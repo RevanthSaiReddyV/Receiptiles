@@ -9,6 +9,7 @@
     "db:push": "turbo db:push"
   },
   "devDependencies": {
+    "next": "^15.1.0",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   },
