@@ -1,0 +1,16 @@
+{
+  "framework": "nextjs",
+  "installCommand": "pnpm install",
+  "buildCommand": "prisma generate --schema=packages/db/prisma/schema.prisma && cd apps/web && next build",
+  "outputDirectory": "apps/web/.next",
+  "crons": [
+    {
+      "path": "/api/cron/sync",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/subscriptions",
+      "schedule": "0 7 * * *"
+    }
+  ]
+}
