@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
@@ -11,13 +11,13 @@ export default async function WebhooksPage() {
   if (!session?.user?.id) redirect('/login');
 
   // Get recent webhook events for merchant's devices
-  const devices = await prisma.device.findMany({
+  const devices = await db.device.findMany({
     where: { merchantConnection: { userId: session.user.id } },
     select: { id: true },
   });
   const deviceIds = devices.map(d => d.id);
 
-  const recentEvents = await prisma.webhookEvent.findMany({
+  const recentEvents = await db.webhookEvent.findMany({
     where: {
       OR: [
         { deviceId: { in: deviceIds.length > 0 ? deviceIds : ['__none__'] } },

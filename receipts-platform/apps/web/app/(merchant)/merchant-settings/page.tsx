@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
@@ -10,12 +10,12 @@ export default async function MerchantSettingsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
-  const connections = await prisma.merchantConnection.findMany({
+  const connections = await db.merchantConnection.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: 'desc' },
   });
 
-  const devices = await prisma.device.findMany({
+  const devices = await db.device.findMany({
     where: { merchantConnection: { userId: session.user.id } },
     select: { id: true, apiKey: true, deviceSerial: true, status: true },
   });

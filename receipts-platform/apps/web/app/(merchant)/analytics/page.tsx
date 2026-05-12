@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
@@ -11,7 +11,7 @@ export default async function AnalyticsPage() {
   if (!session?.user?.id) redirect('/login');
 
   // Get merchant's devices
-  const devices = await prisma.device.findMany({
+  const devices = await db.device.findMany({
     where: {
       merchantConnection: { userId: session.user.id },
     },
@@ -25,14 +25,14 @@ export default async function AnalyticsPage() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   const [totalReceipts, totalRevenue, todayReceipts, webhookEvents] = await Promise.all([
-    prisma.receipt.count({
+    db.receipt.count({
       where: {
         source: 'POS',
         userId: session.user.id,
         purchasedAt: { gte: thirtyDaysAgo },
       },
     }),
-    prisma.receipt.aggregate({
+    db.receipt.aggregate({
       where: {
         source: 'POS',
         userId: session.user.id,
@@ -40,14 +40,14 @@ export default async function AnalyticsPage() {
       },
       _sum: { total: true },
     }),
-    prisma.receipt.count({
+    db.receipt.count({
       where: {
         source: 'POS',
         userId: session.user.id,
         purchasedAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
       },
     }),
-    prisma.webhookEvent.count({
+    db.webhookEvent.count({
       where: {
         deviceId: { in: deviceIds.length > 0 ? deviceIds : ['__none__'] },
         createdAt: { gte: thirtyDaysAgo },
@@ -56,7 +56,7 @@ export default async function AnalyticsPage() {
   ]);
 
   // Daily breakdown for chart
-  const dailyStats = await prisma.$queryRawUnsafe<Array<{
+  const dailyStats = await db.$queryRawUnsafe<Array<{
     day: Date;
     count: bigint;
     revenue: number;

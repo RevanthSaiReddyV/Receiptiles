@@ -37,7 +37,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
           <NavItem href="/devices" icon="📟">Devices</NavItem>
           <NavItem href="/analytics" icon="📊">Analytics</NavItem>
           <NavItem href="/webhooks" icon="🔗">Webhooks</NavItem>
-          <NavItem href="/settings" icon="⚙️">Settings</NavItem>
+          <NavItem href="/merchant-settings" icon="⚙️">Settings</NavItem>
         </nav>
 
         <div className="p-4 border-t border-neutral-200">
