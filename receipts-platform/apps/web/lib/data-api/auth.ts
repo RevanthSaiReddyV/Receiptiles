@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 
 /**
  * Data API Authentication & Rate Limiting
@@ -42,7 +42,7 @@ export async function authenticateDataApiKey(request: NextRequest): Promise<Data
 
   // Look up API key in database
   // Using a generic approach since we'll add DataApiKey model
-  const keyRecord = await prisma.$queryRaw<Array<{
+  const keyRecord = await db.$queryRaw<Array<{
     id: string;
     partner_id: string;
     partner_name: string;

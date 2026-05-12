@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 
 /**
  * Subscription Detection Engine
@@ -67,7 +67,7 @@ interface DetectedSubscription {
  */
 export async function detectSubscriptions(userId: string): Promise<DetectedSubscription[]> {
   // Get all receipts grouped by merchant
-  const receipts = await prisma.receipt.findMany({
+  const receipts = await db.receipt.findMany({
     where: { userId },
     select: {
       id: true,
@@ -165,7 +165,7 @@ export async function syncSubscriptions(userId: string): Promise<{
   let created = 0, updated = 0, cancelled = 0;
 
   // Get existing subscriptions
-  const existing = await prisma.subscription.findMany({
+  const existing = await db.subscription.findMany({
     where: { userId, status: { in: ['ACTIVE', 'PAUSED'] } },
   });
 
@@ -180,7 +180,7 @@ export async function syncSubscriptions(userId: string): Promise<{
 
     if (existingSub) {
       // Update existing
-      await prisma.subscription.update({
+      await db.subscription.update({
         where: { id: existingSub.id },
         data: {
           amount: sub.amount,
@@ -194,7 +194,7 @@ export async function syncSubscriptions(userId: string): Promise<{
       updated++;
     } else {
       // Create new
-      await prisma.subscription.create({
+      await db.subscription.create({
         data: {
           userId,
           merchantName: sub.merchantName,
@@ -211,12 +211,12 @@ export async function syncSubscriptions(userId: string): Promise<{
       created++;
 
       // Create "new subscription detected" alert
-      const newSub = await prisma.subscription.findFirst({
+      const newSub = await db.subscription.findFirst({
         where: { userId, merchantName: sub.merchantName, frequency: sub.frequency },
         orderBy: { createdAt: 'desc' },
       });
       if (newSub) {
-        await prisma.subscriptionAlert.create({
+        await db.subscriptionAlert.create({
           data: {
             subscriptionId: newSub.id,
             type: 'new_detected',
@@ -240,7 +240,7 @@ export async function syncSubscriptions(userId: string): Promise<{
 
     // If more than 2x the expected interval has passed, mark as potentially cancelled
     if (daysSinceLastCharge > expectedInterval * 2) {
-      await prisma.subscription.update({
+      await db.subscription.update({
         where: { id: orphaned.id },
         data: { status: 'CANCELLED', cancelledAt: new Date() },
       });

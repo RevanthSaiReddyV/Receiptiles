@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 
 /**
  * Data Monetization Query Layer
@@ -69,7 +69,7 @@ export async function getSpendingAggregates(
     ? `date_trunc('week', r."purchasedAt")`
     : `date_trunc('month', r."purchasedAt")`;
 
-  const results = await prisma.$queryRawUnsafe<Array<{
+  const results = await db.$queryRawUnsafe<Array<{
     period: Date;
     transaction_count: bigint;
     unique_users: bigint;
@@ -124,7 +124,7 @@ export async function getMerchantAggregates(
     : sortBy === 'transactions' ? 'transaction_count'
     : 'unique_users';
 
-  const results = await prisma.$queryRawUnsafe<Array<{
+  const results = await db.$queryRawUnsafe<Array<{
     merchant_name: string;
     category: string | null;
     transaction_count: bigint;
@@ -186,7 +186,7 @@ export async function getMerchantAggregates(
 export async function getCategoryAggregates(
   filters: AggregateFilters
 ): Promise<CategoryAggregate[]> {
-  const results = await prisma.$queryRawUnsafe<Array<{
+  const results = await db.$queryRawUnsafe<Array<{
     category: string;
     transaction_count: bigint;
     unique_users: bigint;
@@ -219,7 +219,7 @@ export async function getCategoryAggregates(
   const prevYearEnd = new Date(filters.endDate);
   prevYearEnd.setFullYear(prevYearEnd.getFullYear() - 1);
 
-  const prevResults = await prisma.$queryRawUnsafe<Array<{
+  const prevResults = await db.$queryRawUnsafe<Array<{
     category: string;
     total_spend: number;
   }>>(
@@ -266,7 +266,7 @@ export async function getSpendingTrend(
     : metric === 'transaction_count' ? 'COUNT(*)'
     : 'COUNT(DISTINCT r."userId")';
 
-  const results = await prisma.$queryRawUnsafe<Array<{
+  const results = await db.$queryRawUnsafe<Array<{
     period: Date;
     value: number;
   }>>(
@@ -308,7 +308,7 @@ export async function getTopItems(
   averagePrice: number;
   uniqueBuyers: number;
 }>> {
-  const results = await prisma.$queryRawUnsafe<Array<{
+  const results = await db.$queryRawUnsafe<Array<{
     item_name: string;
     merchant_name: string;
     category: string | null;

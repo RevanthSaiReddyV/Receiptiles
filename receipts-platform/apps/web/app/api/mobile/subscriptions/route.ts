@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 import { syncSubscriptions } from '@/lib/subscriptions/detect';
 import { getPendingAlerts, dismissAlert } from '@/lib/subscriptions/alerts';
 
@@ -16,7 +16,7 @@ async function authenticateUser(request: NextRequest) {
   if (!auth?.startsWith('Bearer ')) return null;
   const token = auth.replace('Bearer ', '');
 
-  const session = await prisma.session.findFirst({
+  const session = await db.session.findFirst({
     where: { sessionToken: token, expires: { gt: new Date() } },
     include: { user: true },
   });
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
 
   const [subscriptions, alerts] = await Promise.all([
-    prisma.subscription.findMany({
+    db.subscription.findMany({
       where: { userId: user.id, status: { in: ['ACTIVE', 'PAUSED'] } },
       include: {
         charges: {
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
   const result = await syncSubscriptions(user.id);
 
   // Return fresh data after sync
-  const subscriptions = await prisma.subscription.findMany({
+  const subscriptions = await db.subscription.findMany({
     where: { userId: user.id, status: { in: ['ACTIVE', 'PAUSED'] } },
     orderBy: { nextExpectedAt: 'asc' },
   });
@@ -108,7 +108,7 @@ export async function PATCH(request: NextRequest) {
 
   // Update subscription
   if (subscriptionId) {
-    const sub = await prisma.subscription.findFirst({
+    const sub = await db.subscription.findFirst({
       where: { id: subscriptionId, userId: user.id },
     });
     if (!sub) {
@@ -130,7 +130,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    const updated = await prisma.subscription.update({
+    const updated = await db.subscription.update({
       where: { id: sub.id },
       data: updates,
     });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 import { syncSubscriptions } from '@/lib/subscriptions/detect';
 import { generateRenewalAlerts, detectMissedCharges } from '@/lib/subscriptions/alerts';
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const activeUsers = await prisma.user.findMany({
+    const activeUsers = await db.user.findMany({
       where: {
         OR: [
           { subscriptions: { some: { status: 'ACTIVE' } } },

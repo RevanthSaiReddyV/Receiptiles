@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 
 /**
  * Subscription Alert Engine
@@ -21,7 +21,7 @@ export async function generateRenewalAlerts(): Promise<number> {
   const now = new Date();
 
   // Find subscriptions renewing in next 3 days that don't already have an alert
-  const upcomingSubs = await prisma.subscription.findMany({
+  const upcomingSubs = await db.subscription.findMany({
     where: {
       status: 'ACTIVE',
       alertsEnabled: true,
@@ -47,7 +47,7 @@ export async function generateRenewalAlerts(): Promise<number> {
     // Skip if already has an active alert
     if (sub.alerts.length > 0) continue;
 
-    await prisma.subscriptionAlert.create({
+    await db.subscriptionAlert.create({
       data: {
         subscriptionId: sub.id,
         type: 'upcoming_renewal',
@@ -75,7 +75,7 @@ export async function detectMissedCharges(): Promise<number> {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - gracePeriod);
 
-  const missedSubs = await prisma.subscription.findMany({
+  const missedSubs = await db.subscription.findMany({
     where: {
       status: 'ACTIVE',
       alertsEnabled: true,
@@ -99,7 +99,7 @@ export async function detectMissedCharges(): Promise<number> {
     // Skip if already alerted recently
     if (sub.alerts.length > 0) continue;
 
-    await prisma.subscriptionAlert.create({
+    await db.subscriptionAlert.create({
       data: {
         subscriptionId: sub.id,
         type: 'missed_charge',
@@ -122,7 +122,7 @@ export async function checkForPriceChange(
   subscriptionId: string,
   newAmount: number
 ): Promise<void> {
-  const sub = await prisma.subscription.findUnique({
+  const sub = await db.subscription.findUnique({
     where: { id: subscriptionId },
   });
 
@@ -133,7 +133,7 @@ export async function checkForPriceChange(
 
   // Only alert if increase > 5%
   if (percentChange > 5) {
-    await prisma.subscriptionAlert.create({
+    await db.subscriptionAlert.create({
       data: {
         subscriptionId: sub.id,
         type: 'price_increase',
@@ -145,7 +145,7 @@ export async function checkForPriceChange(
     });
 
     // Update the subscription amount
-    await prisma.subscription.update({
+    await db.subscription.update({
       where: { id: sub.id },
       data: { amount: newAmount },
     });
@@ -156,7 +156,7 @@ export async function checkForPriceChange(
  * Get pending (unsent, undismissed) alerts for a user.
  */
 export async function getPendingAlerts(userId: string) {
-  return prisma.subscriptionAlert.findMany({
+  return db.subscriptionAlert.findMany({
     where: {
       subscription: { userId },
       sentAt: null,
@@ -180,7 +180,7 @@ export async function getPendingAlerts(userId: string) {
  * Dismiss an alert.
  */
 export async function dismissAlert(alertId: string, userId: string): Promise<boolean> {
-  const alert = await prisma.subscriptionAlert.findFirst({
+  const alert = await db.subscriptionAlert.findFirst({
     where: {
       id: alertId,
       subscription: { userId },
@@ -189,7 +189,7 @@ export async function dismissAlert(alertId: string, userId: string): Promise<boo
 
   if (!alert) return false;
 
-  await prisma.subscriptionAlert.update({
+  await db.subscriptionAlert.update({
     where: { id: alertId },
     data: { dismissedAt: new Date() },
   });

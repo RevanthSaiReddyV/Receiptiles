@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 
 /**
  * GET /api/device/firmware/check?current=1.0.0
@@ -23,7 +23,7 @@ async function authenticateDevice(request: NextRequest) {
   if (!auth?.startsWith('Bearer dk_')) return null;
 
   const apiKey = auth.replace('Bearer ', '');
-  const device = await prisma.device.findUnique({ where: { apiKey } });
+  const device = await db.device.findUnique({ where: { apiKey } });
 
   if (!device || device.status === 'REVOKED') return null;
   return device;
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   const currentVersion = request.nextUrl.searchParams.get('current') || '0.0.0';
 
   // Update device's known firmware version
-  await prisma.device.update({
+  await db.device.update({
     where: { id: device.id },
     data: {
       metadata: {

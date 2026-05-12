@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { db } from '@receipts/db';
 import { syncSubscriptions } from '@/lib/subscriptions/detect';
 
 /**
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   const status = request.nextUrl.searchParams.get('status') || 'ACTIVE';
 
-  const subscriptions = await prisma.subscription.findMany({
+  const subscriptions = await db.subscription.findMany({
     where: {
       userId: session.user.id,
       ...(status !== 'ALL' && { status: status as any }),
