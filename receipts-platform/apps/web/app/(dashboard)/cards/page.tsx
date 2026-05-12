@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { addCard, addRewardRule } from "@/lib/actions/cards";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CardsPage() {
   const session = await auth();
   const userId = session!.user!.id!;

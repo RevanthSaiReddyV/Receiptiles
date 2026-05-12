@@ -2,6 +2,8 @@ import { db } from '@receipts/db';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Merchant Analytics Page
  * Shows transaction volume, revenue trends, and device performance.
@@ -10,10 +12,16 @@ export default async function AnalyticsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
-  // Get merchant's devices
+  // Get merchant's devices via their merchant connections
+  const merchantConns = await db.merchantConnection.findMany({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+  const merchantConnIds = merchantConns.map(c => c.id);
+
   const devices = await db.device.findMany({
     where: {
-      merchantConnection: { userId: session.user.id },
+      merchantId: { in: merchantConnIds.length > 0 ? merchantConnIds : ['__none__'] },
     },
     select: { id: true },
   });

@@ -71,10 +71,10 @@ export async function detectSubscriptions(userId: string): Promise<DetectedSubsc
     where: { userId },
     select: {
       id: true,
-      merchantName: true,
+      merchantCanonicalName: true,
       total: true,
       purchasedAt: true,
-      category: true,
+      merchantCategory: true,
     },
     orderBy: { purchasedAt: 'asc' },
   });
@@ -82,7 +82,7 @@ export async function detectSubscriptions(userId: string): Promise<DetectedSubsc
   // Group by normalized merchant name
   const merchantGroups = new Map<string, typeof receipts>();
   for (const receipt of receipts) {
-    const key = normalizeMerchant(receipt.merchantName);
+    const key = normalizeMerchant(receipt.merchantCanonicalName);
     if (!merchantGroups.has(key)) {
       merchantGroups.set(key, []);
     }
@@ -130,11 +130,11 @@ export async function detectSubscriptions(userId: string): Promise<DetectedSubsc
       const nextExpected = predictNextCharge(lastCharge.purchasedAt, frequency);
 
       detected.push({
-        merchantName: merchantReceipts[0].merchantName, // Use original casing
+        merchantName: merchantReceipts[0].merchantCanonicalName,
         amount: Math.round(avgAmount * 100) / 100,
         frequency,
         confidence: Math.round(confidence * 100) / 100,
-        category: knownInfo?.category || merchantReceipts[0].category,
+        category: knownInfo?.category || merchantReceipts[0].merchantCategory,
         charges: group.map(r => ({
           receiptId: r.id,
           amount: r.total,
@@ -266,7 +266,7 @@ function findKnownMerchant(normalized: string): { frequency: string; category: s
   return null;
 }
 
-function groupByAmount(receipts: Array<{ id: string; total: number; purchasedAt: Date; merchantName: string; category: string | null }>) {
+function groupByAmount(receipts: Array<{ id: string; total: number; purchasedAt: Date; merchantCanonicalName: string; merchantCategory: string }>) {
   const groups: Array<typeof receipts> = [];
 
   for (const receipt of receipts) {

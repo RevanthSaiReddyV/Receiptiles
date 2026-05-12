@@ -3,6 +3,8 @@ import { db } from "@receipts/db";
 import { getMissedRewards } from "@/lib/card-optimizer";
 import { CategoryPieChart, MerchantBarChart, DailySpendChart } from "./charts";
 
+export const dynamic = 'force-dynamic';
+
 export default async function InsightsPage() {
   const session = await auth();
   const userId = session!.user!.id!;

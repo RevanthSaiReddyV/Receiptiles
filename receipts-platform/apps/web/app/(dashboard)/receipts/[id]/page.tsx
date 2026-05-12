@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { notFound } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ReceiptDetailPage({
   params,
 }: {

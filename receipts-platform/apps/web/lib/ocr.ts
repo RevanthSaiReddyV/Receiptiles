@@ -1,7 +1,9 @@
 import OpenAI from "openai";
 import { canonicalReceiptSchema } from "@receipts/shared";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+}
 
 const RECEIPT_PARSE_PROMPT = `You are a receipt parser. Extract structured data from the receipt image or text.
 
@@ -50,7 +52,7 @@ If you can't determine a value, use reasonable defaults. For dates you can't par
 Always return valid JSON.`;
 
 export async function parseReceiptFromImage(imageBase64: string) {
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: RECEIPT_PARSE_PROMPT },
@@ -77,7 +79,7 @@ export async function parseReceiptFromImage(imageBase64: string) {
 }
 
 export async function parseReceiptFromText(ocrText: string) {
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: RECEIPT_PARSE_PROMPT },

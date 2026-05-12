@@ -2,6 +2,8 @@ import { db } from '@receipts/db';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Merchant Settings Page
  * Configure merchant profile, API keys, notification preferences.
@@ -15,8 +17,9 @@ export default async function MerchantSettingsPage() {
     orderBy: { createdAt: 'desc' },
   });
 
+  const connIds = connections.map(c => c.id);
   const devices = await db.device.findMany({
-    where: { merchantConnection: { userId: session.user.id } },
+    where: { merchantId: { in: connIds.length > 0 ? connIds : ['__none__'] } },
     select: { id: true, apiKey: true, deviceSerial: true, status: true },
   });
 
@@ -56,9 +59,9 @@ export default async function MerchantSettingsPage() {
                   </p>
                 </div>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  conn.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-600'
+                  conn.isActive ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-600'
                 }`}>
-                  {conn.status}
+                  {conn.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
             ))}

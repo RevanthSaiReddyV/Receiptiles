@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const session = await auth();
   const userId = session!.user!.id!;

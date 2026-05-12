@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         isActive: true,
         OR: [
           { merchantId: shopDomain ?? "" },
-          { metadata: { path: ["shop_domain"], equals: shopDomain } },
+          { metadata: { path: ["shop_domain"], equals: shopDomain ?? "" } },
         ],
       },
     });

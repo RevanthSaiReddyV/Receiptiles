@@ -81,7 +81,7 @@ function formatReceipt(r: Record<string, unknown> & { items?: unknown[] }) {
       cardLast4: r.cardLast4,
       walletType: r.walletType,
     },
-    items: (r.items || []).map((item: Record<string, unknown>) => ({
+    items: ((r.items || []) as Record<string, unknown>[]).map((item) => ({
       id: item.id,
       name: item.name,
       quantity: item.quantity,

@@ -2,6 +2,8 @@ import { db } from '@receipts/db';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Merchant Webhooks Page
  * Configure webhook endpoints and view event history.
@@ -10,9 +12,14 @@ export default async function WebhooksPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
-  // Get recent webhook events for merchant's devices
+  const merchantConns = await db.merchantConnection.findMany({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+  const merchantConnIds = merchantConns.map(c => c.id);
+
   const devices = await db.device.findMany({
-    where: { merchantConnection: { userId: session.user.id } },
+    where: { merchantId: { in: merchantConnIds.length > 0 ? merchantConnIds : ['__none__'] } },
     select: { id: true },
   });
   const deviceIds = devices.map(d => d.id);

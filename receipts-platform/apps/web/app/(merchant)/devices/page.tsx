@@ -2,6 +2,8 @@ import { db } from '@receipts/db';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Merchant Devices Page
  * Lists all POS devices registered to this merchant with status indicators.
@@ -10,11 +12,15 @@ export default async function DevicesPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
+  const merchantConns = await db.merchantConnection.findMany({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+  const merchantConnIds = merchantConns.map(c => c.id);
+
   const devices = await db.device.findMany({
     where: {
-      merchantConnection: {
-        userId: session.user.id,
-      },
+      merchantId: { in: merchantConnIds.length > 0 ? merchantConnIds : ['__none__'] },
     },
     orderBy: { lastSeenAt: 'desc' },
   });

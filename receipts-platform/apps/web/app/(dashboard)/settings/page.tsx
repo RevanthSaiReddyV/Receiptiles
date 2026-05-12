@@ -3,6 +3,8 @@ import { db } from "@receipts/db";
 import { redirect } from "next/navigation";
 import { DisconnectButton } from "./disconnect-button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage({
   searchParams,
 }: {
@@ -151,7 +153,7 @@ export default async function SettingsPage({
                     {conn.provider}
                   </span>
                   <span className="ml-2 text-sm text-gray-500">
-                    {conn.accountEmail ?? conn.accountId}
+                    {conn.email ?? conn.accountId}
                   </span>
                 </div>
                 <DisconnectButton id={conn.id} type="customer" />

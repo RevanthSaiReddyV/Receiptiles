@@ -3,6 +3,12 @@ import { parseReceiptFromText } from "@/lib/ocr";
 import { detectRetailer, isReceiptEmail } from "./detector";
 import { parseReceiptEmail } from "./parsers";
 
+interface GmailPayloadPart {
+  mimeType: string;
+  body?: { data?: string };
+  parts?: GmailPayloadPart[];
+}
+
 interface GmailMessage {
   id: string;
   threadId: string;
@@ -10,11 +16,7 @@ interface GmailMessage {
   payload: {
     headers: Array<{ name: string; value: string }>;
     body?: { data?: string };
-    parts?: Array<{
-      mimeType: string;
-      body?: { data?: string };
-      parts?: Array<{ mimeType: string; body?: { data?: string } }>;
-    }>;
+    parts?: GmailPayloadPart[];
   };
   internalDate: string;
 }
@@ -225,7 +227,7 @@ function extractBodies(msg: GmailMessage): { htmlBody: string; plainBody: string
   return { htmlBody, plainBody };
 }
 
-type GmailPart = NonNullable<GmailMessage["payload"]["parts"]>[number];
+type GmailPart = GmailPayloadPart;
 
 function findPart(
   payload: GmailMessage["payload"] | GmailPart,
@@ -239,7 +241,7 @@ function findPart(
     for (const part of parts) {
       if (part.mimeType === mimeType && part.body?.data) return part.body.data;
       if (part.parts) {
-        const nested = findPart(part as GmailMessage["payload"]["parts"][0], mimeType);
+        const nested = findPart(part as GmailPart, mimeType);
         if (nested) return nested;
       }
     }

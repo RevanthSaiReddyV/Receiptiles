@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ReceiptsPage({
   searchParams,
 }: {

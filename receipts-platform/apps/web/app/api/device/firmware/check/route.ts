@@ -25,7 +25,7 @@ async function authenticateDevice(request: NextRequest) {
   const apiKey = auth.replace('Bearer ', '');
   const device = await db.device.findUnique({ where: { apiKey } });
 
-  if (!device || device.status === 'REVOKED') return null;
+  if (!device || device.status === 'INACTIVE') return null;
   return device;
 }
 
