@@ -45,3 +45,12 @@ export async function syncEmail() {
   revalidatePath("/dashboard");
   revalidatePath("/receipts");
 }
+
+export async function deleteAccount() {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  await db.user.delete({
+    where: { id: session.user.id },
+  });
+}

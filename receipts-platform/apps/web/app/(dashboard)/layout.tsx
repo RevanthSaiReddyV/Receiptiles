@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { LogoutButton } from "./logout-button";
 
 export default async function DashboardLayout({
   children,
@@ -12,12 +13,12 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 border-r border-gray-200 bg-white p-6">
+      <aside className="w-64 border-r border-gray-200 bg-white p-6 flex flex-col">
         <div className="mb-8">
           <h2 className="text-lg font-bold">Receipts</h2>
-          <p className="text-sm text-gray-500">{session.user.email}</p>
+          <p className="text-sm text-gray-500 truncate">{session.user.email}</p>
         </div>
-        <nav className="space-y-1">
+        <nav className="space-y-1 flex-1">
           <NavLink href="/dashboard">Dashboard</NavLink>
           <NavLink href="/receipts">Receipts</NavLink>
           <NavLink href="/upload">Upload</NavLink>
@@ -25,8 +26,10 @@ export default async function DashboardLayout({
           <NavLink href="/cards">Cards</NavLink>
           <NavLink href="/insights">Insights</NavLink>
           <NavLink href="/settings">Settings</NavLink>
-          <NavLink href="/admin/jobs">Admin</NavLink>
         </nav>
+        <div className="pt-4 border-t border-gray-200">
+          <LogoutButton />
+        </div>
       </aside>
       <main className="flex-1 p-8">{children}</main>
     </div>

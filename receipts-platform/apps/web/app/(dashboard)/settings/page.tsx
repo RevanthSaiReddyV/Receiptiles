@@ -3,6 +3,7 @@ import { db } from "@receipts/db";
 import { redirect } from "next/navigation";
 import { DisconnectButton } from "./disconnect-button";
 import { SyncButton } from "./sync-button";
+import { DeleteAccountButton } from "./delete-account-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -189,6 +190,15 @@ export default async function SettingsPage({
             Connect Shopify
           </a>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-md border border-red-200 bg-red-50 p-6">
+        <h2 className="text-lg font-semibold text-red-900 mb-2">Danger Zone</h2>
+        <p className="text-sm text-red-700 mb-4">
+          Permanently delete your account and all associated data including receipts,
+          connections, and settings. This action cannot be undone.
+        </p>
+        <DeleteAccountButton />
       </section>
     </div>
   );
