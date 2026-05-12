@@ -1,0 +1,77 @@
+{
+  "expo": {
+    "name": "Receipts",
+    "slug": "receipts",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "receipts",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.receiptsplatform.app",
+      "associatedDomains": [
+        "applinks:receipts.app",
+        "applinks:*.receipts.app"
+      ],
+      "infoPlist": {
+        "NSCameraUsageDescription": "Take photos of receipts to import them.",
+        "NSPhotoLibraryUsageDescription": "Select receipt images from your photo library.",
+        "NFCReaderUsageDescription": "Read NFC tags at point-of-sale terminals to receive digital receipts."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#000000"
+      },
+      "package": "com.receiptsplatform.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "NFC"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "receipts.app",
+              "pathPrefix": "/claim"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image-picker",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#000000"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    },
+    "owner": "receipts-platform",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/YOUR_EAS_PROJECT_ID"
+    }
+  }
+}

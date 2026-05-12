@@ -1,0 +1,67 @@
+"use server";
+
+import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { db } from "@receipts/db";
+import { signIn } from "@/lib/auth";
+
+const signupSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+export async function signup(formData: FormData) {
+  const parsed = signupSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { error: "Invalid input. Password must be at least 8 characters." };
+  }
+
+  const existing = await db.user.findUnique({
+    where: { email: parsed.data.email },
+  });
+
+  if (existing) {
+    return { error: "An account with this email already exists." };
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+
+  await db.user.create({
+    data: {
+      name: parsed.data.name,
+      email: parsed.data.email,
+      passwordHash,
+    },
+  });
+
+  await signIn("credentials", {
+    email: parsed.data.email,
+    password: parsed.data.password,
+    redirectTo: "/dashboard",
+  });
+}
+
+export async function login(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  if (!email || !password) {
+    return { error: "Email and password are required." };
+  }
+
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: "/dashboard",
+    });
+  } catch {
+    return { error: "Invalid email or password." };
+  }
+}

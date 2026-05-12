@@ -1,0 +1,100 @@
+name: EAS Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "packages/shared/**"
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platform to build"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+      profile:
+        description: "Build profile"
+        required: true
+        default: "preview"
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build (push to main)
+        if: github.event_name == 'push'
+        working-directory: apps/mobile
+        run: eas build --profile preview --platform all --non-interactive --no-wait
+
+      - name: Build (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: apps/mobile
+        run: |
+          eas build \
+            --profile ${{ inputs.profile }} \
+            --platform ${{ inputs.platform }} \
+            --non-interactive \
+            --no-wait
+
+  submit:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'production'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to stores
+        working-directory: apps/mobile
+        run: |
+          if [ "${{ inputs.platform }}" = "ios" ] || [ "${{ inputs.platform }}" = "all" ]; then
+            eas submit --platform ios --profile production --non-interactive --latest
+          fi
+          if [ "${{ inputs.platform }}" = "android" ] || [ "${{ inputs.platform }}" = "all" ]; then
+            eas submit --platform android --profile production --non-interactive --latest
+          fi

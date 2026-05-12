@@ -1,0 +1,39 @@
+appId: com.receipts.app
+---
+# Full navigation flow — validate all tabs are reachable
+- runFlow: login.yaml
+
+# Dashboard tab
+- assertVisible:
+    text: "Dashboard"
+    timeout: 5000
+
+# Receipts tab
+- tapOn: "Receipts"
+- assertVisible:
+    text: "Receipts"
+    timeout: 3000
+
+# Upload tab
+- tapOn: "Upload"
+- assertVisible:
+    text: "Upload"
+    timeout: 3000
+
+# Insights tab
+- tapOn: "Insights"
+- assertVisible:
+    text: "Insights"
+    timeout: 3000
+
+# Settings tab
+- tapOn: "Settings"
+- assertVisible:
+    text: "Settings"
+    timeout: 3000
+
+# Back to dashboard
+- tapOn: "Dashboard"
+- assertVisible:
+    text: "Dashboard"
+    timeout: 3000

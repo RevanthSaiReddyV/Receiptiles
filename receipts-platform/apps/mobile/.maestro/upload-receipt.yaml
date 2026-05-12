@@ -1,0 +1,14 @@
+appId: com.receipts.app
+---
+# Upload Receipt Flow
+- runFlow: login.yaml
+- tapOn: "Upload"
+- assertVisible:
+    text: "Upload"
+    timeout: 5000
+# Tap camera/gallery button
+- tapOn:
+    text: "(Camera|Gallery|Choose|Photo)"
+    regex: true
+# Note: On CI, camera/gallery will not actually work
+# This validates the upload screen renders and is interactive

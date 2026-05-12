@@ -1,0 +1,16 @@
+appId: com.receipts.app
+---
+# Signup Flow
+- launchApp
+- tapOn: "Sign Up"
+- assertVisible: "Create Account"
+- tapOn: "Name"
+- inputText: "Maestro Test User"
+- tapOn: "Email"
+- inputText: "maestro-${TIMESTAMP}@test.local"
+- tapOn: "Password"
+- inputText: "Test1234!@#$"
+- tapOn: "Create Account"
+- assertVisible:
+    text: "Dashboard"
+    timeout: 15000

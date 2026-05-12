@@ -1,0 +1,14 @@
+appId: com.receipts.app
+---
+# Insights Tab Flow
+- runFlow: login.yaml
+- tapOn: "Insights"
+- assertVisible:
+    text: "(Insights|Spending|Category)"
+    regex: true
+    timeout: 5000
+# Charts or empty state should be visible
+- assertVisible:
+    text: "(chart|No data|spending|total)"
+    regex: true
+    timeout: 5000

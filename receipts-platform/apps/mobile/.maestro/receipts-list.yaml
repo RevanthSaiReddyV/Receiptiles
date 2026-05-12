@@ -1,0 +1,13 @@
+appId: com.receipts.app
+---
+# Receipts List Flow
+- runFlow: login.yaml
+- tapOn: "Receipts"
+- assertVisible:
+    text: "Receipts"
+    timeout: 5000
+# Verify list loads (or shows empty state)
+- assertVisible:
+    text: "(No receipts|receipt|Total)"
+    regex: true
+    timeout: 5000

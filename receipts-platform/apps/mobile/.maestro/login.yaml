@@ -1,0 +1,13 @@
+appId: com.receipts.app
+---
+# Login Flow
+- launchApp
+- assertVisible: "Sign In"
+- tapOn: "Email"
+- inputText: ${E2E_USER_EMAIL}
+- tapOn: "Password"
+- inputText: ${E2E_USER_PASSWORD}
+- tapOn: "Sign In"
+- assertVisible:
+    text: "Dashboard"
+    timeout: 10000

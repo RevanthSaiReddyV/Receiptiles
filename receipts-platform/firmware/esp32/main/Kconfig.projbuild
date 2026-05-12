@@ -1,0 +1,75 @@
+menu "Receipts Platform Configuration"
+
+    config WIFI_SSID
+        string "WiFi SSID"
+        default ""
+        help
+            WiFi network name for the device to connect to.
+
+    config WIFI_PASSWORD
+        string "WiFi Password"
+        default ""
+        help
+            WiFi network password.
+
+    config API_BASE_URL
+        string "API Base URL"
+        default "https://receipts.app"
+        help
+            Base URL for the receipts platform cloud API.
+            Do not include trailing slash.
+
+    config DEVICE_PROVISION_KEY
+        string "Device Provisioning Key"
+        default ""
+        help
+            One-time provisioning key used during first-boot device registration.
+            Obtained from the merchant dashboard.
+
+    config NFC_BROADCAST_DURATION_MS
+        int "NFC Broadcast Duration (ms)"
+        default 30000
+        range 5000 120000
+        help
+            How long to broadcast the NFC claim URL after a receipt is processed.
+            Phone must tap within this window to claim the receipt.
+
+    config HEARTBEAT_INTERVAL_SEC
+        int "Heartbeat Interval (seconds)"
+        default 300
+        range 60 3600
+        help
+            How frequently the device sends health/heartbeat messages to the cloud.
+
+    config OTA_CHECK_INTERVAL_SEC
+        int "OTA Check Interval (seconds)"
+        default 3600
+        range 300 86400
+        help
+            How frequently the device checks for firmware updates.
+
+    config POS_UART_BAUD
+        int "POS UART Baud Rate"
+        default 9600
+        range 2400 115200
+        help
+            Baud rate for the POS printer serial connection.
+            Most thermal printers use 9600 or 19200.
+
+    config MAX_RECEIPT_QUEUE_DEPTH
+        int "Receipt Queue Depth"
+        default 10
+        range 5 50
+        help
+            Maximum number of parsed receipts to queue before dropping.
+            If the upload task falls behind, oldest receipts are discarded.
+
+    config ENABLE_PASSTHROUGH
+        bool "Enable POS Passthrough"
+        default y
+        help
+            When enabled, all bytes received from POS are forwarded to the
+            physical printer (transparent interception). Disable for
+            standalone/debug mode where no printer is connected.
+
+endmenu

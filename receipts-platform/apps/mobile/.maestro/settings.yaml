@@ -1,0 +1,14 @@
+appId: com.receipts.app
+---
+# Settings Tab Flow
+- runFlow: login.yaml
+- tapOn: "Settings"
+- assertVisible:
+    text: "(Settings|Account|Profile)"
+    regex: true
+    timeout: 5000
+# Verify key settings options are visible
+- assertVisible:
+    text: "(Email|Cards|API|Notifications|Log Out)"
+    regex: true
+    timeout: 3000
