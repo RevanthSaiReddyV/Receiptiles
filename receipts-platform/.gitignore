@@ -6,3 +6,5 @@ dist
 .env.local
 .turbo
 *.tsbuildinfo
+.vercel
+.env*.local
