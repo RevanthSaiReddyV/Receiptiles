@@ -78,12 +78,21 @@ export default async function SettingsPage({
           </ul>
         ) : null}
 
-        <a
-          href="/api/email/connect"
-          className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Connect Gmail
-        </a>
+        {emailConnections.length === 0 ? (
+          <a
+            href="/api/email/connect"
+            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Connect Gmail
+          </a>
+        ) : (
+          <a
+            href="/api/email/connect"
+            className="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            + Add another Gmail account
+          </a>
+        )}
       </section>
 
       <section className="mb-8">
