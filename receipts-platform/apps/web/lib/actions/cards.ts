@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { revalidatePath } from "next/cache";
 
-export async function addCard(formData: FormData) {
+export async function addCard(formData: FormData): Promise<void> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -13,7 +13,7 @@ export async function addCard(formData: FormData) {
   const network = formData.get("network") as string;
 
   if (!name || !last4 || last4.length !== 4) {
-    return { error: "Invalid card details." };
+    throw new Error("Invalid card details.");
   }
 
   await db.userCard.create({
@@ -28,7 +28,7 @@ export async function addCard(formData: FormData) {
   revalidatePath("/cards");
 }
 
-export async function addRewardRule(formData: FormData) {
+export async function addRewardRule(formData: FormData): Promise<void> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -38,7 +38,7 @@ export async function addRewardRule(formData: FormData) {
   const rewardType = formData.get("rewardType") as string;
 
   if (!cardId || isNaN(rewardRate)) {
-    return { error: "Invalid reward rule." };
+    throw new Error("Invalid reward rule.");
   }
 
   const card = await db.userCard.findFirst({

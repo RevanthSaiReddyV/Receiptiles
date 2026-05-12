@@ -29,7 +29,7 @@ export interface PaymentDetails {
 }
 
 export interface ReceiptItem {
-  id: string;
+  id?: string;
   rawName: string;
   name: string;
   quantity: number;

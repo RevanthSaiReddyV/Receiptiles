@@ -3,8 +3,9 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { getImportConnector, listImportConnectors } from "@/lib/connectors/import";
+import { redirect } from "next/navigation";
 
-export async function importOrderHistory(formData: FormData) {
+export async function importOrderHistory(formData: FormData): Promise<void> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -12,11 +13,11 @@ export async function importOrderHistory(formData: FormData) {
   const provider = formData.get("provider") as string;
 
   if (!file || file.size === 0) {
-    return { error: "Please select a file to import." };
+    throw new Error("Please select a file to import.");
   }
 
   if (!provider) {
-    return { error: "Please select a provider." };
+    throw new Error("Please select a provider.");
   }
 
   const connector = getImportConnector(provider);
@@ -24,7 +25,7 @@ export async function importOrderHistory(formData: FormData) {
   const orders = await connector.parseFile(content, file.name);
 
   if (orders.length === 0) {
-    return { error: "No orders found in the file. Check that the format matches the expected export." };
+    throw new Error("No orders found in the file. Check that the format matches the expected export.");
   }
 
   let imported = 0;
@@ -84,7 +85,7 @@ export async function importOrderHistory(formData: FormData) {
     imported++;
   }
 
-  return { imported, skipped, total: orders.length };
+  redirect("/receipts");
 }
 
 export async function getImportProviders() {

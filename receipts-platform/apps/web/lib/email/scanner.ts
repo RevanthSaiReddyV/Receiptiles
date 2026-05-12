@@ -225,8 +225,10 @@ function extractBodies(msg: GmailMessage): { htmlBody: string; plainBody: string
   return { htmlBody, plainBody };
 }
 
+type GmailPart = NonNullable<GmailMessage["payload"]["parts"]>[number];
+
 function findPart(
-  payload: GmailMessage["payload"] | GmailMessage["payload"]["parts"][0],
+  payload: GmailMessage["payload"] | GmailPart,
   mimeType: string
 ): string | null {
   if ("mimeType" in payload && payload.mimeType === mimeType && payload.body?.data) {

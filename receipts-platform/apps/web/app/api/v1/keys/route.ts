@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import crypto from "crypto";
 
-/**
- * GET /api/v1/keys
- * List API keys for the authenticated user (session-based, not API key auth).
- */
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json(
       { error: { code: "unauthorized", message: "Session required." } },
@@ -41,7 +36,7 @@ export async function GET() {
  * Returns the full key ONCE — it cannot be retrieved again.
  */
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json(
       { error: { code: "unauthorized", message: "Session required." } },

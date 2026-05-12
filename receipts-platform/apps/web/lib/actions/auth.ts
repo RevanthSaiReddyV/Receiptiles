@@ -4,6 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { db } from "@receipts/db";
 import { signIn } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 const signupSchema = z.object({
   name: z.string().min(2),
@@ -11,7 +12,7 @@ const signupSchema = z.object({
   password: z.string().min(8),
 });
 
-export async function signup(formData: FormData) {
+export async function signup(formData: FormData): Promise<void> {
   const parsed = signupSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -19,7 +20,7 @@ export async function signup(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { error: "Invalid input. Password must be at least 8 characters." };
+    redirect("/signup?error=Invalid+input.+Password+must+be+at+least+8+characters.");
   }
 
   const existing = await db.user.findUnique({
@@ -27,7 +28,7 @@ export async function signup(formData: FormData) {
   });
 
   if (existing) {
-    return { error: "An account with this email already exists." };
+    redirect("/signup?error=An+account+with+this+email+already+exists.");
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
@@ -47,12 +48,12 @@ export async function signup(formData: FormData) {
   });
 }
 
-export async function login(formData: FormData) {
+export async function login(formData: FormData): Promise<void> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
   if (!email || !password) {
-    return { error: "Email and password are required." };
+    redirect("/login?error=Email+and+password+are+required.");
   }
 
   try {
@@ -62,6 +63,6 @@ export async function login(formData: FormData) {
       redirectTo: "/dashboard",
     });
   } catch {
-    return { error: "Invalid email or password." };
+    redirect("/login?error=Invalid+email+or+password.");
   }
 }

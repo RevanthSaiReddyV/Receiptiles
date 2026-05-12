@@ -7,18 +7,18 @@ import { processReceiptJob } from "@/lib/process-receipt";
 import { redirect } from "next/navigation";
 import { waitUntil } from "@vercel/functions";
 
-export async function uploadReceipt(formData: FormData) {
+export async function uploadReceipt(formData: FormData): Promise<void> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
   const file = formData.get("file") as File;
   if (!file || file.size === 0) {
-    return { error: "Please select a file to upload." };
+    throw new Error("Please select a file to upload.");
   }
 
   const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
   if (!allowedTypes.includes(file.type)) {
-    return { error: "Only JPEG, PNG, WebP, and PDF files are supported." };
+    throw new Error("Only JPEG, PNG, WebP, and PDF files are supported.");
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());

@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     } else if (receipt && receipt.userId === userId) {
       // Already belongs to user — no-op
     } else if (!receipt) {
-      receiptId = null;
+      receiptId = undefined;
     }
   }
 
