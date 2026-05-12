@@ -5,6 +5,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "build": "echo 'shared: no build needed'",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
