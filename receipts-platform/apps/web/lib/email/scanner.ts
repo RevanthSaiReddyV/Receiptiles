@@ -28,16 +28,23 @@ export async function scanEmailsForReceipts(userId: string) {
 
   let totalImported = 0;
 
+  console.log(`[Email Scanner] Found ${connections.length} active connections for user ${userId}`);
+
   for (const connection of connections) {
     const accessToken = await getValidToken(connection);
-    if (!accessToken) continue;
+    if (!accessToken) {
+      console.error(`[Email Scanner] Failed to get valid token for ${connection.email}`);
+      continue;
+    }
 
-    const since = connection.lastSyncAt ?? new Date(Date.now() - 7 * 86400000);
+    const since = connection.lastSyncAt ?? new Date(Date.now() - 30 * 86400000);
     const afterTimestamp = Math.floor(since.getTime() / 1000);
 
     const query = `after:${afterTimestamp} (subject:receipt OR subject:"order confirm" OR subject:invoice OR from:auto-confirm@amazon.com OR from:help@walmart.com OR from:no-reply@instacart.com OR from:no-reply@doordash.com OR from:uber.us@uber.com)`;
 
+    console.log(`[Email Scanner] Searching Gmail for ${connection.email} since ${since.toISOString()}`);
     const messages = await fetchGmailMessages(accessToken, query);
+    console.log(`[Email Scanner] Found ${messages.length} candidate messages`);
 
     for (const msgMeta of messages) {
       const msg = await fetchGmailMessage(accessToken, msgMeta.id);

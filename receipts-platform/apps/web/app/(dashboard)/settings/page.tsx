@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { redirect } from "next/navigation";
 import { DisconnectButton } from "./disconnect-button";
+import { SyncButton } from "./sync-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +73,10 @@ export default async function SettingsPage({
                     </span>
                   )}
                 </div>
-                <DisconnectButton id={conn.id} type="email" />
+                <div className="flex items-center gap-2">
+                  <SyncButton />
+                  <DisconnectButton id={conn.id} type="email" />
+                </div>
               </li>
             ))}
           </ul>

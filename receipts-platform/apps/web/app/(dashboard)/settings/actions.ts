@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { revalidatePath } from "next/cache";
+import { scanEmailsForReceipts } from "@/lib/email/scanner";
 
 export async function disconnectSource(formData: FormData) {
   const session = await auth();
@@ -27,4 +28,20 @@ export async function disconnectSource(formData: FormData) {
   }
 
   revalidatePath("/settings");
+}
+
+export async function syncEmail() {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  try {
+    const count = await scanEmailsForReceipts(session.user.id);
+    console.log(`[Manual Sync] Imported ${count} receipts for user ${session.user.id}`);
+  } catch (err) {
+    console.error("[Manual Sync] Failed:", err);
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  revalidatePath("/receipts");
 }

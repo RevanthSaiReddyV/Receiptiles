@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@receipts/db";
 import { scanEmailsForReceipts } from "@/lib/email/scanner";
+import { waitUntil } from "@vercel/functions";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -26,6 +27,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenRes.ok) {
+      const errBody = await tokenRes.text();
+      console.error("[Email Callback] Token exchange failed:", errBody);
       return NextResponse.redirect(
         `${process.env.NEXTAUTH_URL}/settings?error=token_exchange`
       );
@@ -59,12 +62,19 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    scanEmailsForReceipts(userId).catch(() => {});
+    console.log(`[Email Callback] Connected ${email} for user ${userId}, starting scan...`);
+
+    waitUntil(
+      scanEmailsForReceipts(userId)
+        .then((count) => console.log(`[Email Scan] Imported ${count} receipts for ${email}`))
+        .catch((err) => console.error(`[Email Scan] Failed for ${email}:`, err))
+    );
 
     return NextResponse.redirect(
       `${process.env.NEXTAUTH_URL}/settings?success=email_connected`
     );
-  } catch {
+  } catch (err) {
+    console.error("[Email Callback] Unexpected error:", err);
     return NextResponse.redirect(
       `${process.env.NEXTAUTH_URL}/settings?error=unknown`
     );
