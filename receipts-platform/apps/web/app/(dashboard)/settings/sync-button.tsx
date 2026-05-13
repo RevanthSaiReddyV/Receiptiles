@@ -13,7 +13,11 @@ export function SyncButton() {
     setResult(null);
 
     try {
-      const res = await fetch("/api/sync", { method: "POST" });
+      const res = await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullRescan: true }),
+      });
       const data = await res.json();
 
       if (!res.ok) {

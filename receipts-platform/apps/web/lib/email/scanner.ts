@@ -37,14 +37,20 @@ export async function scanEmailsForReceipts(userId: string) {
       continue;
     }
 
-    const since = connection.lastSyncAt ?? new Date(Date.now() - 30 * 86400000);
+    const since = connection.lastSyncAt ?? new Date(Date.now() - 90 * 86400000);
     const afterTimestamp = Math.floor(since.getTime() / 1000);
 
-    const query = `after:${afterTimestamp} (subject:receipt OR subject:"order confirm" OR subject:invoice OR from:auto-confirm@amazon.com OR from:help@walmart.com OR from:no-reply@instacart.com OR from:no-reply@doordash.com OR from:uber.us@uber.com)`;
+    const query = `after:${afterTimestamp} (subject:receipt OR subject:"order confirmation" OR subject:"order confirmed" OR subject:invoice OR subject:"your trip" OR subject:"your ride" OR subject:"your order" OR subject:"your purchase" OR from:uber.com OR from:lyft.com OR from:amazon.com OR from:walmart.com OR from:instacart.com OR from:doordash.com OR from:grubhub.com OR from:target.com OR from:costco.com OR from:apple.com OR from:bestbuy.com OR from:starbucks.com OR from:etsy.com OR from:paypal.com)`;
 
-    console.log(`[Email Scanner] Searching Gmail for ${connection.email} since ${since.toISOString()}`);
+    console.log(JSON.stringify({
+      event: "gmail_search",
+      email: connection.email,
+      since: since.toISOString(),
+      lastSyncAt: connection.lastSyncAt?.toISOString() ?? null,
+      query: query.substring(0, 200),
+    }));
     const messages = await fetchGmailMessages(accessToken, query);
-    console.log(`[Email Scanner] Found ${messages.length} candidate messages`);
+    console.log(JSON.stringify({ event: "gmail_results", email: connection.email, count: messages.length }));
 
     for (const msgMeta of messages) {
       const msg = await fetchGmailMessage(accessToken, msgMeta.id);
@@ -54,7 +60,9 @@ export async function scanEmailsForReceipts(userId: string) {
       const subject = getHeader(msg, "Subject") ?? "";
       const senderEmail = extractEmail(from);
 
-      if (!isReceiptEmail(senderEmail, subject)) continue;
+      const isReceipt = isReceiptEmail(senderEmail, subject);
+      console.log(JSON.stringify({ event: "email_check", from: senderEmail, subject, isReceipt }));
+      if (!isReceipt) continue;
 
       const alreadyProcessed = await db.receipt.findFirst({
         where: {
