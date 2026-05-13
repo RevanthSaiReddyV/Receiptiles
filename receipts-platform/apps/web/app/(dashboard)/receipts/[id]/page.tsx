@@ -123,14 +123,52 @@ export default async function ReceiptDetailPage({
             </div>
             <div className="divide-y divide-zinc-50">
               {receipt.items.map((item) => (
-                <div key={item.id} className="px-6 py-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-zinc-900">{item.name}</p>
-                    {item.quantity > 1 && (
-                      <p className="text-xs text-zinc-400">Qty: {item.quantity} x ${item.unitPrice.toFixed(2)}</p>
-                    )}
+                <div key={item.id} className="px-5 py-4 flex gap-4">
+                  {/* Product image */}
+                  {item.imageUrl ? (
+                    <div className="w-16 h-16 rounded-xl bg-zinc-50 border border-zinc-100 overflow-hidden flex-shrink-0">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-contain"
+                        loading="lazy"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg font-bold text-zinc-300">{item.name.charAt(0)}</span>
+                    </div>
+                  )}
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        {item.productUrl ? (
+                          <a href={item.productUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-zinc-900 hover:text-violet-600 transition-colors line-clamp-2">
+                            {item.name}
+                          </a>
+                        ) : (
+                          <p className="text-sm font-medium text-zinc-900 line-clamp-2">{item.name}</p>
+                        )}
+                        {item.description && item.description !== item.name && (
+                          <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{item.description}</p>
+                        )}
+                      </div>
+                      <span className="text-sm font-semibold text-zinc-900 tabular-nums whitespace-nowrap">
+                        ${item.totalPrice.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      {item.quantity > 1 && (
+                        <span className="text-[11px] text-zinc-400">Qty: {item.quantity} x ${item.unitPrice.toFixed(2)}</span>
+                      )}
+                      {item.sku && (
+                        <span className="text-[11px] text-zinc-400 font-mono">SKU: {item.sku}</span>
+                      )}
+                      <span className="text-[11px] text-zinc-300">{item.category}</span>
+                    </div>
                   </div>
-                  <span className="text-sm font-medium text-zinc-900 tabular-nums">${item.totalPrice.toFixed(2)}</span>
                 </div>
               ))}
             </div>

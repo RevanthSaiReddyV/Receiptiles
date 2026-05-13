@@ -156,14 +156,18 @@ model Receipt {
 }
 
 model ReceiptItem {
-  id         String @id @default(cuid())
-  receiptId  String
-  rawName    String
-  name       String
-  quantity   Float  @default(1)
-  unitPrice  Float
-  totalPrice Float
-  category   String @default("Uncategorized")
+  id          String  @id @default(cuid())
+  receiptId   String
+  rawName     String
+  name        String
+  description String?
+  imageUrl    String?
+  quantity    Float   @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  category    String  @default("Uncategorized")
+  sku         String?
+  productUrl  String?
 
   receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
 

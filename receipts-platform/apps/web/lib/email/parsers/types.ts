@@ -24,10 +24,14 @@ export interface ParsedEmailReceipt {
   items: Array<{
     rawName: string;
     name: string;
+    description?: string;
+    imageUrl?: string;
     quantity: number;
     unitPrice: number;
     totalPrice: number;
     category: string;
+    sku?: string;
+    productUrl?: string;
   }>;
   metadata: {
     confidence: number;
