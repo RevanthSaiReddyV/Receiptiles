@@ -1,28 +1,28 @@
-import { NextRequest, NextResponse } from "next/server";
-import { authenticateRequest } from "@/lib/mobile-auth";
-import {
-  getOrCreateGoogleWalletPass,
-  generateGooglePassObject,
-  generateSaveLink,
-} from "@/lib/wallet/google-pass";
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@receipts/db";
+import { generateGoogleWalletLink } from "@/lib/wallet/google-wallet";
 
-/**
- * GET /api/wallet/google
- * Get Google Wallet pass data + save link.
- */
-export async function GET(request: NextRequest) {
-  const userId = await authenticateRequest();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.redirect(new URL("/login", process.env.NEXTAUTH_URL!));
   }
 
-  const pass = await getOrCreateGoogleWalletPass(userId);
-  const passObject = await generateGooglePassObject(userId, pass.serialNumber);
-  const saveLink = generateSaveLink(passObject);
+  const userId = session.user.id;
 
-  return NextResponse.json({
-    passObject,
-    serialNumber: pass.serialNumber,
-    saveLink,
+  const receiptCount = await db.receipt.count({ where: { userId } });
+  const treesSaved = receiptCount / 8333;
+  const co2Saved = receiptCount * 0.0057;
+
+  const link = generateGoogleWalletLink({
+    userId,
+    userName: session.user.name ?? "Member",
+    receiptCount,
+    treesSaved,
+    co2Saved,
+    memberSince: new Date().getFullYear().toString(),
   });
+
+  return NextResponse.redirect(link);
 }
