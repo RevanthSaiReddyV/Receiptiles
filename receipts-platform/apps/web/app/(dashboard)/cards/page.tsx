@@ -3,6 +3,7 @@ import { db } from "@receipts/db";
 import { addRewardRule } from "@/lib/actions/cards";
 import { getMissedRewards } from "@/lib/card-optimizer";
 import { CARD_DATABASE } from "@/lib/rewards/card-database";
+import { getCardImageByName } from "@/lib/rewards/card-images";
 import { AddCardForm } from "./add-card-form";
 import { DeleteButton } from "./delete-button";
 
@@ -97,75 +98,52 @@ export default async function CardsPage() {
             d => d.name.toLowerCase() === card.name.toLowerCase()
           );
           const topRate = card.rewardRules[0]?.rewardRate;
+          const cardImage = getCardImageByName(card.name);
 
           return (
             <div key={card.id} className="space-y-4">
-              {/* Realistic credit card — 3.375:2.125 aspect ratio */}
-              <div className={`relative aspect-[3.375/2.125] rounded-2xl bg-gradient-to-br ${style.bg} p-6 overflow-hidden shadow-xl`}>
-                {/* Background pattern */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[80%] rounded-full bg-white/20" />
-                  <div className="absolute bottom-[-30%] left-[-10%] w-[50%] h-[70%] rounded-full bg-white/10" />
-                </div>
+              {/* Credit card visual */}
+              <div className="relative aspect-[3.375/2.125] rounded-2xl overflow-hidden shadow-xl group">
+                {cardImage ? (
+                  /* Real card image from issuer */
+                  <>
+                    <img
+                      src={cardImage}
+                      alt={card.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+                  </>
+                ) : (
+                  /* Fallback CSS card */
+                  <div className={`absolute inset-0 bg-gradient-to-br ${style.bg}`}>
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[80%] rounded-full bg-white/20" />
+                    </div>
+                  </div>
+                )}
 
                 {/* Delete button */}
-                <div className="absolute top-4 right-4 z-10">
+                <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                   <DeleteButton id={card.id} type="card" />
                 </div>
 
-                {/* Card content */}
-                <div className="relative h-full flex flex-col justify-between">
-                  {/* Top: issuer + network */}
-                  <div className="flex items-start justify-between">
+                {/* Overlay info */}
+                <div className="absolute inset-0 p-5 flex flex-col justify-end">
+                  <p className="text-white font-mono text-sm tracking-[0.15em] drop-shadow-lg">
+                    •••• •••• •••• {card.last4}
+                  </p>
+                  <div className="flex items-end justify-between mt-2">
                     <div>
-                      <p className="text-white/60 text-[10px] font-medium uppercase tracking-widest">
-                        {dbCard?.issuer ?? card.network}
-                      </p>
-                      <p className="text-white text-sm font-bold mt-0.5">{card.name}</p>
+                      <p className="text-white/90 text-xs font-semibold drop-shadow-lg">{card.name}</p>
+                      <p className="text-white/60 text-[10px] drop-shadow">{dbCard?.issuer ?? card.network.toUpperCase()}</p>
                     </div>
-                    {/* NFC symbol */}
-                    <svg className="w-6 h-6 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                      <path d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-
-                  {/* Middle: chip + card number */}
-                  <div>
-                    {/* Chip */}
-                    <div className="w-10 h-7 rounded-md bg-gradient-to-br from-amber-300/80 to-amber-500/80 mb-3 flex items-center justify-center">
-                      <div className="w-6 h-4 rounded-sm border border-amber-600/30 grid grid-cols-3 grid-rows-2 gap-px">
-                        {[...Array(6)].map((_, i) => (
-                          <div key={i} className="bg-amber-400/50 rounded-[1px]" />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-white font-mono text-lg tracking-[0.2em]">
-                      •••• •••• •••• {card.last4}
-                    </p>
-                  </div>
-
-                  {/* Bottom: name + network logo */}
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-white/40 text-[9px] uppercase tracking-wider">Card Holder</p>
-                      <p className="text-white/80 text-xs font-medium uppercase tracking-wider mt-0.5">
-                        {session!.user!.name ?? "CARDHOLDER"}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      {card.network === "mastercard" ? (
-                        <div className="flex items-center gap-[-4px]">
-                          <div className="w-6 h-6 rounded-full bg-red-500 opacity-80" />
-                          <div className="w-6 h-6 rounded-full bg-amber-400 opacity-80 -ml-2" />
-                        </div>
-                      ) : card.network === "amex" ? (
-                        <p className="text-white font-bold text-[10px] tracking-wider">AMERICAN<br/>EXPRESS</p>
-                      ) : (
-                        <p className={`font-bold text-sm italic tracking-wider ${style.accent}`}>
-                          {style.logo}
-                        </p>
-                      )}
-                    </div>
+                    {topRate && (
+                      <span className="bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 text-[11px] font-bold text-white">
+                        Up to {topRate}% back
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
