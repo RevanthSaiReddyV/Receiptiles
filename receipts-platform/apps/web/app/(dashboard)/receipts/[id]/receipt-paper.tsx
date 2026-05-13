@@ -24,34 +24,12 @@ interface ReceiptPaperProps {
   source: string;
   confidence: number;
   receiptId: string;
-}
-
-const MERCHANT_ICONS: Record<string, string> = {
-  amazon: "A",
-  apple: "",
-  "best buy": "BB",
-  costco: "C",
-  target: "T",
-  walmart: "W",
-  uber: "U",
-  "uber eats": "UE",
-  lyft: "L",
-  doordash: "DD",
-  instacart: "IC",
-  starbucks: "SB",
-};
-
-function getMerchantInitial(name: string): string {
-  const lower = name.toLowerCase();
-  for (const [key, icon] of Object.entries(MERCHANT_ICONS)) {
-    if (lower.includes(key)) return icon;
-  }
-  return name.charAt(0).toUpperCase();
+  cardBrand?: string;
 }
 
 function generateBarcode(id: string): string {
   const bars: string[] = [];
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 50; i++) {
     const charCode = id.charCodeAt(i % id.length);
     bars.push(((charCode + i) % 3 === 0) ? "wide" : "narrow");
   }
@@ -62,23 +40,197 @@ export function ReceiptPaper(props: ReceiptPaperProps) {
   const {
     merchant, location, date, items, subtotal, tax, tip,
     discount, fees, total, paymentMethod, cardLast4, source,
-    receiptId,
+    receiptId, cardBrand,
   } = props;
 
-  const barcode = generateBarcode(receiptId);
+  const isPOS = source === "POS";
   const d = new Date(date);
+  const barcode = generateBarcode(receiptId);
+  const transId = receiptId.slice(-8).toUpperCase();
+
+  if (isPOS) {
+    return <POSReceipt {...{ merchant, location, d, items, subtotal, tax, tip, discount, fees, total, paymentMethod, cardLast4, cardBrand, receiptId, transId, barcode }} />;
+  }
+
+  return <EmailReceipt {...{ merchant, location, d, items, subtotal, tax, tip, discount, fees, total, paymentMethod, cardLast4, source, receiptId, transId, barcode }} />;
+}
+
+/* ─────────────────────── POS RECEIPT (Square-style) ──────────────────── */
+
+function POSReceipt({ merchant, location, d, items, subtotal, tax, tip, discount, fees, total, paymentMethod, cardLast4, cardBrand, transId, barcode }: {
+  merchant: string; location: string | null; d: Date; items: ReceiptItem[];
+  subtotal: number; tax: number; tip: number; discount: number; fees: number;
+  total: number; paymentMethod: string; cardLast4: string | null;
+  cardBrand?: string; receiptId: string; transId: string; barcode: string;
+}) {
+  const brand = (cardBrand || paymentMethod || "").toUpperCase();
+  const brandDisplay = brand === "AMEX" ? "AMERICAN EXPRESS" : brand;
 
   return (
-    <div className="relative">
-      {/* Torn top edge */}
-      <div className="h-3 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2020%2010%22%3E%3Cpath%20d%3D%22M0%2010%20Q5%200%2010%2010%20Q15%200%2020%2010%22%20fill%3D%22%23fafaf8%22/%3E%3C/svg%3E')] bg-repeat-x bg-[length:20px_10px] bg-bottom" />
+    <div className="relative max-w-sm mx-auto">
+      {/* Torn top */}
+      <TornEdge direction="top" />
 
-      {/* Receipt body */}
-      <div className="bg-[#fafaf8] px-8 py-6 font-mono text-[13px] leading-relaxed text-neutral-800 shadow-lg">
+      <div className="bg-white px-6 py-5 font-mono text-[12px] leading-[1.6] text-black shadow-xl">
+        {/* Store header */}
+        <div className="text-center mb-3">
+          <div className="text-[15px] font-bold tracking-wide">{merchant.toUpperCase()}</div>
+          {location && <div className="text-[10px] text-neutral-600">{location}</div>}
+          <div className="text-[10px] text-neutral-600 mt-0.5">
+            {d.toLocaleDateString(undefined, { month: "2-digit", day: "2-digit", year: "numeric" })}
+            {"  "}
+            {d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
+          </div>
+          <div className="text-[10px] text-neutral-500">Trans #{transId}</div>
+        </div>
+
+        <SolidDivider />
+
+        {/* Card info block — like Square prints */}
+        {cardLast4 && (
+          <>
+            <div className="my-2 text-[11px]">
+              <div className="flex justify-between">
+                <span>{brandDisplay}</span>
+                <span>SALE</span>
+              </div>
+              <div className="flex justify-between text-neutral-600">
+                <span>Card #: **** **** **** {cardLast4}</span>
+              </div>
+              <div className="flex justify-between text-neutral-600">
+                <span>Entry: {paymentMethod === "CARD" ? "CHIP" : "TAP"}</span>
+                <span>Approval: {transId.slice(0, 6)}</span>
+              </div>
+            </div>
+            <SolidDivider />
+          </>
+        )}
+
+        {/* Items */}
+        {items.length > 0 ? (
+          <div className="my-2">
+            {items.map((item, i) => (
+              <div key={i} className="flex justify-between">
+                <span className="flex-1 truncate pr-2">
+                  {item.qty > 1 ? `${item.qty} x ` : ""}{item.name}
+                </span>
+                <span className="tabular-nums">{fmt(item.price)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="my-2 text-center text-neutral-400 text-[10px]">
+            — Item details not available —
+          </div>
+        )}
+
+        <DashedDivider />
+
+        {/* Totals block */}
+        <div className="my-2 space-y-0.5">
+          {subtotal > 0 && subtotal !== total && (
+            <TotalRow label="Subtotal" value={fmt(subtotal)} />
+          )}
+          {discount > 0 && <TotalRow label="Discount" value={`-${fmt(discount)}`} />}
+          {tax > 0 && <TotalRow label="Tax" value={fmt(tax)} />}
+          {fees > 0 && <TotalRow label="Fees" value={fmt(fees)} />}
+        </div>
+
+        <SolidDivider />
+
+        {/* Grand total */}
+        <div className="flex justify-between font-bold text-[15px] my-2">
+          <span>TOTAL</span>
+          <span className="tabular-nums">{fmt(total)}</span>
+        </div>
+
+        {tip > 0 && (
+          <div className="flex justify-between text-[11px] text-neutral-600">
+            <span>Tip</span>
+            <span className="tabular-nums">{fmt(tip)}</span>
+          </div>
+        )}
+
+        {tip > 0 && (
+          <>
+            <DashedDivider />
+            <div className="flex justify-between font-bold text-[13px]">
+              <span>TOTAL + TIP</span>
+              <span className="tabular-nums">{fmt(total)}</span>
+            </div>
+          </>
+        )}
+
+        {/* Tip and signature line (POS style) */}
+        {tip === 0 && (
+          <div className="mt-4 space-y-3">
+            <div>
+              <div className="text-[10px] text-neutral-500">Tip: ________________</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-neutral-500">Total: ________________</div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 mb-2">
+          <div className="text-[10px] text-neutral-500">Signature</div>
+          <div className="mt-1 border-b border-neutral-300 h-8" />
+          <div className="text-[9px] text-neutral-400 mt-0.5">I agree to pay the above total amount</div>
+        </div>
+
+        <SolidDivider />
+
+        {/* Barcode */}
+        <div className="mt-3 flex justify-center">
+          <div className="flex items-end gap-[0.5px] h-12">
+            {barcode.split(",").map((bar, i) => (
+              <div
+                key={i}
+                className="bg-black"
+                style={{
+                  width: bar === "wide" ? "2px" : "0.8px",
+                  height: `${32 + ((i * 3) % 16)}px`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="text-center text-[9px] text-neutral-500 mt-1 tracking-[0.15em]">
+          {transId}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-4 text-center text-[10px] text-neutral-500">
+          <div>CUSTOMER COPY</div>
+          <div className="mt-1 font-bold text-[11px] text-black">THANK YOU!</div>
+          <div className="mt-0.5 text-[9px] text-neutral-400">Powered by Receipts Platform</div>
+        </div>
+      </div>
+
+      {/* Torn bottom */}
+      <TornEdge direction="bottom" />
+    </div>
+  );
+}
+
+/* ─────────────────────── EMAIL RECEIPT (original style) ──────────────── */
+
+function EmailReceipt({ merchant, location, d, items, subtotal, tax, tip, discount, fees, total, paymentMethod, cardLast4, source, receiptId, transId, barcode }: {
+  merchant: string; location: string | null; d: Date; items: ReceiptItem[];
+  subtotal: number; tax: number; tip: number; discount: number; fees: number;
+  total: number; paymentMethod: string; cardLast4: string | null;
+  source: string; receiptId: string; transId: string; barcode: string;
+}) {
+  return (
+    <div className="relative max-w-sm mx-auto">
+      <TornEdge direction="top" />
+
+      <div className="bg-[#fafaf8] px-8 py-6 font-mono text-[13px] leading-relaxed text-neutral-800 shadow-xl">
         {/* Header */}
         <div className="text-center mb-4">
           <div className="text-2xl font-bold tracking-wider mb-1">
-            {getMerchantInitial(merchant)}
+            {merchant.charAt(0).toUpperCase()}
           </div>
           <div className="text-lg font-bold uppercase tracking-widest">
             {merchant}
@@ -93,7 +245,7 @@ export function ReceiptPaper(props: ReceiptPaperProps) {
           </div>
         </div>
 
-        <Divider />
+        <DashedDivider />
 
         {/* Items */}
         {items.length > 0 ? (
@@ -104,9 +256,7 @@ export function ReceiptPaper(props: ReceiptPaperProps) {
                   {item.qty > 1 && <span className="text-neutral-500">{item.qty}x </span>}
                   {item.name}
                 </span>
-                <span className="tabular-nums whitespace-nowrap">
-                  {formatPrice(item.price)}
-                </span>
+                <span className="tabular-nums whitespace-nowrap">{fmt(item.price)}</span>
               </div>
             ))}
           </div>
@@ -116,24 +266,22 @@ export function ReceiptPaper(props: ReceiptPaperProps) {
           </div>
         )}
 
-        <Divider />
+        <DashedDivider />
 
         {/* Totals */}
         <div className="my-3 space-y-1">
-          {subtotal > 0 && subtotal !== total && (
-            <Row label="SUBTOTAL" value={formatPrice(subtotal)} />
-          )}
-          {tax > 0 && <Row label="TAX" value={formatPrice(tax)} />}
-          {tip > 0 && <Row label="TIP" value={formatPrice(tip)} />}
-          {discount > 0 && <Row label="DISCOUNT" value={`-${formatPrice(discount)}`} />}
-          {fees > 0 && <Row label="FEES" value={formatPrice(fees)} />}
+          {subtotal > 0 && subtotal !== total && <TotalRow label="SUBTOTAL" value={fmt(subtotal)} />}
+          {tax > 0 && <TotalRow label="TAX" value={fmt(tax)} />}
+          {tip > 0 && <TotalRow label="TIP" value={fmt(tip)} />}
+          {discount > 0 && <TotalRow label="DISCOUNT" value={`-${fmt(discount)}`} />}
+          {fees > 0 && <TotalRow label="FEES" value={fmt(fees)} />}
         </div>
 
         <div className="border-t-2 border-dashed border-neutral-400 my-2" />
 
         <div className="flex justify-between font-bold text-base my-2">
           <span>TOTAL</span>
-          <span className="tabular-nums">{formatPrice(total)}</span>
+          <span className="tabular-nums">{fmt(total)}</span>
         </div>
 
         <div className="border-t-2 border-dashed border-neutral-400 my-2" />
@@ -163,39 +311,59 @@ export function ReceiptPaper(props: ReceiptPaperProps) {
           </div>
         </div>
         <div className="text-center text-[10px] text-neutral-400 mt-1 tracking-widest">
-          {receiptId.toUpperCase().slice(0, 16)}
+          {transId}
         </div>
 
         {/* Footer */}
         <div className="mt-4 text-center text-[10px] text-neutral-400">
           <div className="uppercase tracking-wider">
-            {source === "EMAIL" ? "Imported from email" : source === "POS" ? "POS capture" : source === "UPLOAD" ? "Uploaded" : source.toLowerCase()}
+            {source === "EMAIL" ? "Imported from email" : source === "UPLOAD" ? "Uploaded" : source.toLowerCase()}
           </div>
           <div className="mt-1">THANK YOU</div>
         </div>
       </div>
 
-      {/* Torn bottom edge */}
-      <div className="h-3 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2020%2010%22%3E%3Cpath%20d%3D%22M0%200%20Q5%2010%2010%200%20Q15%2010%2020%200%22%20fill%3D%22%23fafaf8%22/%3E%3C/svg%3E')] bg-repeat-x bg-[length:20px_10px] bg-top" />
+      <TornEdge direction="bottom" />
     </div>
   );
 }
 
-function Divider() {
+/* ─────────────────────── SHARED COMPONENTS ───────────────────────────── */
+
+function TornEdge({ direction }: { direction: "top" | "bottom" }) {
+  const path = direction === "top"
+    ? "M0 10 Q5 0 10 10 Q15 0 20 10"
+    : "M0 0 Q5 10 10 0 Q15 10 20 0";
+  const fill = direction === "top" ? "%23ffffff" : "%23ffffff";
+  const bgPos = direction === "top" ? "bg-bottom" : "bg-top";
+
   return (
-    <div className="border-t border-dashed border-neutral-300 my-2" />
+    <div
+      className={`h-3 bg-repeat-x bg-[length:20px_10px] ${bgPos}`}
+      style={{
+        backgroundImage: `url('data:image/svg+xml,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 viewBox%3D%220 0 20 10%22%3E%3Cpath d%3D%22${path}%22 fill%3D%22${fill}%22/%3E%3C/svg%3E')`,
+      }}
+    />
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function SolidDivider() {
+  return <div className="border-t border-neutral-300 my-1.5" />;
+}
+
+function DashedDivider() {
+  return <div className="border-t border-dashed border-neutral-300 my-2" />;
+}
+
+function TotalRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between text-xs">
-      <span className="text-neutral-500">{label}</span>
+    <div className="flex justify-between text-[11px]">
+      <span className="text-neutral-600">{label}</span>
       <span className="tabular-nums">{value}</span>
     </div>
   );
 }
 
-function formatPrice(n: number): string {
+function fmt(n: number): string {
   return `$${n.toFixed(2)}`;
 }
