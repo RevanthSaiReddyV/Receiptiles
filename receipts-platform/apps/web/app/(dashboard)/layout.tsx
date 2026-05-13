@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { LogoutButton } from "./logout-button";
+import { SidebarNav } from "./sidebar-nav";
 
 export default async function DashboardLayout({
   children,
@@ -12,37 +12,37 @@ export default async function DashboardLayout({
   if (!session?.user) redirect("/login");
 
   return (
-    <div className="flex min-h-screen bg-gray-50 text-gray-900">
-      <aside className="w-64 border-r border-gray-200 bg-white p-6 flex flex-col">
-        <div className="mb-8">
-          <h2 className="text-lg font-bold">Receipts</h2>
-          <p className="text-sm text-gray-500 truncate">{session.user.email}</p>
+    <div className="flex min-h-screen">
+      {/* Dark sidebar */}
+      <aside className="w-64 bg-[#0c0c10] border-r border-white/[0.06] p-5 flex flex-col flex-shrink-0">
+        {/* Logo */}
+        <div className="mb-8 px-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-emerald-500 flex items-center justify-center">
+              <span className="text-white text-sm font-bold">R</span>
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-white">Receipts</h2>
+              <p className="text-[11px] text-zinc-500 truncate max-w-[150px]">{session.user.email}</p>
+            </div>
+          </div>
         </div>
-        <nav className="space-y-1 flex-1">
-          <NavLink href="/dashboard">Dashboard</NavLink>
-          <NavLink href="/receipts">Receipts</NavLink>
-          <NavLink href="/upload">Upload</NavLink>
-          <NavLink href="/email">Email</NavLink>
-          <NavLink href="/cards">Cards</NavLink>
-          <NavLink href="/insights">Insights</NavLink>
-          <NavLink href="/settings">Settings</NavLink>
-        </nav>
-        <div className="pt-4 border-t border-gray-200">
+
+        {/* Navigation */}
+        <SidebarNav />
+
+        {/* Logout */}
+        <div className="pt-4 mt-4 border-t border-white/[0.06]">
           <LogoutButton />
         </div>
       </aside>
-      <main className="flex-1 p-8">{children}</main>
-    </div>
-  );
-}
 
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-    >
-      {children}
-    </Link>
+      {/* Light content area */}
+      <main className="flex-1 bg-[#f8f9fb] min-h-screen overflow-auto">
+        <div className="max-w-6xl mx-auto p-8">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }

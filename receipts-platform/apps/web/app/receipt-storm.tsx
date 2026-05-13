@@ -1,11 +1,146 @@
 "use client";
 
-import { useRef, useState, useEffect, Suspense } from "react";
+import { useRef, useState, useEffect, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, Stars, RoundedBox, Text, MeshTransmissionMaterial } from "@react-three/drei";
 import * as THREE from "three";
+
+/* ───────────────────── SEEDED RANDOM FOR SSR/CSR ────────────────────── */
+
+function seededRandom(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+/* ─────────────────── ANIMATED DOT GRID BACKGROUND ───────────────────── */
+
+function AnimatedDotGrid() {
+  return (
+    <>
+      <style jsx global>{`
+        @keyframes dotDrift {
+          0% { background-position: 0px 0px; }
+          100% { background-position: 40px 40px; }
+        }
+      `}</style>
+      <div
+        className="fixed inset-0 z-0 opacity-[0.15] pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #3f3f46 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+          animation: 'dotDrift 20s linear infinite',
+        }}
+      />
+    </>
+  );
+}
+
+/* ──────────────────── FLOATING RECEIPT ICONS ────────────────────────── */
+
+const RECEIPT_SVG_PATH = "M4 2C3.45 2 3 2.45 3 3v17.59c0 .66.75 1.04 1.28.65L6 19.86l1.72 1.38c.39.31.94.31 1.33 0L10.5 19.86l1.45 1.16c.39.31.94.31 1.33 0L14.5 19.86l1.72 1.38c.53.39 1.28.01 1.28-.65V3c0-.55-.45-1-1-1H4zm10 12H7v-1.5h7V14zm1-3H7v-1.5h8V11zm0-3H7V6.5h8V8z";
+
+function FloatingReceipts() {
+  const receipts = useMemo(() => {
+    const rand = seededRandom(42);
+    return Array.from({ length: 18 }, (_, i) => {
+      const size = 30 + rand() * 30;
+      const left = rand() * 100;
+      const top = rand() * 100;
+      const duration = 15 + rand() * 25;
+      const delay = rand() * -40;
+      const yDrift = 40 + rand() * 80;
+      const xDrift = 20 + rand() * 60;
+      const rotateDeg = -20 + rand() * 40;
+      const opacity = 0.03 + rand() * 0.05;
+      const directionY = rand() > 0.5 ? 1 : -1;
+      const directionX = rand() > 0.5 ? 1 : -1;
+
+      return {
+        id: i,
+        size,
+        left,
+        top,
+        duration,
+        delay,
+        yDrift: yDrift * directionY,
+        xDrift: xDrift * directionX,
+        rotateDeg,
+        opacity,
+      };
+    });
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden">
+      {receipts.map((r) => (
+        <motion.div
+          key={r.id}
+          className="absolute"
+          style={{
+            left: `${r.left}%`,
+            top: `${r.top}%`,
+            width: r.size,
+            height: r.size * 1.3,
+            opacity: r.opacity,
+          }}
+          animate={{
+            y: [0, r.yDrift, 0],
+            x: [0, r.xDrift, 0],
+            rotate: [0, r.rotateDeg, 0],
+          }}
+          transition={{
+            duration: r.duration,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: r.delay,
+          }}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="#a1a1aa"
+            className="w-full h-full"
+          >
+            <path d={RECEIPT_SVG_PATH} />
+          </svg>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+/* ──────────────────── SECTION GLOW COMPONENT ────────────────────────── */
+
+function PulsingGlow({
+  color,
+  className,
+  duration = 5,
+  minOpacity = 0.5,
+  maxOpacity = 1,
+}: {
+  color: string;
+  className: string;
+  duration?: number;
+  minOpacity?: number;
+  maxOpacity?: number;
+}) {
+  return (
+    <motion.div
+      className={className}
+      style={{ background: color }}
+      animate={{ opacity: [minOpacity, maxOpacity, minOpacity] }}
+      transition={{
+        duration,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
+}
 
 /* ─────────────────────────── 3D RECEIPT CARD ─────────────────────────── */
 
@@ -301,6 +436,22 @@ function HeroSection() {
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      {/* Section-specific glows: violet + emerald pulse */}
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)"
+        className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full blur-[80px] pointer-events-none z-[2]"
+        duration={5}
+        minOpacity={0.4}
+        maxOpacity={0.9}
+      />
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)"
+        className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full blur-[80px] pointer-events-none z-[2]"
+        duration={6}
+        minOpacity={0.3}
+        maxOpacity={0.8}
+      />
+
       {/* 3D background */}
       {webglOk && <HeroScene />}
 
@@ -383,8 +534,21 @@ function ProblemSection() {
 
   return (
     <section ref={ref} className="relative min-h-screen flex items-center justify-center py-32 px-6">
-      {/* Red glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-red-600/5 blur-[120px] pointer-events-none" />
+      {/* Red/orange glow — enhanced with pulsing animation */}
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(220,38,38,0.07) 0%, transparent 70%)"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none"
+        duration={5}
+        minOpacity={0.4}
+        maxOpacity={1}
+      />
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(234,88,12,0.05) 0%, transparent 70%)"
+        className="absolute top-1/3 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none"
+        duration={4}
+        minOpacity={0.3}
+        maxOpacity={0.9}
+      />
 
       <motion.div
         className="max-w-4xl mx-auto text-center"
@@ -449,8 +613,21 @@ function SolutionSection() {
 
   return (
     <section ref={ref} className="relative min-h-screen flex items-center justify-center py-32 px-6">
-      {/* Emerald glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
+      {/* Emerald glow — enhanced with pulsing animation */}
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 70%)"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none"
+        duration={5}
+        minOpacity={0.4}
+        maxOpacity={1}
+      />
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 70%)"
+        className="absolute bottom-1/4 left-1/4 w-[350px] h-[350px] rounded-full blur-[100px] pointer-events-none"
+        duration={6}
+        minOpacity={0.3}
+        maxOpacity={0.8}
+      />
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* 3D Phone */}
@@ -564,6 +741,22 @@ function HowItWorksSection() {
 
   return (
     <section ref={ref} className="relative min-h-screen flex items-center justify-center py-32 px-6">
+      {/* Fuchsia glow — pulsing animation */}
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(217,70,239,0.06) 0%, transparent 70%)"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none"
+        duration={4.5}
+        minOpacity={0.3}
+        maxOpacity={1}
+      />
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 70%)"
+        className="absolute top-1/4 right-1/3 w-[350px] h-[350px] rounded-full blur-[100px] pointer-events-none"
+        duration={5.5}
+        minOpacity={0.2}
+        maxOpacity={0.7}
+      />
+
       <motion.div
         className="max-w-5xl mx-auto"
         initial="hidden"
@@ -606,9 +799,21 @@ function CTASection() {
 
   return (
     <section ref={ref} className="relative min-h-[80vh] flex items-center justify-center py-32 px-6">
-      {/* Dual glow */}
-      <div className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full bg-violet-600/8 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/3 right-1/3 w-[400px] h-[400px] rounded-full bg-emerald-600/8 blur-[120px] pointer-events-none" />
+      {/* Dual glow — enhanced with pulsing animations */}
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)"
+        className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full blur-[120px] pointer-events-none"
+        duration={5}
+        minOpacity={0.4}
+        maxOpacity={1}
+      />
+      <PulsingGlow
+        color="radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)"
+        className="absolute bottom-1/3 right-1/3 w-[400px] h-[400px] rounded-full blur-[120px] pointer-events-none"
+        duration={6}
+        minOpacity={0.3}
+        maxOpacity={0.9}
+      />
 
       <motion.div
         className="text-center max-w-2xl mx-auto"
@@ -670,6 +875,13 @@ function CTASection() {
 export default function ReceiptStorm() {
   return (
     <div className="bg-[#050507]">
+      {/* Background layer 1: Animated dot grid */}
+      <AnimatedDotGrid />
+
+      {/* Background layer 2: Floating receipt icons */}
+      <FloatingReceipts />
+
+      {/* Page sections (z-10+ content sits above background layers) */}
       <HeroSection />
       <ProblemSection />
       <SolutionSection />
