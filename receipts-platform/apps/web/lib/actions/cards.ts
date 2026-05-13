@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { revalidatePath } from "next/cache";
+import { claimPendingReceipts } from "@/lib/webhooks/process";
 
 export async function addCard(formData: FormData): Promise<void> {
   const session = await auth();
@@ -25,7 +26,11 @@ export async function addCard(formData: FormData): Promise<void> {
     },
   });
 
+  // Claim any pending POS receipts that match this card
+  claimPendingReceipts(session.user.id, last4).catch(() => {});
+
   revalidatePath("/cards");
+  revalidatePath("/receipts");
 }
 
 export async function deleteCard(formData: FormData): Promise<void> {
@@ -69,7 +74,10 @@ export async function addCardWithPreset(formData: FormData): Promise<void> {
     });
   }
 
+  claimPendingReceipts(session.user.id, last4).catch(() => {});
+
   revalidatePath("/cards");
+  revalidatePath("/receipts");
 }
 
 const CARD_PRESETS: Record<string, Array<{ category: string | null; merchantName: string | null; rewardRate: number; rewardType: string; multiplier: number }>> = {
