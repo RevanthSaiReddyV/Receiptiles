@@ -18,9 +18,10 @@ export const squareConnector: PosConnector = {
   getAuthUrl(merchantId: string, redirectUri: string) {
     const params = new URLSearchParams({
       client_id: process.env.SQUARE_APP_ID!,
+      redirect_uri: redirectUri,
       scope: "PAYMENTS_READ ORDERS_READ MERCHANT_PROFILE_READ ITEMS_READ",
       session: "false",
-      state: merchantId,
+      state: merchantId || "connect",
     });
     return `${SQUARE_BASE_URL}/oauth2/authorize?${params}`;
   },
