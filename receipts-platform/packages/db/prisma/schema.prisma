@@ -141,6 +141,7 @@ model Receipt {
   requiresReview Boolean  @default(false)
   ocrText        String?  @db.Text
   rawParseResult Json?
+  receiptUrl     String?  // Original receipt URL from POS (e.g., Square receipt_url)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

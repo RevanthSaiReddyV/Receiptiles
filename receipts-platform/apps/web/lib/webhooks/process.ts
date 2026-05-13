@@ -22,8 +22,9 @@ interface WebhookReceiptData {
   paymentMethod?: string;
   cardLast4?: string;
   purchasedAt: Date;
-  userId?: string; // If we can resolve the user (e.g., from merchant connection)
+  userId?: string;
   deviceId?: string;
+  receiptUrl?: string;
 }
 
 /**

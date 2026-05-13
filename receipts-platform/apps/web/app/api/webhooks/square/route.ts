@@ -105,7 +105,16 @@ export async function POST(request: NextRequest) {
       cardLast4: payment.card_details?.card?.last_4,
       purchasedAt: new Date(payment.created_at ?? event.created_at),
       userId: merchantConn?.userId,
+      receiptUrl: payment.receipt_url,
     });
+
+    // If we got a receipt URL, update the receipt record
+    if (receiptId && payment.receipt_url) {
+      await db.receipt.update({
+        where: { id: receiptId },
+        data: { receiptUrl: payment.receipt_url },
+      });
+    }
 
     return NextResponse.json({ received: true, receiptId });
   } catch (error) {
