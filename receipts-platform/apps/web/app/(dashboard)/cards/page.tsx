@@ -5,6 +5,7 @@ import { getMissedRewards } from "@/lib/card-optimizer";
 import { CARD_DATABASE } from "@/lib/rewards/card-database";
 import { getCardImageByName } from "@/lib/rewards/card-images";
 import { AddCardForm } from "./add-card-form";
+import { BenefitTracker, parseCardBenefits } from "./benefit-tracker";
 import { DeleteButton } from "./delete-button";
 import { FlipCard } from "./flip-card";
 
@@ -111,6 +112,23 @@ export default async function CardsPage() {
           );
         })}
       </div>
+
+      {/* Benefit Tracker */}
+      {(() => {
+        const cardBenefits = parseCardBenefits(
+          cards
+            .map(card => {
+              const dbCard = CARD_DATABASE.find(d => d.name.toLowerCase() === card.name.toLowerCase());
+              return {
+                id: card.id,
+                name: card.name,
+                dbPerks: dbCard?.perks ?? [],
+              };
+            })
+            .filter(c => c.dbPerks.length > 0)
+        );
+        return cardBenefits.length > 0 ? <BenefitTracker cardBenefits={cardBenefits} /> : null;
+      })()}
 
       {/* Missed Rewards */}
       {missedRewards.length > 0 && (

@@ -21,6 +21,7 @@
     "@receipts/db": "workspace:*",
     "@receipts/shared": "workspace:*",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/blob": "^2.3.3",
     "@vercel/functions": "^1.4.0",
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.0.0",

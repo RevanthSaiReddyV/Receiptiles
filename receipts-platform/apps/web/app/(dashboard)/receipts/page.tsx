@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import Link from "next/link";
+import { detectSubscriptions } from "@/lib/subscriptions/detect";
 import { ReceiptCalendar } from "./receipt-calendar";
 
 export const dynamic = 'force-dynamic';
@@ -25,27 +26,41 @@ export default async function ReceiptsPage({
     where.merchantCategory = params.category;
   }
 
-  const receipts = await db.receipt.findMany({
-    where,
-    orderBy: { purchasedAt: "desc" },
-    take: 200,
-    select: {
-      id: true,
-      merchantCanonicalName: true,
-      merchantCategory: true,
-      total: true,
-      purchasedAt: true,
-      source: true,
-      cardLast4: true,
-      requiresReview: true,
-    },
-  });
+  const [receipts, detectedSubscriptions] = await Promise.all([
+    db.receipt.findMany({
+      where,
+      orderBy: { purchasedAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        merchantCanonicalName: true,
+        merchantCategory: true,
+        total: true,
+        purchasedAt: true,
+        source: true,
+        cardLast4: true,
+        requiresReview: true,
+      },
+    }),
+    detectSubscriptions(userId),
+  ]);
 
   const totalAmount = receipts.reduce((sum, r) => sum + r.total, 0);
 
   const serialized = receipts.map(r => ({
     ...r,
     purchasedAt: r.purchasedAt.toISOString(),
+  }));
+
+  const serializedSubscriptions = detectedSubscriptions.map(sub => ({
+    merchantName: sub.merchantName,
+    amount: sub.amount,
+    frequency: sub.frequency,
+    confidence: sub.confidence,
+    category: sub.category,
+    nextExpectedAt: sub.nextExpectedAt.toISOString(),
+    firstChargeAt: sub.firstChargeAt.toISOString(),
+    lastChargeAt: sub.lastChargeAt.toISOString(),
   }));
 
   return (
@@ -98,7 +113,7 @@ export default async function ReceiptsPage({
           </Link>
         </div>
       ) : (
-        <ReceiptCalendar receipts={serialized} />
+        <ReceiptCalendar receipts={serialized} subscriptions={serializedSubscriptions} />
       )}
     </div>
   );
