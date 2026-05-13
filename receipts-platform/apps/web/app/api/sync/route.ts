@@ -5,6 +5,7 @@ import * as cheerio from "cheerio";
 import { isReceiptEmail, detectRetailer } from "@/lib/email/detector";
 import { parseReceiptEmail } from "@/lib/email/parsers";
 import { parseReceiptFromText } from "@/lib/ocr";
+import { isBankAlert, parseBankAlert } from "@/lib/email/parsers/bank-alerts";
 
 export const maxDuration = 60;
 
@@ -73,7 +74,7 @@ export async function POST() {
     // Search Gmail
     const since = new Date(Date.now() - 90 * 86400000);
     const afterTs = Math.floor(since.getTime() / 1000);
-    const query = `after:${afterTs} (subject:receipt OR subject:"order confirmation" OR subject:"order confirmed" OR subject:invoice OR subject:"your trip" OR subject:"your ride" OR subject:"your order" OR subject:"your purchase" OR subject:"ordered:" OR from:uber.com OR from:lyft.com OR from:amazon.com OR from:walmart.com OR from:instacart.com OR from:doordash.com OR from:grubhub.com OR from:target.com OR from:costco.com OR from:apple.com OR from:bestbuy.com OR from:starbucks.com OR from:etsy.com OR from:paypal.com)`;
+    const query = `after:${afterTs} (subject:receipt OR subject:"order confirmation" OR subject:"order confirmed" OR subject:invoice OR subject:"your trip" OR subject:"your ride" OR subject:"your order" OR subject:"your purchase" OR subject:"ordered:" OR subject:"transaction alert" OR subject:"purchase notification" OR subject:"card transaction" OR subject:"large purchase" OR from:uber.com OR from:lyft.com OR from:amazon.com OR from:walmart.com OR from:instacart.com OR from:doordash.com OR from:grubhub.com OR from:target.com OR from:costco.com OR from:apple.com OR from:bestbuy.com OR from:starbucks.com OR from:etsy.com OR from:paypal.com OR from:chase.com OR from:aexp.com OR from:bankofamerica.com OR from:capitalone.com OR from:citi.com OR from:citibank.com OR from:wellsfargo.com OR from:discover.com)`;
 
     const listRes = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages?${new URLSearchParams({ q: query, maxResults: "50" })}`,
@@ -130,6 +131,47 @@ export async function POST() {
       if (!htmlBody && !plainBody) {
         logs.push(`  [${subject.substring(0, 40)}] no body`);
         continue;
+      }
+
+      const bodyText = plainBody || stripHtml(htmlBody);
+
+      // Check if this is a bank transaction alert
+      if (isBankAlert(senderEmail, subject)) {
+        const bankParsed = parseBankAlert(senderEmail, subject, bodyText);
+        if (bankParsed && bankParsed.purchase.total > 0) {
+          const purchaseDate = new Date(bankParsed.purchase.purchasedAt);
+          const isValidDate = !isNaN(purchaseDate.getTime()) && purchaseDate.toDateString() !== new Date().toDateString();
+
+          try {
+            await db.receipt.create({
+              data: {
+                userId,
+                source: "EMAIL",
+                merchantRawName: bankParsed.merchant.rawName,
+                merchantCanonicalName: bankParsed.merchant.canonicalName,
+                merchantCategory: bankParsed.merchant.category,
+                purchasedAt: isValidDate ? purchaseDate : emailDate,
+                currency: "USD",
+                subtotal: bankParsed.purchase.total,
+                tax: 0,
+                tip: 0,
+                discount: 0,
+                fees: 0,
+                total: bankParsed.purchase.total,
+                paymentMethod: "card",
+                cardLast4: bankParsed.payment.cardLast4,
+                confidence: 0.8,
+                requiresReview: false,
+                ocrText: `email:${msgMeta.id}`,
+              },
+            });
+            totalImported++;
+            logs.push(`  [${subject.substring(0, 40)}] BANK ALERT: ${bankParsed.merchant.canonicalName} $${bankParsed.purchase.total}`);
+            continue;
+          } catch (err) {
+            logs.push(`  [${subject.substring(0, 40)}] bank alert save failed: ${err instanceof Error ? err.message : err}`);
+          }
+        }
       }
 
       // Try code parsers
