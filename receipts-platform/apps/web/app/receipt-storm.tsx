@@ -42,13 +42,25 @@ function AnimatedDotGrid() {
 
 /* ──────────────────── FLOATING RECEIPT ICONS ────────────────────────── */
 
-const RECEIPT_SVG_PATH = "M4 2C3.45 2 3 2.45 3 3v17.59c0 .66.75 1.04 1.28.65L6 19.86l1.72 1.38c.39.31.94.31 1.33 0L10.5 19.86l1.45 1.16c.39.31.94.31 1.33 0L14.5 19.86l1.72 1.38c.53.39 1.28.01 1.28-.65V3c0-.55-.45-1-1-1H4zm10 12H7v-1.5h7V14zm1-3H7v-1.5h8V11zm0-3H7V6.5h8V8z";
+const FLOATING_ICONS = [
+  // Receipt
+  "M4 2C3.45 2 3 2.45 3 3v17.59c0 .66.75 1.04 1.28.65L6 19.86l1.72 1.38c.39.31.94.31 1.33 0L10.5 19.86l1.45 1.16c.39.31.94.31 1.33 0L14.5 19.86l1.72 1.38c.53.39 1.28.01 1.28-.65V3c0-.55-.45-1-1-1H4zm10 12H7v-1.5h7V14zm1-3H7v-1.5h8V11zm0-3H7V6.5h8V8z",
+  // Credit card
+  "M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z",
+  // Dollar
+  "M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  // Shopping bag
+  "M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z",
+  // Chart
+  "M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6",
+];
 
 function FloatingReceipts() {
   const receipts = useMemo(() => {
     const rand = seededRandom(42);
-    return Array.from({ length: 18 }, (_, i) => {
-      const size = 30 + rand() * 30;
+    return Array.from({ length: 25 }, (_, i) => {
+      const size = 24 + rand() * 36;
+      const iconIndex = Math.floor(rand() * FLOATING_ICONS.length);
       const left = rand() * 100;
       const top = rand() * 100;
       const duration = 15 + rand() * 25;
@@ -71,6 +83,7 @@ function FloatingReceipts() {
         xDrift: xDrift * directionX,
         rotateDeg,
         opacity,
+        iconIndex,
       };
     });
   }, []);
@@ -102,10 +115,14 @@ function FloatingReceipts() {
         >
           <svg
             viewBox="0 0 24 24"
-            fill="#a1a1aa"
+            fill={r.iconIndex === 0 ? "#a1a1aa" : "none"}
+            stroke={r.iconIndex === 0 ? "none" : "#a1a1aa"}
+            strokeWidth={r.iconIndex === 0 ? 0 : 1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
             className="w-full h-full"
           >
-            <path d={RECEIPT_SVG_PATH} />
+            <path d={FLOATING_ICONS[r.iconIndex]} />
           </svg>
         </motion.div>
       ))}
