@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   if (!session?.user) redirect("/login");
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-50 text-gray-900">
       <aside className="w-64 border-r border-gray-200 bg-white p-6 flex flex-col">
         <div className="mb-8">
           <h2 className="text-lg font-bold">Receipts</h2>
