@@ -1,20 +1,9 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import Link from "next/link";
-import { LocalDate } from "@/app/components/local-date";
+import { ReceiptCalendar } from "./receipt-calendar";
 
 export const dynamic = 'force-dynamic';
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Shopping: "bg-violet-100 text-violet-700",
-  Dining: "bg-amber-100 text-amber-700",
-  Groceries: "bg-emerald-100 text-emerald-700",
-  Transportation: "bg-blue-100 text-blue-700",
-  Subscriptions: "bg-fuchsia-100 text-fuchsia-700",
-  Electronics: "bg-cyan-100 text-cyan-700",
-  Entertainment: "bg-pink-100 text-pink-700",
-  Uncategorized: "bg-zinc-100 text-zinc-600",
-};
 
 export default async function ReceiptsPage({
   searchParams,
@@ -39,10 +28,25 @@ export default async function ReceiptsPage({
   const receipts = await db.receipt.findMany({
     where,
     orderBy: { purchasedAt: "desc" },
-    take: 50,
+    take: 200,
+    select: {
+      id: true,
+      merchantCanonicalName: true,
+      merchantCategory: true,
+      total: true,
+      purchasedAt: true,
+      source: true,
+      cardLast4: true,
+      requiresReview: true,
+    },
   });
 
   const totalAmount = receipts.reduce((sum, r) => sum + r.total, 0);
+
+  const serialized = receipts.map(r => ({
+    ...r,
+    purchasedAt: r.purchasedAt.toISOString(),
+  }));
 
   return (
     <div>
@@ -81,7 +85,6 @@ export default async function ReceiptsPage({
         </div>
       </form>
 
-      {/* Receipt list */}
       {receipts.length === 0 ? (
         <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm p-12 text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-zinc-100 flex items-center justify-center">
@@ -90,50 +93,12 @@ export default async function ReceiptsPage({
             </svg>
           </div>
           <p className="text-zinc-500 text-sm">No receipts found</p>
-          <Link href="/settings" className="mt-3 inline-block text-sm font-medium text-violet-600 hover:text-violet-700">
+          <Link href="/email" className="mt-3 inline-block text-sm font-medium text-violet-600 hover:text-violet-700">
             Connect Gmail to import receipts
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm overflow-hidden divide-y divide-zinc-100">
-          {receipts.map((r) => (
-            <Link
-              key={r.id}
-              href={`/receipts/${r.id}`}
-              className="flex items-center justify-between px-5 py-4 hover:bg-zinc-50/50 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm font-bold text-zinc-600">
-                    {r.merchantCanonicalName.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-zinc-900">{r.merchantCanonicalName}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-zinc-400">
-                      <LocalDate date={r.purchasedAt} />
-                    </span>
-                    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${CATEGORY_COLORS[r.merchantCategory] ?? CATEGORY_COLORS.Uncategorized}`}>
-                      {r.merchantCategory}
-                    </span>
-                    {r.requiresReview && (
-                      <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
-                        Review
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-sm font-semibold text-zinc-900 tabular-nums">
-                  ${r.total.toFixed(2)}
-                </span>
-                <p className="text-[10px] text-zinc-400 uppercase mt-0.5">{r.source}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <ReceiptCalendar receipts={serialized} />
       )}
     </div>
   );
