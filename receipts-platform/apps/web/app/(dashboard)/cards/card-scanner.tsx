@@ -8,10 +8,72 @@ interface ScanResult {
   network: string;
   expMonth: number | null;
   expYear: number | null;
-  issuer: string | null;
-  cardName: string | null;
   cardholderName: string | null;
-  dominantColor: string | null;
+}
+
+function detectNetwork(digits: string): string {
+  if (digits.startsWith("4")) return "visa";
+  if (digits.startsWith("5") || digits.startsWith("2")) return "mastercard";
+  if (digits.startsWith("3")) return "amex";
+  if (digits.startsWith("6")) return "discover";
+  return "other";
+}
+
+function extractCardData(text: string): ScanResult | null {
+  const cleaned = text.replace(/[^0-9A-Za-z\s\/\-\.]/g, " ");
+
+  // Find card number — 13-19 digits, possibly with spaces/dashes
+  const numberPatterns = [
+    /(\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4})/,
+    /(\d{4}[\s\-]?\d{6}[\s\-]?\d{5})/, // Amex: 4-6-5
+    /(\d{13,19})/,
+  ];
+
+  let fullNumber = "";
+  for (const pat of numberPatterns) {
+    const m = cleaned.match(pat);
+    if (m) {
+      fullNumber = m[1].replace(/[\s\-]/g, "");
+      break;
+    }
+  }
+
+  if (fullNumber.length < 13) return null;
+
+  const last4 = fullNumber.slice(-4);
+  const network = detectNetwork(fullNumber);
+
+  // Find expiration — MM/YY or MM/YYYY
+  const expMatch = cleaned.match(/(\d{2})\s*\/\s*(\d{2,4})/);
+  let expMonth: number | null = null;
+  let expYear: number | null = null;
+  if (expMatch) {
+    const m = parseInt(expMatch[1]);
+    let y = parseInt(expMatch[2]);
+    if (m >= 1 && m <= 12) {
+      expMonth = m;
+      if (y < 100) y += 2000;
+      if (y >= 2024 && y <= 2040) expYear = y;
+    }
+  }
+
+  // Find cardholder name — typically all caps line that isn't numbers
+  let cardholderName: string | null = null;
+  const lines = cleaned.split(/\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (
+      trimmed.length >= 4 &&
+      trimmed.length <= 30 &&
+      /^[A-Z\s\-\.]+$/.test(trimmed) &&
+      !trimmed.match(/VISA|MASTER|AMEX|DISCOVER|DEBIT|CREDIT|VALID|THRU|GOOD|MEMBER|SINCE|PLATINUM|GOLD|SILVER/)
+    ) {
+      cardholderName = trimmed;
+      break;
+    }
+  }
+
+  return { last4, network, expMonth, expYear, cardholderName };
 }
 
 export function CardScanner({ onDone }: { onDone?: () => void }) {
@@ -43,7 +105,7 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
         videoRef.current.srcObject = stream;
       }
     } catch {
-      setError("Camera access denied. You can upload a photo instead.");
+      setError("Camera access denied. Use the upload button instead.");
       setMode("idle");
     }
   }
@@ -54,10 +116,10 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
     setPreview(dataUrl);
     stopCamera();
-    scanImage(dataUrl);
+    processImage(dataUrl);
   }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -67,39 +129,35 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
       setPreview(dataUrl);
-      scanImage(dataUrl);
+      processImage(dataUrl);
     };
     reader.readAsDataURL(file);
   }
 
-  async function scanImage(dataUrl: string) {
+  async function processImage(dataUrl: string) {
     setMode("scanning");
     setError(null);
 
     try {
-      const blob = await (await fetch(dataUrl)).blob();
-      const formData = new FormData();
-      formData.append("image", blob, "card.jpg");
+      // Load Tesseract.js dynamically (large library, only load when needed)
+      const { createWorker } = await import("tesseract.js");
+      const worker = await createWorker("eng");
 
-      const res = await fetch("/api/cards/scan", { method: "POST", body: formData });
-      const data = await res.json();
+      const { data } = await worker.recognize(dataUrl);
+      await worker.terminate();
 
-      if (!res.ok) {
-        setError(data.error || "Could not read card");
+      const extracted = extractCardData(data.text);
+
+      if (!extracted || extracted.last4.length !== 4) {
+        setError("Could not read card number. Try with better lighting or enter manually.");
         setMode("idle");
         return;
       }
 
-      if (!data.last4 || data.last4.length !== 4) {
-        setError("Could not read card number. Try again with better lighting.");
-        setMode("idle");
-        return;
-      }
-
-      setResult(data);
+      setResult(extracted);
       setMode("confirm");
     } catch {
-      setError("Scan failed. Please try again.");
+      setError("OCR failed. Please try again or enter manually.");
       setMode("idle");
     }
   }
@@ -108,11 +166,7 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
     if (!result) return;
     setSaving(true);
 
-    const name = result.cardName
-      ? `${result.issuer ? result.issuer + " " : ""}${result.cardName}`
-      : result.issuer
-        ? `${result.issuer} Card`
-        : `${result.network.toUpperCase()} Card`;
+    const name = `${result.network.charAt(0).toUpperCase() + result.network.slice(1)} Card`;
 
     const formData = new FormData();
     formData.append("name", name);
@@ -164,9 +218,6 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
             onClick={() => fileRef.current?.click()}
             className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-            </svg>
             Upload Photo
           </button>
           <input
@@ -187,9 +238,13 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
       <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm overflow-hidden">
         <div className="relative bg-black aspect-[16/10]">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-          {/* Card overlay guide */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-[80%] aspect-[3.375/2.125] border-2 border-white/50 rounded-2xl" />
+            <div className="w-[80%] aspect-[3.375/2.125] border-2 border-white/50 rounded-2xl">
+              <div className="absolute top-2 left-2 w-6 h-6 border-t-2 border-l-2 border-white/70 rounded-tl-lg" />
+              <div className="absolute top-2 right-2 w-6 h-6 border-t-2 border-r-2 border-white/70 rounded-tr-lg" />
+              <div className="absolute bottom-2 left-2 w-6 h-6 border-b-2 border-l-2 border-white/70 rounded-bl-lg" />
+              <div className="absolute bottom-2 right-2 w-6 h-6 border-b-2 border-r-2 border-white/70 rounded-br-lg" />
+            </div>
           </div>
           <p className="absolute bottom-3 left-0 right-0 text-center text-white/70 text-xs">
             Align your card within the frame
@@ -201,7 +256,7 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
             onClick={captureFrame}
             className="w-14 h-14 rounded-full bg-violet-600 border-4 border-violet-200 flex items-center justify-center hover:bg-violet-700 transition-colors"
           >
-            <div className="w-10 h-10 rounded-full bg-white/20" />
+            <div className="w-10 h-10 rounded-full border-2 border-white/40" />
           </button>
           <div className="w-12" />
         </div>
@@ -219,17 +274,13 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <p className="text-sm font-medium text-zinc-900">Reading card details...</p>
-        <p className="text-xs text-zinc-400 mt-1">Only the last 4 digits are extracted</p>
+        <p className="text-sm font-medium text-zinc-900">Reading card on your device...</p>
+        <p className="text-xs text-zinc-400 mt-1">Image never leaves your browser</p>
       </div>
     );
   }
 
   if (mode === "confirm" && result) {
-    const displayName = result.cardName
-      ? `${result.issuer ? result.issuer + " " : ""}${result.cardName}`
-      : result.issuer ?? result.network.toUpperCase();
-
     return (
       <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-zinc-100">
@@ -243,41 +294,10 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
         </div>
 
         <div className="p-5">
-          {/* Mini card preview */}
-          <div
-            className="w-full aspect-[3.375/2.125] rounded-xl p-4 flex flex-col justify-between mb-4"
-            style={{
-              background: result.dominantColor
-                ? `linear-gradient(135deg, ${result.dominantColor}, ${adjustColor(result.dominantColor, -30)})`
-                : "linear-gradient(135deg, #18181b, #09090b)",
-            }}
-          >
-            <div className="flex justify-between items-start">
-              <p className="text-white/60 text-[10px] font-medium uppercase tracking-widest">{result.issuer ?? ""}</p>
-              <p className="text-white/80 text-[10px] font-bold uppercase">{result.network}</p>
-            </div>
-            <div>
-              <p className="text-white font-mono text-sm tracking-[0.2em]">•••• •••• •••• {result.last4}</p>
-              <div className="flex justify-between items-end mt-2">
-                <p className="text-white/70 text-[10px] uppercase">{result.cardholderName ?? ""}</p>
-                {result.expMonth && result.expYear && (
-                  <p className="text-white/70 text-[10px] font-mono">
-                    {String(result.expMonth).padStart(2, "0")}/{String(result.expYear).slice(-2)}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Details grid */}
           <div className="grid grid-cols-2 gap-3 text-sm mb-4">
             <div>
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Card</p>
-              <p className="font-medium text-zinc-900">{displayName}</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Number</p>
-              <p className="font-mono text-zinc-900">•••• {result.last4}</p>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Last 4</p>
+              <p className="font-mono font-bold text-zinc-900">{result.last4}</p>
             </div>
             <div>
               <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Network</p>
@@ -289,15 +309,21 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
                 <p className="text-zinc-900">{String(result.expMonth).padStart(2, "0")}/{result.expYear}</p>
               </div>
             )}
+            {result.cardholderName && (
+              <div>
+                <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Name</p>
+                <p className="text-zinc-900">{result.cardholderName}</p>
+              </div>
+            )}
           </div>
 
-          <div className="rounded-lg bg-emerald-50 border border-emerald-200/60 px-3 py-2 mb-4">
+          <div className="rounded-lg bg-emerald-50 border border-emerald-200/60 px-3 py-2">
             <div className="flex items-center gap-2">
               <svg className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
               </svg>
               <p className="text-[11px] text-emerald-700">
-                Only last 4 digits stored. Full number was never transmitted or saved.
+                Processed entirely on your device. Card image was never uploaded.
               </p>
             </div>
           </div>
@@ -318,12 +344,4 @@ export function CardScanner({ onDone }: { onDone?: () => void }) {
   }
 
   return null;
-}
-
-function adjustColor(hex: string, amount: number): string {
-  const num = parseInt(hex.replace("#", ""), 16);
-  const r = Math.min(255, Math.max(0, (num >> 16) + amount));
-  const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + amount));
-  const b = Math.min(255, Math.max(0, (num & 0x0000ff) + amount));
-  return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, "0")}`;
 }
