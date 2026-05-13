@@ -6,6 +6,7 @@ import { CARD_DATABASE } from "@/lib/rewards/card-database";
 import { getCardImageByName } from "@/lib/rewards/card-images";
 import { AddCardForm } from "./add-card-form";
 import { BenefitTracker, parseCardBenefits } from "./benefit-tracker";
+import { CardScanner } from "./card-scanner";
 import { DeleteButton } from "./delete-button";
 import { FlipCard } from "./flip-card";
 
@@ -60,7 +61,17 @@ export default async function CardsPage() {
         </div>
       )}
 
-      <AddCardForm />
+      {/* Card Scanner + Manual Add */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+        <div>
+          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Scan Card</p>
+          <CardScanner />
+        </div>
+        <div>
+          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Or Add Manually</p>
+          <AddCardForm />
+        </div>
+      </div>
 
       {/* Cards grid — smaller, 3 columns, flippable */}
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
