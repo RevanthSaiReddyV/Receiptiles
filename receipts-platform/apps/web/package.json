@@ -25,6 +25,7 @@
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.0.0",
     "framer-motion": "^12.38.0",
+    "html-to-image": "^1.11.13",
     "jose": "^5.9.0",
     "lucide-react": "^0.469.0",
     "next": "^15.1.0",
