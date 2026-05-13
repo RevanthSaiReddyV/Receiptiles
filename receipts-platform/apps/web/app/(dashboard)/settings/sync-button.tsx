@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 export function SyncButton() {
   const [status, setStatus] = useState<"idle" | "syncing" | "done" | "error">("idle");
   const [result, setResult] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
   const router = useRouter();
 
   async function handleSync() {
     setStatus("syncing");
     setResult(null);
+    setLogs([]);
 
     try {
       const res = await fetch("/api/sync", {
@@ -28,6 +30,7 @@ export function SyncButton() {
 
       setStatus("done");
       setResult(`Imported ${data.imported} receipt${data.imported !== 1 ? "s" : ""}`);
+      if (data.logs) setLogs(data.logs);
       router.refresh();
     } catch {
       setStatus("error");
@@ -36,18 +39,25 @@ export function SyncButton() {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={handleSync}
-        disabled={status === "syncing"}
-        className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {status === "syncing" ? "Syncing..." : "Sync Now"}
-      </button>
-      {result && (
-        <span className={`text-xs ${status === "error" ? "text-red-600" : "text-green-600"}`}>
-          {result}
-        </span>
+    <div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleSync}
+          disabled={status === "syncing"}
+          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {status === "syncing" ? "Syncing..." : "Sync Now"}
+        </button>
+        {result && (
+          <span className={`text-xs ${status === "error" ? "text-red-600" : "text-green-600"}`}>
+            {result}
+          </span>
+        )}
+      </div>
+      {logs.length > 0 && (
+        <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-gray-900 p-3 text-xs text-green-400 font-mono">
+          {logs.join("\n")}
+        </pre>
       )}
     </div>
   );
