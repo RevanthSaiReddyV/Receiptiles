@@ -1,4 +1,7 @@
-const SQUARE_API = "https://connect.squareup.com";
+const isSandbox = process.env.SQUARE_APP_ID?.startsWith("sandbox-");
+const SQUARE_API = isSandbox
+  ? "https://connect.squareupsandbox.com"
+  : "https://connect.squareup.com";
 const SQUARE_VERSION = "2024-01-18";
 
 /**

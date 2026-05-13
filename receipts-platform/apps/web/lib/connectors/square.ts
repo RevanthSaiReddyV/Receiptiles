@@ -5,7 +5,10 @@ import type {
   PosOrder,
 } from "./types";
 
-const SQUARE_BASE_URL = "https://connect.squareup.com";
+const isSandbox = process.env.SQUARE_APP_ID?.startsWith("sandbox-");
+const SQUARE_BASE_URL = isSandbox
+  ? "https://connect.squareupsandbox.com"
+  : "https://connect.squareup.com";
 const SQUARE_API_VERSION = "2024-01-18";
 
 export const squareConnector: PosConnector = {
