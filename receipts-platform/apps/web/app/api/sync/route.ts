@@ -106,6 +106,7 @@ export async function POST() {
       const from = headers.find((h: { name: string }) => h.name === "From")?.value ?? "";
       const subject = headers.find((h: { name: string }) => h.name === "Subject")?.value ?? "";
       const senderEmail = (from.match(/<([^>]+)>/)?.[1] ?? from.split(" ").pop() ?? "").toLowerCase();
+      const emailDate = msg.internalDate ? new Date(parseInt(msg.internalDate)) : new Date();
 
       // Soft reject: skip obvious non-receipts but let everything else through
       // since Gmail already pre-filtered with our receipt query
@@ -162,6 +163,21 @@ export async function POST() {
         continue;
       }
 
+      // Fix "Unknown" merchants — derive from sender email domain
+      if (!parsed.merchant.canonicalName || parsed.merchant.canonicalName === "Unknown" || parsed.merchant.canonicalName === "") {
+        const domain = senderEmail.split("@")[1]?.split(".")[0] ?? "";
+        const fromName = from.replace(/<[^>]+>/, "").trim().replace(/"/g, "");
+        parsed.merchant.rawName = fromName || domain;
+        parsed.merchant.canonicalName = fromName || domain.charAt(0).toUpperCase() + domain.slice(1);
+      }
+
+      // Fix dates — use email date if parser returned today's date or invalid
+      const parsedDate = new Date(parsed.purchase.purchasedAt);
+      const now = new Date();
+      const isToday = parsedDate.toDateString() === now.toDateString();
+      const isInvalid = isNaN(parsedDate.getTime());
+      const purchaseDate = (isToday || isInvalid) ? emailDate : parsedDate;
+
       try {
         await db.receipt.create({
           data: {
@@ -171,7 +187,7 @@ export async function POST() {
             merchantCanonicalName: parsed.merchant.canonicalName,
             merchantCategory: parsed.merchant.category,
             merchantLocation: parsed.merchant.location,
-            purchasedAt: new Date(parsed.purchase.purchasedAt),
+            purchasedAt: purchaseDate,
             currency: parsed.purchase.currency,
             subtotal: parsed.purchase.subtotal,
             tax: parsed.purchase.tax,
