@@ -150,6 +150,7 @@ export default async function ConnectionsPage({
         )}
 
         <div className="px-6 py-4 border-t border-zinc-50 flex flex-wrap gap-2">
+          <ConnectorButton href="/api/connectors/square/sandbox" label="Square (Sandbox)" />
           <ConnectorButton href="/api/connectors/square/connect" label="Square" />
           <ConnectorButton href="/api/connectors/shopify/connect" label="Shopify" />
           <ConnectorButton href="/api/connectors/clover/connect" label="Clover" />
