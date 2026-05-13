@@ -107,7 +107,11 @@ export async function POST() {
       const subject = headers.find((h: { name: string }) => h.name === "Subject")?.value ?? "";
       const senderEmail = (from.match(/<([^>]+)>/)?.[1] ?? from.split(" ").pop() ?? "").toLowerCase();
 
-      if (!isReceiptEmail(senderEmail, subject)) {
+      // Soft reject: skip obvious non-receipts but let everything else through
+      // since Gmail already pre-filtered with our receipt query
+      const hardReject = /\[.*\/.*\]|pull request|merge|commit|unsubscribe here|noreply@github|delivery estimate|tracking update|out for delivery/i;
+      if (hardReject.test(subject) || senderEmail.includes("github.com")) {
+        logs.push(`  [${subject.substring(0, 40)}] rejected (non-receipt)`);
         continue;
       }
 
@@ -134,7 +138,7 @@ export async function POST() {
 
       let parsed = codeParsed;
 
-      if (!parsed && needsAI && process.env.OPENAI_API_KEY) {
+      if (!parsed && process.env.OPENAI_API_KEY) {
         try {
           const body = plainBody || stripHtml(htmlBody);
           if (body.length >= 50) {
