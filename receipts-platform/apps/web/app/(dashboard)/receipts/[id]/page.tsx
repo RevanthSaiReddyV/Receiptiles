@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { notFound } from "next/navigation";
 import { SaveReceiptButton } from "./save-button";
+import { MerchantMap } from "./merchant-map";
 import { calculateReward, findBestCard, getCardCategory, CARD_DATABASE } from "@/lib/rewards/card-database";
 import { LocalDate } from "@/app/components/local-date";
 import Link from "next/link";
@@ -99,6 +100,9 @@ export default async function ReceiptDetailPage({
             </div>
           )}
         </div>
+
+        {/* Merchant location map */}
+        <MerchantMap merchantName={receipt.merchantCanonicalName} location={receipt.merchantLocation} />
 
         {/* Original merchant receipt — fetched server-side via our proxy */}
         {hasOriginalReceipt && (
