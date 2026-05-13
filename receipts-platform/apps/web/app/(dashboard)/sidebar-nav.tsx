@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
-  { href: "/receipts", label: "Receipts", icon: ReceiptIcon },
-  { href: "/upload", label: "Upload", icon: UploadIcon },
-  { href: "/email", label: "Email", icon: EmailIcon },
-  { href: "/cards", label: "Cards", icon: CardIcon },
+const MAIN_NAV = [
   { href: "/insights", label: "Insights", icon: InsightsIcon },
+  { href: "/receipts", label: "Receipts", icon: ReceiptIcon },
+  { href: "/cards", label: "Cards", icon: CardIcon },
+];
+
+const SECONDARY_NAV = [
+  { href: "/email", label: "Connections", icon: EmailIcon },
+  { href: "/upload", label: "Upload", icon: UploadIcon },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -17,24 +19,47 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-0.5 flex-1">
-      {NAV_ITEMS.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-              isActive
-                ? "bg-white/10 text-white"
-                : "text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200"
-            }`}
-          >
-            <item.icon active={isActive} />
-            {item.label}
-          </Link>
-        );
-      })}
+    <nav className="flex-1 flex flex-col">
+      <div className="space-y-0.5">
+        {MAIN_NAV.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-white/10 text-white"
+                  : "text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200"
+              }`}
+            >
+              <item.icon active={isActive} />
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 pt-4 border-t border-white/[0.06] space-y-0.5">
+        <p className="px-3 mb-2 text-[10px] font-medium text-zinc-600 uppercase tracking-widest">More</p>
+        {SECONDARY_NAV.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all ${
+                isActive
+                  ? "bg-white/10 text-white"
+                  : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-300"
+              }`}
+            >
+              <item.icon active={isActive} />
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

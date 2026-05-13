@@ -29,7 +29,7 @@ function AnimatedDotGrid() {
         }
       `}</style>
       <div
-        className="fixed inset-0 z-0 opacity-[0.15] pointer-events-none"
+        className="fixed inset-0 z-0 opacity-[0.25] pointer-events-none"
         style={{
           backgroundImage: 'radial-gradient(circle, #3f3f46 1px, transparent 1px)',
           backgroundSize: '40px 40px',
@@ -56,7 +56,7 @@ function FloatingReceipts() {
       const yDrift = 40 + rand() * 80;
       const xDrift = 20 + rand() * 60;
       const rotateDeg = -20 + rand() * 40;
-      const opacity = 0.03 + rand() * 0.05;
+      const opacity = 0.08 + rand() * 0.12;
       const directionY = rand() > 0.5 ? 1 : -1;
       const directionX = rand() > 0.5 ? 1 : -1;
 
