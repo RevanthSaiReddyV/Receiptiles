@@ -41,7 +41,10 @@ export async function GET(
       });
 
       if (!res.ok) {
-        return NextResponse.json({ error: "Failed to fetch receipt" }, { status: 502 });
+        return new NextResponse(
+          "<html><body style='display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui;color:#a1a1aa;font-size:13px'>Receipt not available</body></html>",
+          { headers: { "Content-Type": "text/html; charset=utf-8" } }
+        );
       }
 
       let html = await res.text();
@@ -60,9 +63,15 @@ export async function GET(
         },
       });
     } catch {
-      return NextResponse.json({ error: "Failed to fetch" }, { status: 502 });
+      return new NextResponse(
+        "<html><body style='display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui;color:#a1a1aa;font-size:13px'>Receipt not available</body></html>",
+        { headers: { "Content-Type": "text/html; charset=utf-8" } }
+      );
     }
   }
 
-  return NextResponse.json({ error: "No original receipt available" }, { status: 404 });
+  return new NextResponse(
+    "<html><body style='display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui;color:#a1a1aa;font-size:13px'>Receipt not available</body></html>",
+    { headers: { "Content-Type": "text/html; charset=utf-8" } }
+  );
 }
