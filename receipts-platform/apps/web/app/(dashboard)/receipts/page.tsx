@@ -92,9 +92,9 @@ export default async function ReceiptsPage({
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185z" />
             </svg>
           </div>
-          <p className="text-zinc-500 text-sm">No receipts found</p>
+          <p className="text-zinc-500 text-sm">No receipts yet</p>
           <Link href="/email" className="mt-3 inline-block text-sm font-medium text-violet-600 hover:text-violet-700">
-            Connect Gmail to import receipts
+            Go to Connections to sync
           </Link>
         </div>
       ) : (
