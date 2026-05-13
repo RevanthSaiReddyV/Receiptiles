@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import Link from "next/link";
+import { LocalDate } from "@/app/components/local-date";
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +72,7 @@ export default async function ReceiptsPage({
               <div>
                 <p className="font-medium">{r.merchantCanonicalName}</p>
                 <p className="text-sm text-gray-500">
-                  {new Date(r.purchasedAt).toLocaleDateString()} &middot;{" "}
+                  <LocalDate date={r.purchasedAt} /> &middot;{" "}
                   {r.merchantCategory}
                 </p>
               </div>

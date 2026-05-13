@@ -83,6 +83,7 @@ export async function scanEmailsForReceipts(userId: string) {
         );
 
         let parsed = codeParsed;
+        console.log(JSON.stringify({ event: "parse_attempt", msgId: msgMeta.id, from: senderEmail, codeParsed: !!codeParsed, needsAI }));
 
         // 2. Only fall back to GPT-4o if code parser totally failed
         if (!parsed && needsAI) {
@@ -136,7 +137,9 @@ export async function scanEmailsForReceipts(userId: string) {
         });
 
         totalImported++;
-      } catch {
+        console.log(JSON.stringify({ event: "receipt_saved", merchant: parsed.merchant.canonicalName, total: parsed.purchase.total }));
+      } catch (err) {
+        console.error(JSON.stringify({ event: "receipt_parse_error", msgId: msgMeta.id, from: senderEmail, subject, error: err instanceof Error ? err.message : String(err) }));
         // skip unparseable emails
       }
     }

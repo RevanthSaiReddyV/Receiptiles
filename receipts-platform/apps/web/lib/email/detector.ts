@@ -18,7 +18,7 @@ const RETAILER_PATTERNS: Array<{
       "digital-no-reply@amazon.com",
       "no-reply@amazon.com",
     ],
-    subjectPatterns: [/your.*order/i, /order confirmation/i, /delivery/i],
+    subjectPatterns: [/your.*order/i, /order confirmation/i, /delivery/i, /^ordered:/i, /shipped:/i],
   },
   {
     retailer: { id: "walmart", name: "Walmart", category: "Shopping" },

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
+import { LocalDate } from "@/app/components/local-date";
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,7 @@ export default async function DashboardPage() {
                 <div>
                   <p className="font-medium">{r.merchantCanonicalName}</p>
                   <p className="text-sm text-gray-500">
-                    {new Date(r.purchasedAt).toLocaleDateString()}
+                    <LocalDate date={r.purchasedAt} />
                   </p>
                 </div>
                 <p className="font-semibold">${r.total.toFixed(2)}</p>

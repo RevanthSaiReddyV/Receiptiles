@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { DisconnectButton } from "./disconnect-button";
 import { SyncButton } from "./sync-button";
 import { DeleteAccountButton } from "./delete-account-button";
+import { LocalDate } from "@/app/components/local-date";
 
 export const dynamic = 'force-dynamic';
 
@@ -70,7 +71,7 @@ export default async function SettingsPage({
                   {conn.lastSyncAt && (
                     <span className="ml-2 text-xs text-gray-400">
                       Last synced:{" "}
-                      {new Date(conn.lastSyncAt).toLocaleDateString()}
+                      <LocalDate date={conn.lastSyncAt} format="datetime" />
                     </span>
                   )}
                 </div>

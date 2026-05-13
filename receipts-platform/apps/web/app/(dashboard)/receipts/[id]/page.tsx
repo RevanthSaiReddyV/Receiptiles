@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { notFound } from "next/navigation";
+import { LocalDate } from "@/app/components/local-date";
 
 export const dynamic = 'force-dynamic';
 
@@ -23,12 +24,7 @@ export default async function ReceiptDetailPage({
     <div className="max-w-2xl">
       <h1 className="text-2xl font-bold">{receipt.merchantCanonicalName}</h1>
       <p className="text-gray-500">
-        {new Date(receipt.purchasedAt).toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
+        <LocalDate date={receipt.purchasedAt} format="long" />
       </p>
 
       {receipt.requiresReview && (

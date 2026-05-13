@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
+import { LocalDate } from "@/app/components/local-date";
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,7 @@ export default async function EmailPage() {
                 <p className="text-sm text-gray-500">
                   Last synced:{" "}
                   {conn.lastSyncAt
-                    ? new Date(conn.lastSyncAt).toLocaleString()
+                    ? <LocalDate date={conn.lastSyncAt} format="datetime" />
                     : "Never"}
                 </p>
               </div>

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
+import { LocalDate } from "@/app/components/local-date";
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export default async function AdminJobsPage() {
                 <p className="text-sm text-gray-500">
                   {job.fileName ?? "Unknown file"} &middot;{" "}
                   {job.source.toLowerCase()} &middot;{" "}
-                  {new Date(job.createdAt).toLocaleString()}
+                  <LocalDate date={job.createdAt} format="datetime" />
                 </p>
                 {job.error && (
                   <p className="mt-1 text-sm text-red-600">{job.error}</p>
