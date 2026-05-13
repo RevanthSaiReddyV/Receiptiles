@@ -149,7 +149,15 @@ async function getValidToken(connection: {
   expiresAt: Date | null;
 }): Promise<string | null> {
   if (connection.expiresAt && connection.expiresAt > new Date()) {
+    console.log(`[Email Scanner] Token still valid, expires ${connection.expiresAt.toISOString()}`);
     return connection.accessToken;
+  }
+
+  console.log(`[Email Scanner] Token expired (${connection.expiresAt?.toISOString() ?? "no expiry"}), refreshing...`);
+
+  if (!connection.refreshToken) {
+    console.error(`[Email Scanner] No refresh token available for connection ${connection.id}`);
+    return null;
   }
 
   try {
@@ -164,7 +172,11 @@ async function getValidToken(connection: {
       }),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error(`[Email Scanner] Token refresh failed (${res.status}): ${errBody}`);
+      return null;
+    }
     const data = await res.json();
 
     await db.emailConnection.update({
@@ -176,7 +188,8 @@ async function getValidToken(connection: {
     });
 
     return data.access_token;
-  } catch {
+  } catch (err) {
+    console.error(`[Email Scanner] Token refresh exception:`, err);
     return null;
   }
 }
@@ -195,7 +208,11 @@ async function fetchGmailMessages(
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
-  if (!res.ok) return [];
+  if (!res.ok) {
+    const errBody = await res.text();
+    console.error(`[Email Scanner] Gmail API list failed (${res.status}): ${errBody}`);
+    return [];
+  }
   const data = await res.json();
   return data.messages ?? [];
 }
