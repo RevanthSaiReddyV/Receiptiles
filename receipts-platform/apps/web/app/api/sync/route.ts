@@ -1,43 +1,44 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
-import { isReceiptEmail } from "@/lib/email/detector";
+import * as cheerio from "cheerio";
+import { isReceiptEmail, detectRetailer } from "@/lib/email/detector";
+import { parseReceiptEmail } from "@/lib/email/parsers";
+import { parseReceiptFromText } from "@/lib/ocr";
 
 export const maxDuration = 60;
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => ({}));
-  const debug = (body as Record<string, unknown>).debug === true;
+  const userId = session.user.id;
+  const logs: string[] = [];
+  let totalImported = 0;
 
   // Reset lastSyncAt for full rescan
   await db.emailConnection.updateMany({
-    where: { userId: session.user.id },
+    where: { userId },
     data: { lastSyncAt: null },
   });
 
   const connections = await db.emailConnection.findMany({
-    where: { userId: session.user.id, isActive: true },
+    where: { userId, isActive: true },
   });
 
   if (connections.length === 0) {
-    return NextResponse.json({ error: "No email connections", imported: 0 });
+    return NextResponse.json({ error: "No email connections", imported: 0, logs: ["No active connections"] });
   }
 
-  const logs: string[] = [];
-  let totalImported = 0;
-
   for (const connection of connections) {
-    logs.push(`Connection: ${connection.email}`);
+    logs.push(`--- ${connection.email} ---`);
 
-    // Check token
+    // Get valid token
     let accessToken = connection.accessToken;
     if (connection.expiresAt && connection.expiresAt <= new Date()) {
-      logs.push(`Token expired (${connection.expiresAt.toISOString()}), refreshing...`);
+      logs.push(`Token expired, refreshing...`);
       try {
         const res = await fetch("https://oauth2.googleapis.com/token", {
           method: "POST",
@@ -51,33 +52,28 @@ export async function POST(request: NextRequest) {
         });
         if (!res.ok) {
           const errBody = await res.text();
-          logs.push(`Token refresh FAILED (${res.status}): ${errBody}`);
+          logs.push(`Token refresh FAILED: ${errBody}`);
           continue;
         }
         const data = await res.json();
         accessToken = data.access_token;
         await db.emailConnection.update({
           where: { id: connection.id },
-          data: {
-            accessToken: data.access_token,
-            expiresAt: new Date(Date.now() + data.expires_in * 1000),
-          },
+          data: { accessToken, expiresAt: new Date(Date.now() + data.expires_in * 1000) },
         });
         logs.push(`Token refreshed OK`);
       } catch (err) {
-        logs.push(`Token refresh exception: ${err}`);
+        logs.push(`Token exception: ${err}`);
         continue;
       }
     } else {
-      logs.push(`Token valid until ${connection.expiresAt?.toISOString() ?? "unknown"}`);
+      logs.push(`Token valid`);
     }
 
     // Search Gmail
     const since = new Date(Date.now() - 90 * 86400000);
-    const afterTimestamp = Math.floor(since.getTime() / 1000);
-    const query = `after:${afterTimestamp} (subject:receipt OR subject:"order confirmation" OR subject:"order confirmed" OR subject:invoice OR subject:"your trip" OR subject:"your ride" OR subject:"your order" OR subject:"your purchase" OR from:uber.com OR from:lyft.com OR from:amazon.com OR from:walmart.com OR from:instacart.com OR from:doordash.com OR from:grubhub.com OR from:target.com OR from:costco.com OR from:apple.com OR from:bestbuy.com OR from:starbucks.com OR from:etsy.com OR from:paypal.com)`;
-
-    logs.push(`Query: ${query.substring(0, 150)}...`);
+    const afterTs = Math.floor(since.getTime() / 1000);
+    const query = `after:${afterTs} (subject:receipt OR subject:"order confirmation" OR subject:"order confirmed" OR subject:invoice OR subject:"your trip" OR subject:"your ride" OR subject:"your order" OR subject:"your purchase" OR subject:"ordered:" OR from:uber.com OR from:lyft.com OR from:amazon.com OR from:walmart.com OR from:instacart.com OR from:doordash.com OR from:grubhub.com OR from:target.com OR from:costco.com OR from:apple.com OR from:bestbuy.com OR from:starbucks.com OR from:etsy.com OR from:paypal.com)`;
 
     const listRes = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages?${new URLSearchParams({ q: query, maxResults: "50" })}`,
@@ -92,17 +88,16 @@ export async function POST(request: NextRequest) {
 
     const listData = await listRes.json();
     const messages: Array<{ id: string }> = listData.messages ?? [];
-    logs.push(`Gmail returned ${messages.length} messages`);
+    logs.push(`Found ${messages.length} candidate emails`);
 
-    // Check each message
-    for (const msgMeta of messages.slice(0, 20)) {
+    for (const msgMeta of messages.slice(0, 30)) {
+      // Fetch full message
       const msgRes = await fetch(
-        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgMeta.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`,
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgMeta.id}?format=full`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-
       if (!msgRes.ok) {
-        logs.push(`  [${msgMeta.id}] Fetch failed (${msgRes.status})`);
+        logs.push(`  [${msgMeta.id}] fetch failed`);
         continue;
       }
 
@@ -110,23 +105,138 @@ export async function POST(request: NextRequest) {
       const headers = (msg.payload?.headers ?? []) as Array<{ name: string; value: string }>;
       const from = headers.find((h: { name: string }) => h.name === "From")?.value ?? "";
       const subject = headers.find((h: { name: string }) => h.name === "Subject")?.value ?? "";
+      const senderEmail = (from.match(/<([^>]+)>/)?.[1] ?? from.split(" ").pop() ?? "").toLowerCase();
 
-      const senderEmail = from.match(/<([^>]+)>/)?.[1] ?? from.split(" ").pop() ?? "";
-      const isReceipt = isReceiptEmail(senderEmail.toLowerCase(), subject);
+      if (!isReceiptEmail(senderEmail, subject)) {
+        continue;
+      }
 
-      logs.push(`  [${msgMeta.id}] From: ${senderEmail} | Subject: ${subject.substring(0, 60)} | Receipt: ${isReceipt}`);
+      // Check dedup
+      const exists = await db.receipt.findFirst({
+        where: { userId, source: "EMAIL", ocrText: { contains: msgMeta.id } },
+      });
+      if (exists) {
+        logs.push(`  [${subject.substring(0, 40)}] already imported`);
+        continue;
+      }
+
+      // Extract body
+      const { htmlBody, plainBody } = extractBodies(msg);
+      if (!htmlBody && !plainBody) {
+        logs.push(`  [${subject.substring(0, 40)}] no body`);
+        continue;
+      }
+
+      // Try code parsers
+      const { result: codeParsed, parser: parserUsed, needsAI } = parseReceiptEmail(
+        senderEmail, subject, htmlBody, plainBody
+      );
+
+      let parsed = codeParsed;
+
+      if (!parsed && needsAI && process.env.OPENAI_API_KEY) {
+        try {
+          const body = plainBody || stripHtml(htmlBody);
+          if (body.length >= 50) {
+            const aiParsed = await parseReceiptFromText(body);
+            const retailer = detectRetailer(senderEmail, subject);
+            if (retailer) {
+              aiParsed.merchant.rawName = aiParsed.merchant.rawName || retailer.name;
+              aiParsed.merchant.canonicalName = retailer.name;
+              aiParsed.merchant.category = retailer.category;
+            }
+            parsed = { ...aiParsed, metadata: { confidence: 0.7, requiresReview: true } } as typeof codeParsed;
+            logs.push(`  [${subject.substring(0, 40)}] AI parsed: $${aiParsed.purchase.total}`);
+          }
+        } catch (err) {
+          logs.push(`  [${subject.substring(0, 40)}] AI failed: ${err instanceof Error ? err.message : err}`);
+        }
+      }
+
+      if (!parsed || parsed.purchase.total === 0) {
+        logs.push(`  [${subject.substring(0, 40)}] parser=${parserUsed}, total=0, skipped`);
+        continue;
+      }
+
+      try {
+        await db.receipt.create({
+          data: {
+            userId,
+            source: "EMAIL",
+            merchantRawName: parsed.merchant.rawName,
+            merchantCanonicalName: parsed.merchant.canonicalName,
+            merchantCategory: parsed.merchant.category,
+            merchantLocation: parsed.merchant.location,
+            purchasedAt: new Date(parsed.purchase.purchasedAt),
+            currency: parsed.purchase.currency,
+            subtotal: parsed.purchase.subtotal,
+            tax: parsed.purchase.tax,
+            tip: parsed.purchase.tip,
+            discount: parsed.purchase.discount,
+            fees: parsed.purchase.fees,
+            total: parsed.purchase.total,
+            paymentMethod: parsed.payment.method,
+            cardLast4: parsed.payment.cardLast4,
+            walletType: parsed.payment.walletType,
+            confidence: parsed.metadata.confidence,
+            requiresReview: parsed.metadata.requiresReview,
+            ocrText: `email:${msgMeta.id}`,
+            items: {
+              create: parsed.items.map((item) => ({
+                rawName: item.rawName,
+                name: item.name,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice,
+                category: item.category,
+              })),
+            },
+          },
+        });
+        totalImported++;
+        logs.push(`  [${subject.substring(0, 40)}] SAVED via ${parserUsed}: ${parsed.merchant.canonicalName} $${parsed.purchase.total}`);
+      } catch (err) {
+        logs.push(`  [${subject.substring(0, 40)}] DB save failed: ${err instanceof Error ? err.message : err}`);
+      }
     }
+
+    await db.emailConnection.update({
+      where: { id: connection.id },
+      data: { lastSyncAt: new Date() },
+    });
   }
 
-  // Now run the actual scanner if not just debug
-  if (!debug) {
-    const { scanEmailsForReceipts } = await import("@/lib/email/scanner");
-    try {
-      totalImported = await scanEmailsForReceipts(session.user.id);
-    } catch (err) {
-      logs.push(`Scanner error: ${err}`);
-    }
-  }
-
+  logs.push(`\nDone. Imported ${totalImported} receipts.`);
   return NextResponse.json({ imported: totalImported, logs });
+}
+
+// --- helpers ---
+
+function extractBodies(msg: { payload: Record<string, unknown> }): { htmlBody: string; plainBody: string } {
+  let htmlBody = "";
+  let plainBody = "";
+
+  function walk(part: Record<string, unknown>) {
+    const mime = part.mimeType as string | undefined;
+    const body = part.body as { data?: string } | undefined;
+    const parts = part.parts as Record<string, unknown>[] | undefined;
+
+    if (mime === "text/html" && body?.data) {
+      htmlBody = Buffer.from(body.data, "base64url").toString("utf-8");
+    } else if (mime === "text/plain" && body?.data) {
+      plainBody = Buffer.from(body.data, "base64url").toString("utf-8");
+    }
+
+    if (parts) {
+      for (const p of parts) walk(p);
+    }
+  }
+
+  walk(msg.payload);
+  return { htmlBody, plainBody };
+}
+
+function stripHtml(html: string): string {
+  if (!html) return "";
+  return cheerio.load(html).text().replace(/\s+/g, " ").trim();
 }
