@@ -1,726 +1,680 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  type MotionValue,
-} from "framer-motion";
+import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Float, Stars, RoundedBox, Text, MeshTransmissionMaterial } from "@react-three/drei";
+import * as THREE from "three";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+/* ─────────────────────────── 3D RECEIPT CARD ─────────────────────────── */
 
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 0) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
+function ReceiptCard() {
+  const meshRef = useRef<THREE.Group>(null!);
+  const mouse = useMotionValue({ x: 0, y: 0 });
 
-// ---------------------------------------------------------------------------
-// Receipt SVG — crumpled paper shapes
-// ---------------------------------------------------------------------------
-
-const RECEIPT_PATHS = [
-  // Variant A – tall crumpled receipt
-  "M4 0C3 2 1 3 0 6L1 14C2 16 0 18 1 22L2 30C1 32 3 34 4 36L8 36C9 34 11 33 12 30L11 22C12 19 10 17 11 14L12 6C11 3 9 1 8 0Z",
-  // Variant B – wider crumple
-  "M2 0C0 3 1 5 0 8L2 16C0 19 2 22 1 26L3 34C5 36 7 35 10 36L12 34C14 32 13 28 14 26L12 18C14 15 12 12 14 8L12 2C10 0 6 1 2 0Z",
-  // Variant C – narrow slip
-  "M3 0C2 1 1 3 0 5L1 12C0 15 2 17 1 20L2 28C1 31 3 33 3 36L7 36C7 33 9 31 8 28L9 20C8 17 10 15 9 12L10 5C9 3 8 1 7 0Z",
-  // Variant D – wavy edges
-  "M1 0C0 4 2 6 1 10L0 18C2 21 0 24 2 28L1 34C3 36 5 36 8 36L10 34C12 30 10 26 12 22L11 16C13 12 11 8 12 4L10 0C7 1 4 1 1 0Z",
-  // Variant E – compact receipt
-  "M3 0C1 2 0 4 1 8L0 14C2 17 1 20 2 24L4 28C3 30 5 30 7 28L9 24C10 20 8 17 10 14L9 8C10 4 9 2 7 0Z",
-];
-
-function ReceiptSVG({ variant, color }: { variant: number; color: string }) {
-  const path = RECEIPT_PATHS[variant % RECEIPT_PATHS.length];
-  return (
-    <svg
-      viewBox="0 0 14 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-full h-full"
-    >
-      <path d={path} fill={color} fillOpacity={0.85} />
-      {/* faint crumple lines */}
-      <line
-        x1="3"
-        y1="8"
-        x2="10"
-        y2="10"
-        stroke={color}
-        strokeOpacity={0.3}
-        strokeWidth={0.4}
-      />
-      <line
-        x1="2"
-        y1="18"
-        x2="11"
-        y2="16"
-        stroke={color}
-        strokeOpacity={0.25}
-        strokeWidth={0.3}
-      />
-      <line
-        x1="4"
-        y1="26"
-        x2="9"
-        y2="24"
-        stroke={color}
-        strokeOpacity={0.2}
-        strokeWidth={0.35}
-      />
-    </svg>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Data generation — deterministic so SSR/CSR match
-// ---------------------------------------------------------------------------
-
-interface ReceiptData {
-  id: number;
-  x: number; // vw percentage for left
-  size: number; // px
-  rotation: number;
-  variant: number;
-  color: string;
-  speedOffset: number; // 0-1, affects fall timing
-  swayAmount: number;
-  originSide: "top" | "left" | "right";
-}
-
-function generateReceipts(count: number): ReceiptData[] {
-  const rand = seededRandom(42);
-  const colors = [
-    "#e4e4e7", // zinc-200
-    "#d4d4d8", // zinc-300
-    "#a1a1aa", // zinc-400
-    "#f5f5f4", // stone-100
-    "#e7e5e4", // stone-200
-    "#d6d3d1", // stone-300
-    "#fafaf9", // stone-50
-  ];
-  const receipts: ReceiptData[] = [];
-  for (let i = 0; i < count; i++) {
-    const originSide: "top" | "left" | "right" =
-      rand() < 0.5 ? "top" : rand() < 0.5 ? "left" : "right";
-    receipts.push({
-      id: i,
-      x: rand() * 90 + 5,
-      size: 28 + rand() * 40,
-      rotation: rand() * 720 - 360,
-      variant: Math.floor(rand() * RECEIPT_PATHS.length),
-      color: colors[Math.floor(rand() * colors.length)],
-      speedOffset: rand(),
-      swayAmount: rand() * 60 - 30,
-      originSide,
-    });
-  }
-  return receipts;
-}
-
-// ---------------------------------------------------------------------------
-// Single animated receipt
-// ---------------------------------------------------------------------------
-
-function AnimatedReceipt({
-  receipt,
-  scrollProgress,
-}: {
-  receipt: ReceiptData;
-  scrollProgress: MotionValue<number>;
-}) {
-  // Phase 1: fall (0 -> 0.20), Phase 2: pile (0.20 -> 0.40)
-  const fallStart = receipt.speedOffset * 0.08;
-  const fallEnd = 0.18 + receipt.speedOffset * 0.06;
-  const pileEnd = 0.35 + receipt.speedOffset * 0.05;
-
-  // Starting position based on origin side
-  const startY =
-    receipt.originSide === "top"
-      ? -150
-      : -80 + receipt.speedOffset * -100;
-  const startX =
-    receipt.originSide === "left"
-      ? -120
-      : receipt.originSide === "right"
-        ? 120
-        : receipt.swayAmount;
-
-  // Final pile position at bottom
-  const pileY = 600 + (1 - receipt.speedOffset) * 180;
-  const pileX = (receipt.x - 50) * 0.4;
-
-  const y = useTransform(
-    scrollProgress,
-    [fallStart, fallEnd, pileEnd, 0.5],
-    [startY, pileY * 0.7, pileY, pileY + 20]
-  );
-
-  const x = useTransform(
-    scrollProgress,
-    [fallStart, fallEnd, pileEnd],
-    [startX, receipt.swayAmount * 0.3, pileX]
-  );
-
-  const rotate = useTransform(
-    scrollProgress,
-    [fallStart, fallEnd, pileEnd],
-    [0, receipt.rotation, receipt.rotation * 0.5]
-  );
-
-  const opacity = useTransform(
-    scrollProgress,
-    [fallStart, fallStart + 0.01, 0.42, 0.52],
-    [0, 1, 1, 0.15]
-  );
-
-  const scale = useTransform(
-    scrollProgress,
-    [fallStart, fallEnd, pileEnd, 0.55],
-    [0.6, 1, 0.85, 0.6]
-  );
-
-  return (
-    <motion.div
-      className="absolute"
-      style={{
-        left: `${receipt.x}%`,
-        top: "15%",
-        width: receipt.size,
-        height: receipt.size * 2.5,
-        y,
-        x,
-        rotate,
-        opacity,
-        scale,
-        zIndex: Math.floor(receipt.speedOffset * 50),
-      }}
-    >
-      <ReceiptSVG variant={receipt.variant} color={receipt.color} />
-    </motion.div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// POS / Card-tap Machine
-// ---------------------------------------------------------------------------
-
-function POSMachine({
-  scrollProgress,
-}: {
-  scrollProgress: MotionValue<number>;
-}) {
-  const y = useTransform(scrollProgress, [0.38, 0.52], [400, 0]);
-  const opacity = useTransform(scrollProgress, [0.38, 0.46], [0, 1]);
-  const scale = useTransform(scrollProgress, [0.38, 0.52], [0.7, 1]);
-
-  // NFC wave pulse
-  const nfcOpacity = useTransform(
-    scrollProgress,
-    [0.46, 0.5, 0.54, 0.58],
-    [0, 1, 1, 0.6]
-  );
-
-  return (
-    <motion.div
-      className="absolute left-1/2 bottom-[18%] -translate-x-1/2 z-30"
-      style={{ y, opacity, scale }}
-    >
-      <div className="relative w-[160px] h-[240px]">
-        {/* Machine body */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700 shadow-2xl shadow-black/60">
-          {/* Screen */}
-          <div className="mx-4 mt-4 h-[72px] rounded-lg bg-gradient-to-br from-emerald-400/90 to-teal-500/90 border border-emerald-300/30 flex items-center justify-center overflow-hidden">
-            <div className="text-center">
-              <div className="text-[8px] font-mono text-emerald-950/70 tracking-wider">
-                TAP TO PAY
-              </div>
-              <div className="text-[18px] font-bold text-emerald-950/80 tracking-tight">
-                $0.00
-              </div>
-              <div className="text-[7px] font-mono text-emerald-950/50">
-                GO PAPERLESS
-              </div>
-            </div>
-          </div>
-
-          {/* Keypad grid */}
-          <div className="mx-4 mt-3 grid grid-cols-3 gap-[5px]">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, "*", 0, "#"].map((key, i) => (
-              <div
-                key={i}
-                className="h-[18px] rounded-[3px] bg-zinc-700/80 border border-zinc-600/40 flex items-center justify-center"
-              >
-                <span className="text-[7px] text-zinc-400 font-mono">
-                  {key}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Action buttons */}
-          <div className="mx-4 mt-2 flex gap-1">
-            <div className="flex-1 h-[14px] rounded-sm bg-red-900/60 border border-red-800/40" />
-            <div className="flex-1 h-[14px] rounded-sm bg-yellow-900/60 border border-yellow-800/40" />
-            <div className="flex-1 h-[14px] rounded-sm bg-emerald-900/60 border border-emerald-800/40" />
-          </div>
-
-          {/* Card slot */}
-          <div className="mx-6 mt-3 h-[8px] rounded-full bg-zinc-950 border border-zinc-700/50 shadow-inner" />
-        </div>
-
-        {/* NFC wave indicator */}
-        <motion.div
-          className="absolute -top-8 left-1/2 -translate-x-1/2"
-          style={{ opacity: nfcOpacity }}
-        >
-          <svg
-            width="60"
-            height="40"
-            viewBox="0 0 60 40"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M30 36C30 36 22 28 22 20C22 12 30 4 30 4"
-              stroke="#34d399"
-              strokeWidth="2"
-              strokeLinecap="round"
-              opacity="0.4"
-            />
-            <path
-              d="M30 36C30 36 18 26 18 20C18 14 30 4 30 4"
-              stroke="#34d399"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.3"
-            />
-            <path
-              d="M30 36C30 36 14 24 14 20C14 16 30 4 30 4"
-              stroke="#34d399"
-              strokeWidth="1"
-              strokeLinecap="round"
-              opacity="0.2"
-            />
-            <path
-              d="M30 36C30 36 38 28 38 20C38 12 30 4 30 4"
-              stroke="#34d399"
-              strokeWidth="2"
-              strokeLinecap="round"
-              opacity="0.4"
-            />
-            <path
-              d="M30 36C30 36 42 26 42 20C42 14 30 4 30 4"
-              stroke="#34d399"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.3"
-            />
-            <path
-              d="M30 36C30 36 46 24 46 20C46 16 30 4 30 4"
-              stroke="#34d399"
-              strokeWidth="1"
-              strokeLinecap="round"
-              opacity="0.2"
-            />
-          </svg>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Tree — trunk, branches, leaves
-// ---------------------------------------------------------------------------
-
-interface BranchData {
-  angle: number;
-  length: number;
-  startY: number;
-  side: "left" | "right";
-  leafCount: number;
-  leafDelay: number;
-}
-
-const BRANCHES: BranchData[] = [
-  { angle: -35, length: 55, startY: 50, side: "left", leafCount: 4, leafDelay: 0 },
-  { angle: 30, length: 50, startY: 55, side: "right", leafCount: 3, leafDelay: 0.01 },
-  { angle: -45, length: 65, startY: 35, side: "left", leafCount: 5, leafDelay: 0.02 },
-  { angle: 40, length: 60, startY: 30, side: "right", leafCount: 4, leafDelay: 0.03 },
-  { angle: -25, length: 45, startY: 20, side: "left", leafCount: 3, leafDelay: 0.04 },
-  { angle: 20, length: 40, startY: 15, side: "right", leafCount: 4, leafDelay: 0.05 },
-  { angle: -10, length: 30, startY: 5, side: "left", leafCount: 3, leafDelay: 0.06 },
-];
-
-function LeafCluster({
-  cx,
-  cy,
-  count,
-  scrollProgress,
-  bloomStart,
-}: {
-  cx: number;
-  cy: number;
-  count: number;
-  scrollProgress: MotionValue<number>;
-  bloomStart: number;
-}) {
-  const scale = useTransform(
-    scrollProgress,
-    [bloomStart, bloomStart + 0.06],
-    [0, 1]
-  );
-  const opacity = useTransform(
-    scrollProgress,
-    [bloomStart, bloomStart + 0.04],
-    [0, 1]
-  );
-
-  const rand = seededRandom(cx * 100 + cy);
-  const leaves = useMemo(() => {
-    const result = [];
-    for (let i = 0; i < count; i++) {
-      result.push({
-        dx: rand() * 24 - 12,
-        dy: rand() * 20 - 10,
-        size: 6 + rand() * 8,
-        hue: 120 + rand() * 40,
-        lightness: 35 + rand() * 20,
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      mouse.set({
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: -(e.clientY / window.innerHeight - 0.5) * 2,
       });
-    }
-    return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [count, cx, cy]);
+    };
+    window.addEventListener("mousemove", handler);
+    return () => window.removeEventListener("mousemove", handler);
+  }, [mouse]);
 
-  return (
-    <motion.g style={{ scale, opacity, originX: `${cx}px`, originY: `${cy}px` }}>
-      {leaves.map((leaf, i) => (
-        <ellipse
-          key={i}
-          cx={cx + leaf.dx}
-          cy={cy + leaf.dy}
-          rx={leaf.size}
-          ry={leaf.size * 0.7}
-          fill={`hsl(${leaf.hue}, 55%, ${leaf.lightness}%)`}
-          fillOpacity={0.85}
-        />
-      ))}
-    </motion.g>
-  );
-}
-
-function Tree({ scrollProgress }: { scrollProgress: MotionValue<number> }) {
-  const trunkHeight = useTransform(scrollProgress, [0.5, 0.62], [0, 200]);
-  const trunkOpacity = useTransform(scrollProgress, [0.5, 0.54], [0, 1]);
-  const treeY = useTransform(scrollProgress, [0.5, 0.58], [60, 0]);
-  const treeScale = useTransform(scrollProgress, [0.5, 0.65], [0.8, 1]);
-
-  return (
-    <motion.div
-      className="absolute left-1/2 bottom-[28%] -translate-x-1/2 z-20"
-      style={{ y: treeY, scale: treeScale }}
-    >
-      <svg
-        width="260"
-        height="320"
-        viewBox="0 0 260 320"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="overflow-visible"
-      >
-        {/* Trunk */}
-        <motion.rect
-          x="120"
-          y="120"
-          width="20"
-          rx="4"
-          fill="url(#trunkGrad)"
-          style={{ height: trunkHeight, opacity: trunkOpacity }}
-        />
-
-        {/* Branches */}
-        {BRANCHES.map((branch, i) => {
-          const bx = branch.side === "left" ? 120 : 140;
-          const by = 120 + branch.startY * 1.6;
-          const endX =
-            bx +
-            Math.cos((branch.angle * Math.PI) / 180) * branch.length *
-              (branch.side === "left" ? -1 : 1);
-          const endY = by + Math.sin((branch.angle * Math.PI) / 180) * branch.length * -1;
-
-          return (
-            <BranchLine
-              key={i}
-              x1={bx}
-              y1={by}
-              x2={endX}
-              y2={endY}
-              scrollProgress={scrollProgress}
-              drawStart={0.56 + i * 0.015}
-              branch={branch}
-              endX={endX}
-              endY={endY}
-            />
-          );
-        })}
-
-        {/* Gradient definitions */}
-        <defs>
-          <linearGradient id="trunkGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#78350f" />
-            <stop offset="100%" stopColor="#451a03" />
-          </linearGradient>
-        </defs>
-      </svg>
-    </motion.div>
-  );
-}
-
-function BranchLine({
-  x1,
-  y1,
-  x2,
-  y2,
-  scrollProgress,
-  drawStart,
-  branch,
-  endX,
-  endY,
-}: {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  scrollProgress: MotionValue<number>;
-  drawStart: number;
-  branch: BranchData;
-  endX: number;
-  endY: number;
-}) {
-  const pathOpacity = useTransform(
-    scrollProgress,
-    [drawStart, drawStart + 0.03],
-    [0, 1]
-  );
-
-  const pathLength = useTransform(
-    scrollProgress,
-    [drawStart, drawStart + 0.05],
-    [0, 1]
-  );
-
-  return (
-    <>
-      <motion.line
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke="#78350f"
-        strokeWidth={3}
-        strokeLinecap="round"
-        style={{ opacity: pathOpacity, pathLength }}
-      />
-      <LeafCluster
-        cx={endX}
-        cy={endY}
-        count={branch.leafCount}
-        scrollProgress={scrollProgress}
-        bloomStart={drawStart + 0.04 + branch.leafDelay}
-      />
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Final message with shimmer effect
-// ---------------------------------------------------------------------------
-
-function FinalMessage({
-  scrollProgress,
-}: {
-  scrollProgress: MotionValue<number>;
-}) {
-  const opacity = useTransform(scrollProgress, [0.76, 0.84], [0, 1]);
-  const y = useTransform(scrollProgress, [0.76, 0.86], [80, 0]);
-  const scale = useTransform(scrollProgress, [0.76, 0.86], [0.9, 1]);
-
-  const btnOpacity = useTransform(scrollProgress, [0.86, 0.92], [0, 1]);
-  const btnY = useTransform(scrollProgress, [0.86, 0.92], [30, 0]);
-
-  return (
-    <motion.div
-      className="absolute inset-0 flex flex-col items-center justify-center z-40 pointer-events-none"
-      style={{ opacity }}
-    >
-      <motion.div className="text-center px-6" style={{ y, scale }}>
-        <h2 className="relative text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white">
-          <span className="relative inline-block">
-            Save Trees,
-            {/* Shimmer overlay */}
-            <span
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer bg-[length:200%_100%]"
-              aria-hidden="true"
-            />
-          </span>
-          <br />
-          <span className="relative inline-block text-emerald-400">
-            Use eReceipts
-            <span
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-300/20 to-transparent animate-shimmer bg-[length:200%_100%]"
-              aria-hidden="true"
-            />
-          </span>
-        </h2>
-        <p className="mt-4 text-zinc-400 text-lg sm:text-xl max-w-md mx-auto">
-          Digitize every receipt. Reduce waste. Track spending effortlessly.
-        </p>
-      </motion.div>
-
-      <motion.div
-        className="mt-10 pointer-events-auto"
-        style={{ opacity: btnOpacity, y: btnY }}
-      >
-        <Link
-          href="/signup"
-          className="group relative inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-violet-500/25 transition-all duration-300 hover:shadow-violet-500/40 hover:scale-105 active:scale-[0.98]"
-        >
-          <span className="relative z-10">Get Started</span>
-          <svg
-            className="relative z-10 w-5 h-5 transition-transform group-hover:translate-x-0.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-            />
-          </svg>
-          {/* Button glow */}
-          <span className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
-        </Link>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------------------------
-
-export default function ReceiptStorm() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
+  useFrame(() => {
+    if (!meshRef.current) return;
+    const m = mouse.get();
+    meshRef.current.rotation.y = THREE.MathUtils.lerp(
+      meshRef.current.rotation.y,
+      m.x * 0.3,
+      0.05
+    );
+    meshRef.current.rotation.x = THREE.MathUtils.lerp(
+      meshRef.current.rotation.x,
+      m.y * 0.15,
+      0.05
+    );
   });
 
-  const receipts = useMemo(() => generateReceipts(50), []);
+  const receiptLines = [
+    { text: "RECEIPTS", y: 1.1, size: 0.18, bold: true },
+    { text: "━━━━━━━━━━━━━━━━━", y: 0.85, size: 0.1, bold: false },
+    { text: "Organic Avocados  x2", y: 0.55, size: 0.09, bold: false },
+    { text: "                $4.98", y: 0.55, size: 0.09, bold: false },
+    { text: "Sourdough Bread", y: 0.3, size: 0.09, bold: false },
+    { text: "                $5.49", y: 0.3, size: 0.09, bold: false },
+    { text: "Oat Milk Latte", y: 0.05, size: 0.09, bold: false },
+    { text: "                $6.75", y: 0.05, size: 0.09, bold: false },
+    { text: "━━━━━━━━━━━━━━━━━", y: -0.2, size: 0.1, bold: false },
+    { text: "SUBTOTAL        $17.22", y: -0.45, size: 0.09, bold: false },
+    { text: "TAX              $1.38", y: -0.65, size: 0.09, bold: false },
+    { text: "━━━━━━━━━━━━━━━━━", y: -0.85, size: 0.1, bold: false },
+    { text: "TOTAL           $18.60", y: -1.05, size: 0.12, bold: true },
+  ];
 
-  // Subtle background color shift through phases
-  const bgOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.4, 0.6, 0.8],
-    [0, 0, 0.15, 0.05]
+  return (
+    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+      <group ref={meshRef}>
+        {/* Card body */}
+        <RoundedBox args={[2.4, 3.2, 0.04]} radius={0.06} smoothness={4}>
+          <meshPhysicalMaterial
+            color="#fafaf9"
+            roughness={0.6}
+            clearcoat={0.3}
+            clearcoatRoughness={0.4}
+          />
+        </RoundedBox>
+
+        {/* Receipt text */}
+        {receiptLines.map((line, i) => (
+          <Text
+            key={i}
+            position={[-0.95, line.y, 0.025]}
+            fontSize={line.size}
+            color="#1c1917"
+            anchorX="left"
+            anchorY="middle"
+            font="/fonts/SpaceMono-Regular.ttf"
+            fontWeight={line.bold ? "bold" : "normal"}
+          >
+            {line.text}
+          </Text>
+        ))}
+
+        {/* Subtle paper edge shadow */}
+        <mesh position={[0, 0, -0.03]}>
+          <boxGeometry args={[2.5, 3.3, 0.01]} />
+          <meshBasicMaterial color="#000" transparent opacity={0.1} />
+        </mesh>
+      </group>
+    </Float>
   );
+}
+
+/* ─────────────────────── 3D PHONE + NFC WAVES ────────────────────────── */
+
+function PhoneMockup() {
+  const groupRef = useRef<THREE.Group>(null!);
+  const waveRefs = useRef<THREE.Mesh[]>([]);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.5) * 0.1;
+
+    waveRefs.current.forEach((wave, i) => {
+      if (!wave) return;
+      const t = (clock.elapsedTime * 0.8 + i * 0.6) % 2;
+      const scale = 1 + t * 0.6;
+      wave.scale.set(scale, scale, 1);
+      wave.material instanceof THREE.MeshBasicMaterial &&
+        (wave.material.opacity = Math.max(0, 0.5 - t * 0.3));
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Phone body */}
+      <RoundedBox args={[1.4, 2.6, 0.12]} radius={0.12} smoothness={4}>
+        <meshPhysicalMaterial
+          color="#18181b"
+          roughness={0.3}
+          metalness={0.8}
+          clearcoat={1}
+        />
+      </RoundedBox>
+
+      {/* Screen */}
+      <RoundedBox
+        args={[1.2, 2.3, 0.01]}
+        radius={0.08}
+        smoothness={4}
+        position={[0, 0, 0.065]}
+      >
+        <meshBasicMaterial color="#0a0a0a" />
+      </RoundedBox>
+
+      {/* Screen content - receipt on phone */}
+      <Text
+        position={[0, 0.7, 0.08]}
+        fontSize={0.1}
+        color="#10b981"
+        anchorX="center"
+      >
+        Receipt Saved
+      </Text>
+      <Text
+        position={[0, 0.4, 0.08]}
+        fontSize={0.07}
+        color="#71717a"
+        anchorX="center"
+      >
+        Whole Foods Market
+      </Text>
+      <Text
+        position={[0, 0.15, 0.08]}
+        fontSize={0.15}
+        color="#fafafa"
+        anchorX="center"
+      >
+        $18.60
+      </Text>
+      <Text
+        position={[0, -0.15, 0.08]}
+        fontSize={0.06}
+        color="#52525b"
+        anchorX="center"
+      >
+        Tap confirmed  •  No paper
+      </Text>
+
+      {/* NFC waves */}
+      {[0, 1, 2].map((i) => (
+        <mesh
+          key={i}
+          ref={(el) => { if (el) waveRefs.current[i] = el; }}
+          position={[0, -1.6, 0]}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <ringGeometry args={[0.3 + i * 0.15, 0.35 + i * 0.15, 32]} />
+          <meshBasicMaterial
+            color="#10b981"
+            transparent
+            opacity={0.4}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/* ─────────────────────────── 3D SCENE WRAPPER ────────────────────────── */
+
+function HeroScene() {
+  return (
+    <Canvas
+      camera={{ position: [0, 0, 5], fov: 45 }}
+      gl={{ antialias: true, alpha: true }}
+      className="!absolute inset-0"
+    >
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[5, 5, 5]} intensity={0.8} />
+      <pointLight position={[-3, 2, 4]} intensity={0.5} color="#8b5cf6" />
+      <pointLight position={[3, -2, 4]} intensity={0.3} color="#10b981" />
+
+      <Stars
+        radius={80}
+        depth={60}
+        count={1500}
+        factor={3}
+        saturation={0}
+        fade
+        speed={0.5}
+      />
+
+      <Suspense fallback={null}>
+        <ReceiptCard />
+      </Suspense>
+    </Canvas>
+  );
+}
+
+function SolutionScene() {
+  return (
+    <Canvas
+      camera={{ position: [0, 0, 5], fov: 40 }}
+      gl={{ antialias: true, alpha: true }}
+      className="!absolute inset-0"
+    >
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[3, 5, 5]} intensity={0.6} />
+      <pointLight position={[0, -2, 3]} intensity={0.8} color="#10b981" />
+
+      <Suspense fallback={null}>
+        <PhoneMockup />
+      </Suspense>
+    </Canvas>
+  );
+}
+
+/* ─────────────────────── ANIMATED COUNTER ─────────────────────────────── */
+
+function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const motionVal = useMotionValue(0);
+  const spring = useSpring(motionVal, { duration: 2000 });
+
+  useEffect(() => {
+    if (isInView) motionVal.set(target);
+  }, [isInView, motionVal, target]);
+
+  useEffect(() => {
+    const unsubscribe = spring.on("change", (v) => {
+      if (ref.current) {
+        ref.current.textContent =
+          target >= 1000000
+            ? (v / 1000000).toFixed(1) + "M"
+            : target >= 1000
+              ? (v / 1000).toFixed(0) + "K"
+              : v.toFixed(0);
+      }
+    });
+    return unsubscribe;
+  }, [spring, target]);
 
   return (
     <>
-      {/* Shimmer keyframe animation */}
-      <style jsx global>{`
-        @keyframes shimmer {
-          0% {
-            background-position: 200% 0;
-          }
-          100% {
-            background-position: -200% 0;
-          }
-        }
-        .animate-shimmer {
-          animation: shimmer 3s ease-in-out infinite;
-        }
-      `}</style>
-
-      <div ref={containerRef} className="relative h-[500vh] bg-[#050507]">
-        {/* Sticky viewport */}
-        <div className="sticky top-0 h-screen w-full overflow-hidden">
-          {/* Subtle gradient overlay that shifts with scroll */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-b from-emerald-950/30 via-transparent to-transparent pointer-events-none"
-            style={{ opacity: bgOpacity }}
-          />
-
-          {/* Ambient glow behind the tree area */}
-          <motion.div
-            className="absolute left-1/2 bottom-1/4 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none"
-            style={{
-              opacity: useTransform(
-                scrollYProgress,
-                [0.5, 0.65, 0.85],
-                [0, 0.6, 0.2]
-              ),
-            }}
-          />
-
-          {/* Receipts layer */}
-          <div className="absolute inset-0 pointer-events-none">
-            {receipts.map((receipt) => (
-              <AnimatedReceipt
-                key={receipt.id}
-                receipt={receipt}
-                scrollProgress={scrollYProgress}
-              />
-            ))}
-          </div>
-
-          {/* POS Machine */}
-          <POSMachine scrollProgress={scrollYProgress} />
-
-          {/* Tree */}
-          <Tree scrollProgress={scrollYProgress} />
-
-          {/* Final message */}
-          <FinalMessage scrollProgress={scrollYProgress} />
-
-          {/* Scroll hint at the very beginning */}
-          <motion.div
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-50"
-            style={{
-              opacity: useTransform(scrollYProgress, [0, 0.04], [1, 0]),
-            }}
-          >
-            <span className="text-zinc-500 text-sm tracking-widest uppercase">
-              Scroll
-            </span>
-            <motion.div
-              className="w-5 h-8 rounded-full border-2 border-zinc-600 flex items-start justify-center pt-1.5"
-              initial={{ opacity: 0.7 }}
-            >
-              <motion.div
-                className="w-1 h-2 rounded-full bg-zinc-500"
-                animate={{ y: [0, 8, 0] }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
+      <span ref={ref}>0</span>
+      {suffix}
     </>
+  );
+}
+
+/* ─────────────────────────── SECTION COMPONENTS ──────────────────────── */
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 60 } as const,
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } } as const,
+};
+
+const stagger = {
+  hidden: {} as const,
+  visible: { transition: { staggerChildren: 0.15 } } as const,
+};
+
+function HeroSection() {
+  const [webglOk, setWebglOk] = useState(true);
+
+  useEffect(() => {
+    try {
+      const c = document.createElement("canvas");
+      const gl = c.getContext("webgl2") || c.getContext("webgl");
+      if (!gl) setWebglOk(false);
+    } catch {
+      setWebglOk(false);
+    }
+  }, []);
+
+  return (
+    <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      {/* 3D background */}
+      {webglOk && <HeroScene />}
+
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050507]/30 via-transparent to-[#050507] pointer-events-none z-10" />
+
+      {/* Text overlay */}
+      <motion.div
+        className="relative z-20 text-center px-6"
+        initial="hidden"
+        animate="visible"
+        variants={stagger}
+      >
+        <motion.h1
+          variants={fadeUp}
+          className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tighter"
+        >
+          <span className="bg-gradient-to-r from-violet-400 via-fuchsia-300 to-emerald-400 bg-clip-text text-transparent">
+            The Future
+          </span>
+          <br />
+          <span className="text-white">of Receipts</span>
+        </motion.h1>
+
+        <motion.p
+          variants={fadeUp}
+          className="mt-6 text-lg sm:text-xl text-zinc-500 max-w-lg mx-auto font-light tracking-wide"
+        >
+          Every purchase. Every store. One app.
+        </motion.p>
+
+        <motion.div variants={fadeUp} className="mt-10 flex gap-4 justify-center">
+          <Link
+            href="/signup"
+            className="group relative px-8 py-3.5 rounded-full bg-gradient-to-r from-violet-600 to-emerald-600 text-white font-medium text-sm tracking-wide overflow-hidden transition-all hover:shadow-lg hover:shadow-violet-500/20"
+          >
+            <span className="relative z-10">Get Started Free</span>
+            <span className="absolute inset-0 bg-gradient-to-r from-violet-500 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Link>
+          <Link
+            href="/login"
+            className="px-8 py-3.5 rounded-full border border-white/10 text-zinc-400 font-medium text-sm tracking-wide hover:text-white hover:border-white/20 transition-all"
+          >
+            Sign In
+          </Link>
+        </motion.div>
+      </motion.div>
+
+      {/* Scroll indicator */}
+      <motion.div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5 }}
+      >
+        <span className="text-zinc-600 text-xs tracking-[0.3em] uppercase">Scroll</span>
+        <motion.div
+          className="w-5 h-8 rounded-full border border-zinc-700 flex items-start justify-center pt-1.5"
+        >
+          <motion.div
+            className="w-1 h-1.5 rounded-full bg-zinc-500"
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}
+
+function ProblemSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-200px" });
+
+  const stats = [
+    { value: 3000000000, label: "lbs of waste per year", suffix: "+" },
+    { value: 93, label: "contain toxic BPA", suffix: "%" },
+    { value: 90, label: "end up in landfills", suffix: "%" },
+  ];
+
+  return (
+    <section ref={ref} className="relative min-h-screen flex items-center justify-center py-32 px-6">
+      {/* Red glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-red-600/5 blur-[120px] pointer-events-none" />
+
+      <motion.div
+        className="max-w-4xl mx-auto text-center"
+        initial="hidden"
+        animate={isInView ? "visible" : "hidden"}
+        variants={stagger}
+      >
+        <motion.p
+          variants={fadeUp}
+          className="text-red-400/80 text-sm font-medium tracking-[0.2em] uppercase mb-6"
+        >
+          The Problem
+        </motion.p>
+
+        <motion.h2
+          variants={fadeUp}
+          className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.1]"
+        >
+          Americans waste{" "}
+          <span className="text-red-400">
+            <Counter target={12400000} />
+          </span>{" "}
+          trees per year on receipts
+        </motion.h2>
+
+        <motion.div
+          variants={fadeUp}
+          className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6"
+        >
+          {stats.map((stat, i) => (
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              className="p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm"
+            >
+              <div className="text-3xl sm:text-4xl font-black text-white">
+                <Counter target={stat.value} suffix={stat.suffix} />
+              </div>
+              <p className="mt-2 text-zinc-500 text-sm">{stat.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}
+
+function SolutionSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-200px" });
+  const [webglOk, setWebglOk] = useState(true);
+
+  useEffect(() => {
+    try {
+      const c = document.createElement("canvas");
+      const gl = c.getContext("webgl2") || c.getContext("webgl");
+      if (!gl) setWebglOk(false);
+    } catch {
+      setWebglOk(false);
+    }
+  }, []);
+
+  return (
+    <section ref={ref} className="relative min-h-screen flex items-center justify-center py-32 px-6">
+      {/* Emerald glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        {/* 3D Phone */}
+        <div className="relative h-[500px] order-2 lg:order-1">
+          {webglOk && <SolutionScene />}
+        </div>
+
+        {/* Text */}
+        <motion.div
+          className="order-1 lg:order-2"
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          variants={stagger}
+        >
+          <motion.p
+            variants={fadeUp}
+            className="text-emerald-400/80 text-sm font-medium tracking-[0.2em] uppercase mb-6"
+          >
+            The Solution
+          </motion.p>
+
+          <motion.h2
+            variants={fadeUp}
+            className="text-4xl sm:text-5xl font-black tracking-tight text-white leading-[1.1]"
+          >
+            One tap.{" "}
+            <span className="text-emerald-400">Zero paper.</span>
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUp}
+            className="mt-6 text-zinc-400 text-lg leading-relaxed"
+          >
+            Connect your email, tap at checkout, or snap a photo.
+            Every receipt lands in one place — organized, searchable,
+            and ready for tax time.
+          </motion.p>
+
+          <motion.div variants={fadeUp} className="mt-8 space-y-4">
+            {[
+              "Auto-import from Gmail, Outlook",
+              "NFC tap at any POS terminal",
+              "Works with Amazon, Walmart, Target, Uber + more",
+              "AI-powered receipt parsing",
+            ].map((feature, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </div>
+                <span className="text-zinc-300 text-sm">{feature}</span>
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorksSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-150px" });
+
+  const steps = [
+    {
+      icon: (
+        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-9.86a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+        </svg>
+      ),
+      title: "Connect",
+      desc: "Link your email, stores, and payment accounts in seconds.",
+      color: "violet",
+    },
+    {
+      icon: (
+        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+        </svg>
+      ),
+      title: "Capture",
+      desc: "Receipts are auto-parsed with AI. Or snap a photo of paper ones.",
+      color: "emerald",
+    },
+    {
+      icon: (
+        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+        </svg>
+      ),
+      title: "Organize",
+      desc: "Search, categorize, and get spending insights automatically.",
+      color: "fuchsia",
+    },
+  ];
+
+  const colorMap: Record<string, string> = {
+    violet: "from-violet-500/20 to-violet-600/5 border-violet-500/10 group-hover:border-violet-500/30",
+    emerald: "from-emerald-500/20 to-emerald-600/5 border-emerald-500/10 group-hover:border-emerald-500/30",
+    fuchsia: "from-fuchsia-500/20 to-fuchsia-600/5 border-fuchsia-500/10 group-hover:border-fuchsia-500/30",
+  };
+
+  const iconColorMap: Record<string, string> = {
+    violet: "text-violet-400",
+    emerald: "text-emerald-400",
+    fuchsia: "text-fuchsia-400",
+  };
+
+  return (
+    <section ref={ref} className="relative min-h-screen flex items-center justify-center py-32 px-6">
+      <motion.div
+        className="max-w-5xl mx-auto"
+        initial="hidden"
+        animate={isInView ? "visible" : "hidden"}
+        variants={stagger}
+      >
+        <motion.div variants={fadeUp} className="text-center mb-16">
+          <p className="text-zinc-500 text-sm font-medium tracking-[0.2em] uppercase mb-4">
+            How It Works
+          </p>
+          <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-white">
+            Three steps to paperless
+          </h2>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {steps.map((step, i) => (
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              className={`group relative p-8 rounded-2xl bg-gradient-to-b ${colorMap[step.color]} border backdrop-blur-sm transition-all duration-500 hover:translate-y-[-4px]`}
+            >
+              <div className="absolute top-6 right-6 text-6xl font-black text-white/[0.03]">
+                {i + 1}
+              </div>
+              <div className={`${iconColorMap[step.color]} mb-6`}>{step.icon}</div>
+              <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">{step.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
+function CTASection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <section ref={ref} className="relative min-h-[80vh] flex items-center justify-center py-32 px-6">
+      {/* Dual glow */}
+      <div className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full bg-violet-600/8 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/3 right-1/3 w-[400px] h-[400px] rounded-full bg-emerald-600/8 blur-[120px] pointer-events-none" />
+
+      <motion.div
+        className="text-center max-w-2xl mx-auto"
+        initial="hidden"
+        animate={isInView ? "visible" : "hidden"}
+        variants={stagger}
+      >
+        <motion.h2
+          variants={fadeUp}
+          className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter text-white leading-[1.05]"
+        >
+          Save Trees.
+          <br />
+          <span className="bg-gradient-to-r from-emerald-400 to-violet-400 bg-clip-text text-transparent">
+            Use eReceipts.
+          </span>
+        </motion.h2>
+
+        <motion.p
+          variants={fadeUp}
+          className="mt-6 text-zinc-400 text-lg max-w-md mx-auto"
+        >
+          Join the movement to eliminate paper waste.
+          Your receipts, digitized and organized forever.
+        </motion.p>
+
+        <motion.div variants={fadeUp} className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/signup"
+            className="group relative inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-violet-600 to-emerald-600 text-white font-semibold tracking-wide shadow-2xl shadow-violet-500/20 transition-all hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <span className="relative z-10">Get Started Free</span>
+            <svg
+              className="relative z-10 w-5 h-5 transition-transform group-hover:translate-x-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+            <span className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-500 to-emerald-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
+          </Link>
+        </motion.div>
+
+        <motion.p variants={fadeUp} className="mt-6 text-zinc-600 text-sm">
+          Already have an account?{" "}
+          <Link href="/login" className="text-zinc-400 hover:text-white transition-colors">
+            Sign in
+          </Link>
+        </motion.p>
+      </motion.div>
+    </section>
+  );
+}
+
+/* ─────────────────────────── MAIN EXPORT ─────────────────────────────── */
+
+export default function ReceiptStorm() {
+  return (
+    <div className="bg-[#050507]">
+      <HeroSection />
+      <ProblemSection />
+      <SolutionSection />
+      <HowItWorksSection />
+      <CTASection />
+    </div>
   );
 }
