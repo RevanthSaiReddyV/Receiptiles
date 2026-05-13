@@ -8,7 +8,7 @@ export const amazonParser: EmailParser = {
     const sender = senderEmail.toLowerCase();
     return (
       (sender.includes("@amazon.com") || sender.includes("@amazon.")) &&
-      /order|confirm|ship|deliver|digital/i.test(subject)
+      /order|confirm|ship|deliver|digital|^ordered:/i.test(subject)
     );
   },
 

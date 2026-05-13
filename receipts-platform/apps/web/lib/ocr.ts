@@ -79,17 +79,18 @@ export async function parseReceiptFromImage(imageBase64: string) {
 }
 
 export async function parseReceiptFromText(ocrText: string) {
+  const truncated = ocrText.slice(0, 3000);
   const response = await getOpenAI().chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4o-mini",
     messages: [
       { role: "system", content: RECEIPT_PARSE_PROMPT },
       {
         role: "user",
-        content: `Parse this receipt text:\n\n${ocrText}`,
+        content: `Parse this receipt text:\n\n${truncated}`,
       },
     ],
     response_format: { type: "json_object" },
-    max_tokens: 4096,
+    max_tokens: 1500,
   });
 
   const content = response.choices[0]?.message?.content;

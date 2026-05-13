@@ -126,8 +126,11 @@ export function detectRetailer(
 }
 
 export function isReceiptEmail(senderEmail: string, subject: string): boolean {
+  const rejectPatterns = /review|rate your|tell us about|meet your|ever wonder|you're onto|skill is now|updates to the|was used with|is expiring|summer menu|unsubscribe/i;
+  if (rejectPatterns.test(subject)) return false;
+
   if (detectRetailer(senderEmail, subject)) return true;
 
-  const receiptKeywords = /receipt|order confirm|invoice|payment confirm|your purchase|order #/i;
+  const receiptKeywords = /receipt|order confirm|invoice|payment confirm|your purchase|order #|^ordered:/i;
   return receiptKeywords.test(subject);
 }

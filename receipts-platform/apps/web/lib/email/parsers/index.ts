@@ -4,6 +4,11 @@ import { walmartParser } from "./walmart";
 import { uberParser } from "./uber";
 import { doordashParser } from "./doordash";
 import { instacartParser } from "./instacart";
+import { appleParser } from "./apple";
+import { bestbuyParser } from "./bestbuy";
+import { targetParser } from "./target";
+import { lyftParser } from "./lyft";
+import { starbucksParser } from "./starbucks";
 import { genericParser } from "./generic";
 
 export type { EmailParser, ParsedEmailReceipt } from "./types";
@@ -14,6 +19,11 @@ const parsers: EmailParser[] = [
   uberParser,
   doordashParser,
   instacartParser,
+  appleParser,
+  bestbuyParser,
+  targetParser,
+  lyftParser,
+  starbucksParser,
   // generic is the last resort — catches anything with a total
   genericParser,
 ];
