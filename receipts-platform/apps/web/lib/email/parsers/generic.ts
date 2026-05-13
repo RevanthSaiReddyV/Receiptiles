@@ -9,87 +9,99 @@ export const genericParser: EmailParser = {
   },
 
   parse(html: string, plainText: string, subject: string): ParsedEmailReceipt | null {
-    const text = html ? cheerio.load(html).text() : plainText;
-    if (!text || text.length < 30) return null;
+    const $ = html ? cheerio.load(html) : null;
+    const text = $ ? extractCleanText($) : plainText;
+    if (!text || text.length < 20) return null;
 
-    const items: ParsedEmailReceipt["items"] = [];
     let total = 0;
     let subtotal = 0;
     let tax = 0;
     let tip = 0;
+    let fees = 0;
+    let discount = 0;
     let merchantName = "";
     let orderDate = "";
     let cardLast4: string | null = null;
+    const items: ParsedEmailReceipt["items"] = [];
 
-    // Try to get merchant from subject
-    const subjectMerchant = subject
-      .replace(/(?:receipt|order|confirm|invoice|payment|your|from|re:?|fwd?:?)/gi, "")
-      .replace(/[#\d-]+/g, "")
-      .trim();
-    if (subjectMerchant.length > 1 && subjectMerchant.length < 50) {
-      merchantName = subjectMerchant;
+    // --- TOTAL extraction (try multiple strategies) ---
+    total = extractLabeledAmount(text, [
+      /(?:order|grand|amount)\s*total[:\s$]*\$?([\d,]+\.\d{2})/i,
+      /total\s*(?:charged|paid|due|amount)?[:\s$]*\$?([\d,]+\.\d{2})/i,
+      /(?:you\s*(?:paid|were charged)|amount\s*charged|charged?)[:\s$]*\$?([\d,]+\.\d{2})/i,
+      /(?:transaction|payment)\s*(?:amount|total)?[:\s$]*\$?([\d,]+\.\d{2})/i,
+    ]);
+
+    if ($ && total === 0) {
+      total = extractFromHtmlTable($, /total/i);
     }
 
-    // Extract prices from the text
-    const priceRegex = /\$(\d+\.\d{2})/g;
-    const prices: number[] = [];
-    let match;
-    while ((match = priceRegex.exec(text)) !== null) {
-      prices.push(parseFloat(match[1]));
+    // Last resort: largest price in the email
+    if (total === 0) {
+      const allPrices: number[] = [];
+      const priceRe = /\$([\d,]+\.\d{2})/g;
+      let m;
+      while ((m = priceRe.exec(text)) !== null) {
+        allPrices.push(parseFloat(m[1].replace(/,/g, "")));
+      }
+      if (allPrices.length > 0) total = Math.max(...allPrices);
     }
 
-    // Total is usually the largest amount, or explicitly labeled
-    const totalMatch = text.match(/(?:order\s*)?total[:\s]*\$(\d+\.\d{2})/i) ??
-      text.match(/(?:amount|charged?)[:\s]*\$(\d+\.\d{2})/i);
-    if (totalMatch) {
-      total = parseFloat(totalMatch[1]);
-    } else if (prices.length > 0) {
-      total = Math.max(...prices);
-    }
+    subtotal = extractLabeledAmount(text, [
+      /sub\s*-?\s*total[:\s$]*\$?([\d,]+\.\d{2})/i,
+      /item\s*(?:sub)?total[:\s$]*\$?([\d,]+\.\d{2})/i,
+    ]);
 
-    const subtotalMatch = text.match(/subtotal[:\s]*\$(\d+\.\d{2})/i);
-    if (subtotalMatch) subtotal = parseFloat(subtotalMatch[1]);
+    tax = extractLabeledAmount(text, [
+      /(?:estimated\s*)?(?:sales\s*)?tax(?:es)?[:\s$]*\$?([\d,]+\.\d{2})/i,
+    ]);
 
-    const taxMatch = text.match(/tax[:\s]*\$(\d+\.\d{2})/i);
-    if (taxMatch) tax = parseFloat(taxMatch[1]);
+    tip = extractLabeledAmount(text, [
+      /(?:tip|gratuity)[:\s$]*\$?([\d,]+\.\d{2})/i,
+    ]);
 
-    const tipMatch = text.match(/(?:tip|gratuity)[:\s]*\$(\d+\.\d{2})/i);
-    if (tipMatch) tip = parseFloat(tipMatch[1]);
+    fees = extractLabeledAmount(text, [
+      /(?:service|delivery|booking|processing)\s*fee[:\s$]*\$?([\d,]+\.\d{2})/i,
+      /shipping(?:\s*&?\s*handling)?[:\s$]*\$?([\d,]+\.\d{2})/i,
+    ]);
 
-    const dateMatch = text.match(/(\w+ \d{1,2},?\s*\d{4})/) ??
-      text.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/);
-    if (dateMatch) orderDate = dateMatch[1];
+    discount = extractLabeledAmount(text, [
+      /(?:discount|savings|promo|coupon)[:\s$]*-?\$?([\d,]+\.\d{2})/i,
+    ]);
 
-    const cardMatch = text.match(/(?:ending|last\s*4)[:\s]*(\d{4})/i) ??
-      text.match(/\*{2,}(\d{4})/);
-    if (cardMatch) cardLast4 = cardMatch[1];
-
-    // Try to extract items: lines with a price at end
-    const lines = text.split("\n");
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.length < 3 || trimmed.length > 200) continue;
-      if (/tax|total|subtotal|shipping|fee|tip|discount|promo/i.test(trimmed)) continue;
-
-      const itemMatch = trimmed.match(/^(.+?)\s+\$(\d+\.\d{2})\s*$/);
-      if (itemMatch) {
-        const name = itemMatch[1].trim();
-        const price = parseFloat(itemMatch[2]);
-        if (name.length > 1 && price > 0 && price < total * 1.1) {
-          items.push({
-            rawName: name,
-            name,
-            quantity: 1,
-            unitPrice: price,
-            totalPrice: price,
-            category: "Uncategorized",
-          });
+    // --- Date extraction ---
+    const datePatterns = [
+      /(?:date|ordered|placed|purchased|billed)[:\s]*(\w{3,9}\.?\s+\d{1,2},?\s+\d{4})/i,
+      /(?:date|ordered|placed|purchased|billed)[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+      /(\w{3,9}\s+\d{1,2},\s+\d{4})/,
+      /(\d{1,2}\/\d{1,2}\/\d{4})/,
+    ];
+    for (const pat of datePatterns) {
+      const dm = text.match(pat);
+      if (dm) {
+        const parsed = new Date(dm[1]);
+        if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 2020) {
+          orderDate = parsed.toISOString();
+          break;
         }
       }
     }
 
+    // --- Card extraction ---
+    const cardMatch = text.match(/(?:ending\s*(?:in|with)|last\s*4|card)[:\s]*[.*x*]*(\d{4})/i) ??
+      text.match(/\*{2,}(\d{4})/) ??
+      text.match(/x{2,}(\d{4})/i);
+    if (cardMatch) cardLast4 = cardMatch[1];
+
+    // --- Merchant name ---
+    merchantName = extractMerchantFromSubject(subject);
+
+    // --- Items ---
+    if ($) extractItemsFromHtml($, items, total);
+    if (items.length === 0) extractItemsFromText(text, items, total);
+
     if (total === 0) return null;
-    if (!subtotal) subtotal = total - tax - tip;
+    if (!subtotal) subtotal = Math.max(0, total - tax - tip - fees + discount);
 
     return {
       merchant: {
@@ -99,21 +111,122 @@ export const genericParser: EmailParser = {
         location: null,
       },
       purchase: {
-        purchasedAt: orderDate ? new Date(orderDate).toISOString() : new Date().toISOString(),
+        purchasedAt: orderDate || new Date().toISOString(),
         currency: "USD",
         subtotal,
         tax,
         tip,
-        discount: 0,
-        fees: 0,
+        discount,
+        fees,
         total,
       },
-      payment: { method: "card", cardLast4, walletType: null, entryMode: null },
+      payment: { method: cardLast4 ? "card" : "unknown", cardLast4, walletType: null, entryMode: null },
       items,
       metadata: {
-        confidence: items.length > 0 ? 0.6 : 0.4,
+        confidence: items.length > 0 ? 0.65 : 0.45,
         requiresReview: true,
       },
     };
   },
 };
+
+function extractLabeledAmount(text: string, patterns: RegExp[]): number {
+  for (const pat of patterns) {
+    const m = text.match(pat);
+    if (m) return parseFloat(m[1].replace(/,/g, ""));
+  }
+  return 0;
+}
+
+function extractFromHtmlTable($: cheerio.CheerioAPI, labelPattern: RegExp): number {
+  let found = 0;
+  $("tr").each((_, row) => {
+    if (found) return;
+    const cells = $(row).find("td, th");
+    cells.each((i, cell) => {
+      const cellText = $(cell).text().trim();
+      if (labelPattern.test(cellText) && cellText.length < 30) {
+        const nextCell = cells.eq(i + 1);
+        const priceText = nextCell.length ? nextCell.text() : $(row).text();
+        const priceMatch = priceText.match(/\$?([\d,]+\.\d{2})/);
+        if (priceMatch) found = parseFloat(priceMatch[1].replace(/,/g, ""));
+      }
+    });
+  });
+  return found;
+}
+
+function extractCleanText($: cheerio.CheerioAPI): string {
+  $("style, script, head, title").remove();
+  return $("body").text().replace(/[\t ]+/g, " ").replace(/\n{3,}/g, "\n\n");
+}
+
+function extractMerchantFromSubject(subject: string): string {
+  let m = subject.match(/(?:receipt|order|invoice)\s+(?:from|at|for)\s+(.+?)(?:\.|!|$)/i);
+  if (m) return m[1].trim();
+
+  m = subject.match(/(?:your\s+)?(.+?)\s+(?:receipt|order|invoice|confirmation)/i);
+  if (m && m[1].length < 40 && m[1].length > 1) {
+    const cleaned = m[1].replace(/^(your|the)\s+/i, "").trim();
+    if (cleaned.length > 1) return cleaned;
+  }
+
+  return "";
+}
+
+const SKIP = /^(tax|total|subtotal|shipping|fee|tip|discount|promo|savings|handling|delivery|service|estimated)/i;
+
+function extractItemsFromHtml($: cheerio.CheerioAPI, items: ParsedEmailReceipt["items"], total: number) {
+  $("tr").each((_, row) => {
+    const rowText = $(row).text().replace(/\s+/g, " ").trim();
+    if (rowText.length < 5 || rowText.length > 300) return;
+    if (SKIP.test(rowText.trim())) return;
+
+    const qtyMatch = rowText.match(/(\d+)\s*[x×]\s*(.+?)\s+\$?([\d,]+\.\d{2})/);
+    if (qtyMatch) {
+      const name = qtyMatch[2].trim();
+      const price = parseFloat(qtyMatch[3].replace(/,/g, ""));
+      const qty = parseInt(qtyMatch[1]);
+      if (name.length > 1 && price > 0 && price <= (total || 99999) * 1.1) {
+        items.push({ rawName: name, name, quantity: qty, unitPrice: price / qty, totalPrice: price, category: "Uncategorized" });
+      }
+      return;
+    }
+
+    const simpleMatch = rowText.match(/^(.+?)\s+\$?([\d,]+\.\d{2})\s*$/);
+    if (simpleMatch) {
+      const name = simpleMatch[1].trim();
+      const price = parseFloat(simpleMatch[2].replace(/,/g, ""));
+      if (name.length > 2 && name.length < 150 && price > 0 && price <= (total || 99999) * 1.1 && !SKIP.test(name)) {
+        items.push({ rawName: name, name, quantity: 1, unitPrice: price, totalPrice: price, category: "Uncategorized" });
+      }
+    }
+  });
+}
+
+function extractItemsFromText(text: string, items: ParsedEmailReceipt["items"], total: number) {
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.length < 3 || trimmed.length > 200 || SKIP.test(trimmed)) continue;
+
+    const qtyMatch = trimmed.match(/(\d+)\s*[x×]\s*(.+?)\s+\$?([\d,]+\.\d{2})/);
+    if (qtyMatch) {
+      const name = qtyMatch[2].trim();
+      const price = parseFloat(qtyMatch[3].replace(/,/g, ""));
+      const qty = parseInt(qtyMatch[1]);
+      if (name.length > 1 && price > 0 && price <= (total || 99999) * 1.1) {
+        items.push({ rawName: name, name, quantity: qty, unitPrice: price / qty, totalPrice: price, category: "Uncategorized" });
+      }
+      continue;
+    }
+
+    const simpleMatch = trimmed.match(/^(.+?)\s+\$?([\d,]+\.\d{2})\s*$/);
+    if (simpleMatch) {
+      const name = simpleMatch[1].trim();
+      const price = parseFloat(simpleMatch[2].replace(/,/g, ""));
+      if (name.length > 2 && name.length < 150 && price > 0 && price <= (total || 99999) * 1.1 && !SKIP.test(name)) {
+        items.push({ rawName: name, name, quantity: 1, unitPrice: price, totalPrice: price, category: "Uncategorized" });
+      }
+    }
+  }
+}

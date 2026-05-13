@@ -75,7 +75,7 @@ export async function parseReceiptFromImage(imageBase64: string) {
   if (!content) throw new Error("No response from GPT-4o");
 
   const parsed = JSON.parse(content);
-  return canonicalReceiptSchema.parse(parsed);
+  return canonicalReceiptSchema.omit({ source: true }).parse(parsed);
 }
 
 export async function parseReceiptFromText(ocrText: string) {
@@ -97,5 +97,5 @@ export async function parseReceiptFromText(ocrText: string) {
   if (!content) throw new Error("No response from GPT-4o");
 
   const parsed = JSON.parse(content);
-  return canonicalReceiptSchema.parse(parsed);
+  return canonicalReceiptSchema.omit({ source: true }).parse(parsed);
 }
