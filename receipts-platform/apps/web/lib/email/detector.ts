@@ -126,8 +126,9 @@ export function detectRetailer(
 }
 
 export function isReceiptEmail(senderEmail: string, subject: string): boolean {
-  const rejectPatterns = /review|rate your|tell us about|meet your|ever wonder|you're onto|skill is now|updates to the|was used with|is expiring|summer menu|unsubscribe/i;
+  const rejectPatterns = /review|rate your|tell us about|meet your|ever wonder|you're onto|skill is now|updates to the|was used with|is expiring|summer menu|unsubscribe|delivery estimate|tracking update|out for delivery|has shipped|pull request|merge|commit|\[.*\/.*\]|github\.com|noreply@github/i;
   if (rejectPatterns.test(subject)) return false;
+  if (senderEmail.includes("github.com") || senderEmail.includes("noreply@github")) return false;
 
   if (detectRetailer(senderEmail, subject)) return true;
 

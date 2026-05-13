@@ -7,11 +7,13 @@ function getOpenAI() {
 
 const RECEIPT_PARSE_PROMPT = `You are a receipt parser. Extract structured data from the receipt image or text.
 
+IMPORTANT: If the text is NOT a receipt (e.g. marketing email, shipping update, notification), return {"not_a_receipt": true}.
+
 Return a JSON object with this exact structure:
 {
   "merchant": {
-    "rawName": "exact name as shown on receipt",
-    "canonicalName": "cleaned/normalized merchant name",
+    "rawName": "exact name as shown on receipt (never null, use 'Unknown' if unsure)",
+    "canonicalName": "cleaned/normalized merchant name (never null)",
     "category": "one of: Groceries, Dining, Shopping, Transportation, Travel, Entertainment, Healthcare, Utilities, Subscriptions, Gas & Fuel, Home & Garden, Personal Care, Education, Gifts & Donations, Business, Uncategorized",
     "location": "store location if visible, or null"
   },
@@ -49,7 +51,32 @@ Return a JSON object with this exact structure:
 }
 
 If you can't determine a value, use reasonable defaults. For dates you can't parse, use the current date.
-Always return valid JSON.`;
+Always return valid JSON. Never use null for string fields — use "Unknown" instead.`;
+
+function sanitizeAIOutput(parsed: Record<string, unknown>): Record<string, unknown> {
+  const m = parsed.merchant as Record<string, unknown> | undefined;
+  if (m) {
+    m.rawName = m.rawName ?? "Unknown";
+    m.canonicalName = m.canonicalName ?? m.rawName ?? "Unknown";
+    m.category = m.category ?? "Uncategorized";
+    m.location = m.location ?? null;
+  }
+  const p = parsed.payment as Record<string, unknown> | undefined;
+  if (p) {
+    p.method = p.method ?? "unknown";
+    p.cardId = p.cardId ?? null;
+    p.cardLast4 = p.cardLast4 ?? null;
+    p.walletType = p.walletType ?? null;
+    p.entryMode = p.entryMode ?? null;
+  }
+  const meta = parsed.metadata as Record<string, unknown> | undefined;
+  if (meta) {
+    meta.confidence = meta.confidence ?? 0.5;
+    meta.requiresReview = meta.requiresReview ?? true;
+  }
+  if (!parsed.items) parsed.items = [];
+  return parsed;
+}
 
 export async function parseReceiptFromImage(imageBase64: string) {
   const response = await getOpenAI().chat.completions.create({
@@ -75,7 +102,8 @@ export async function parseReceiptFromImage(imageBase64: string) {
   if (!content) throw new Error("No response from GPT-4o");
 
   const parsed = JSON.parse(content);
-  return canonicalReceiptSchema.omit({ source: true }).parse(parsed);
+  if (parsed.not_a_receipt) throw new Error("Not a receipt");
+  return canonicalReceiptSchema.omit({ source: true }).parse(sanitizeAIOutput(parsed));
 }
 
 export async function parseReceiptFromText(ocrText: string) {
@@ -94,8 +122,9 @@ export async function parseReceiptFromText(ocrText: string) {
   });
 
   const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error("No response from GPT-4o");
+  if (!content) throw new Error("No response from GPT-4o-mini");
 
   const parsed = JSON.parse(content);
-  return canonicalReceiptSchema.omit({ source: true }).parse(parsed);
+  if (parsed.not_a_receipt) throw new Error("Not a receipt");
+  return canonicalReceiptSchema.omit({ source: true }).parse(sanitizeAIOutput(parsed));
 }
