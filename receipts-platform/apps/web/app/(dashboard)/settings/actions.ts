@@ -28,6 +28,7 @@ export async function disconnectSource(formData: FormData) {
   }
 
   revalidatePath("/settings");
+  revalidatePath("/email");
 }
 
 export async function syncEmail() {
