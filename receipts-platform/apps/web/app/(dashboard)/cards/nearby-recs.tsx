@@ -44,6 +44,47 @@ export function NearbyRecommendations({ userCards }: { userCards: UserCard[] }) 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
+  // Auto-load from saved location on mount
+  useState(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("nearby_location") : null;
+    if (saved) {
+      try {
+        const { lat, lng, merchants: cached, timestamp } = JSON.parse(saved);
+        // Use cache if less than 10 minutes old
+        if (Date.now() - timestamp < 600000 && cached?.length > 0) {
+          setMerchants(cached);
+          setLocationGranted(true);
+          return;
+        }
+        // Stale cache but we have coords — refetch
+        if (lat && lng) {
+          fetchNearby(lat, lng);
+        }
+      } catch { /* ignore bad cache */ }
+    }
+  });
+
+  async function fetchNearby(lat: number, lng: number) {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/nearby-merchants?lat=${lat}&lng=${lng}`);
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      const m = data.merchants ?? [];
+      setMerchants(m);
+      setLocationGranted(true);
+      // Cache location + results
+      localStorage.setItem("nearby_location", JSON.stringify({
+        lat, lng, merchants: m, timestamp: Date.now(),
+      }));
+    } catch {
+      setError("Could not find nearby merchants.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function requestLocation() {
     setLoading(true);
     setError(null);
@@ -51,19 +92,13 @@ export function NearbyRecommendations({ userCards }: { userCards: UserCard[] }) 
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
       });
-      setLocationGranted(true);
-      const { latitude, longitude } = pos.coords;
-      const res = await fetch(`/api/nearby-merchants?lat=${latitude}&lng=${longitude}`);
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      setMerchants(data.merchants ?? []);
+      await fetchNearby(pos.coords.latitude, pos.coords.longitude);
     } catch (err) {
       if (err instanceof GeolocationPositionError) {
         setError("Location access denied. Enable location in your browser settings.");
       } else {
         setError("Could not find nearby merchants.");
       }
-    } finally {
       setLoading(false);
     }
   }

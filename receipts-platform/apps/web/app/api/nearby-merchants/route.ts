@@ -59,24 +59,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Make multiple requests for different retail types to get better results
-    const queries = [
-      `location=${lat},${lng}&radius=800&type=restaurant`,
-      `location=${lat},${lng}&radius=800&type=store`,
-      `location=${lat},${lng}&radius=800&type=gas_station`,
-      `location=${lat},${lng}&radius=800&type=shopping_mall`,
-      `location=${lat},${lng}&radius=800&type=cafe`,
-      `location=${lat},${lng}&radius=800&type=supermarket`,
-    ];
+    // Fetch multiple place types in parallel for variety
+    const types = ["restaurant", "store", "gas_station", "supermarket", "cafe", "shopping_mall"];
+    const fetches = types.map(type =>
+      fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=1000&type=${type}&key=${apiKey}`)
+        .then(r => r.ok ? r.json() : { results: [] })
+        .catch(() => ({ results: [] }))
+    );
 
+    const results = await Promise.all(fetches);
     const allPlaces = new Map<string, PlaceResult>();
-
-    for (const query of queries) {
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${query}&key=${apiKey}`
-      );
-      if (!res.ok) continue;
-      const data = await res.json();
+    for (const data of results) {
       for (const place of (data.results ?? [])) {
         if (!allPlaces.has(place.place_id)) {
           allPlaces.set(place.place_id, place);
