@@ -158,9 +158,21 @@ export default async function ConnectionsPage({
         )}
 
         <div className="px-6 py-4 border-t border-zinc-50 flex flex-wrap gap-2">
-          <ConnectorButton href="/api/connectors/square/connect" label="Square" />
-          <ConnectorButton href="/api/connectors/shopify/connect" label="Shopify" />
-          <ConnectorButton href="/api/connectors/clover/connect" label="Clover" />
+          {!merchantConnections.some(c => c.provider === "square") ? (
+            <ConnectorButton href="/api/connectors/square/connect" label="Square" />
+          ) : (
+            <ConnectorButton href="/api/connectors/square/connect" label="+ Another Square" />
+          )}
+          {!merchantConnections.some(c => c.provider === "shopify") ? (
+            <ConnectorButton href="/api/connectors/shopify/connect" label="Shopify" />
+          ) : (
+            <ConnectorButton href="/api/connectors/shopify/connect" label="+ Another Shopify" />
+          )}
+          {!merchantConnections.some(c => c.provider === "clover") ? (
+            <ConnectorButton href="/api/connectors/clover/connect" label="Clover" />
+          ) : (
+            <ConnectorButton href="/api/connectors/clover/connect" label="+ Another Clover" />
+          )}
         </div>
       </section>
 
