@@ -52,6 +52,18 @@ export function ConnectionsGrid({ catalog }: { catalog: RetailerWithStatus[] }) 
   const connected = filtered.filter((r) => r.connected);
   const available = filtered.filter((r) => !r.connected);
 
+  const handleConnect = (retailerId: string, authMethod: string) => {
+    if (authMethod === "oauth") {
+      window.location.href = `/api/connectors/${retailerId}/connect`;
+    } else if (authMethod === "session_token" || authMethod === "browser_session") {
+      window.location.href = `/connect/${retailerId}`;
+    } else if (authMethod === "email") {
+      window.location.href = `/api/email/connect`;
+    } else {
+      window.location.href = `/connect/${retailerId}`;
+    }
+  };
+
   const handleSync = async (retailerId: string) => {
     setSyncing(retailerId);
     try {
@@ -155,7 +167,10 @@ export function ConnectionsGrid({ catalog }: { catalog: RetailerWithStatus[] }) 
                   <div className="font-bold text-sm text-neutral-900 truncate">{r.name}</div>
                   <div className="text-xs text-neutral-400 truncate">{r.description}</div>
                 </div>
-                <button className="px-3 py-1.5 rounded-lg text-xs font-bold bg-neutral-900 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => handleConnect(r.id, r.authMethod)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
+                >
                   Connect
                 </button>
               </div>
