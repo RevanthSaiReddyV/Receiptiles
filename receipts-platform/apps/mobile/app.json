@@ -21,7 +21,9 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Take photos of receipts to import them.",
         "NSPhotoLibraryUsageDescription": "Select receipt images from your photo library.",
-        "NFCReaderUsageDescription": "Read NFC tags at point-of-sale terminals to receive digital receipts."
+        "NFCReaderUsageDescription": "Read NFC tags at point-of-sale terminals to receive digital receipts.",
+        "NSLocationWhenInUseUsageDescription": "Your location helps us recommend the best credit card for nearby merchants.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Background location enables card recommendations when you arrive at a store."
       }
     },
     "android": {
@@ -32,7 +34,9 @@
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "NFC"
+        "NFC",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
       ],
       "intentFilters": [
         {
@@ -53,6 +57,8 @@
       "expo-router",
       "expo-image-picker",
       "expo-secure-store",
+      "expo-location",
+      "expo-haptics",
       [
         "expo-notifications",
         {

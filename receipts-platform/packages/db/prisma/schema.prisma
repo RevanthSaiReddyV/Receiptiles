@@ -33,6 +33,8 @@ model User {
   merchantVisits        MerchantVisit[]
   locationInsights      LocationInsight[]
   retailerConnections   RetailerConnection[]
+  budgets               Budget[]
+  signupBonusGoals      SignupBonusGoal[]
 }
 
 model PasswordResetToken {
@@ -589,4 +591,45 @@ model RetailerParser {
   updatedAt     DateTime @updatedAt
 
   @@index([senderDomain])
+}
+
+// ─── BUDGETS ──────────────────────────────────────────────────────────────
+
+model Budget {
+  id           String   @id @default(cuid())
+  userId       String
+  category     String   // "Dining", "Groceries", "Gas", etc.
+  monthlyLimit Float    // Monthly spending limit in dollars
+  alertAt      Float?   // Alert when spending reaches this % (e.g., 0.8 = 80%)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@index([userId])
+}
+
+// ─── SIGNUP BONUS TRACKING ────────────────────────────────────────────────
+
+model SignupBonusGoal {
+  id           String   @id @default(cuid())
+  userId       String
+  cardId       String   // UserCard ID
+  cardName     String   // Display name
+  targetSpend  Float    // e.g., 4000
+  currentSpend Float    @default(0)
+  bonusValue   String   // e.g., "60,000 points"
+  deadline     DateTime // Must hit target by this date
+  startDate    DateTime @default(now())
+  isComplete   Boolean  @default(false)
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isComplete])
+  @@index([deadline])
 }
