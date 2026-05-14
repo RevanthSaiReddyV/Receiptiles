@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { findBestCard, CARD_DATABASE } from "@/lib/rewards/card-database";
 
 interface NearbyMerchant {
@@ -45,41 +45,46 @@ export function NearbyRecommendations({ userCards }: { userCards: UserCard[] }) 
   const [activeCategory, setActiveCategory] = useState("all");
 
   // Auto-load from saved location on mount
-  useState(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem("nearby_location") : null;
+  useEffect(() => {
+    const saved = localStorage.getItem("nearby_location");
     if (saved) {
       try {
         const { lat, lng, merchants: cached, timestamp } = JSON.parse(saved);
-        // Use cache if less than 10 minutes old
         if (Date.now() - timestamp < 600000 && cached?.length > 0) {
           setMerchants(cached);
           setLocationGranted(true);
           return;
         }
-        // Stale cache but we have coords — refetch
         if (lat && lng) {
           fetchNearby(lat, lng);
         }
       } catch { /* ignore bad cache */ }
     }
-  });
+  }, []);
 
   async function fetchNearby(lat: number, lng: number) {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/nearby-merchants?lat=${lat}&lng=${lng}`);
-      if (!res.ok) throw new Error("Failed to fetch");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `API error ${res.status}`);
+      }
       const data = await res.json();
       const m = data.merchants ?? [];
+      if (m.length === 0) {
+        setError("No retail merchants found nearby. Try searching for a specific store.");
+      }
       setMerchants(m);
       setLocationGranted(true);
-      // Cache location + results
       localStorage.setItem("nearby_location", JSON.stringify({
         lat, lng, merchants: m, timestamp: Date.now(),
       }));
-    } catch {
-      setError("Could not find nearby merchants.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setError(`Could not find nearby merchants: ${msg}`);
+      setLocationGranted(true);
     } finally {
       setLoading(false);
     }
