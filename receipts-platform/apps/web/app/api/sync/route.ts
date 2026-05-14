@@ -6,6 +6,7 @@ import { isReceiptEmail, detectRetailer } from "@/lib/email/detector";
 import { parseReceiptEmail } from "@/lib/email/parsers";
 import { parseReceiptFromText } from "@/lib/ocr";
 import { isBankAlert, parseBankAlert } from "@/lib/email/parsers/bank-alerts";
+import { trySmartParse, learnParserFromEmail } from "@/lib/email/smart-parser";
 
 export const maxDuration = 60;
 
@@ -174,53 +175,63 @@ export async function POST() {
         }
       }
 
-      // AI-first parsing — send cleaned email text to GPT-4o-mini
-      // This is more reliable than regex-based code parsers
-      let parsed: typeof codeParsed = null;
+      // Self-learning parsing: learned parser → code parser → AI → learn
+      type ParsedReceipt = ReturnType<typeof parseReceiptEmail>["result"];
+      let parsed: ParsedReceipt = null;
       let parserUsed = "none";
 
-      // Try code parsers first (free, instant)
-      const { result: codeParsed, parser: codeParser } = parseReceiptEmail(
-        senderEmail, subject, htmlBody, plainBody
-      );
+      // Step 1: Try learned smart parser (free, instant, gets better over time)
+      try {
+        const smartResult = await trySmartParse(senderEmail, subject, bodyText);
+        if (smartResult && smartResult.purchase.total > 0 && smartResult.items.length > 0) {
+          parsed = smartResult as ParsedReceipt;
+          parserUsed = "smart";
+          logs.push(`  [${subject.substring(0, 40)}] smart parser: $${smartResult.purchase.total} (${smartResult.items.length} items)`);
+        }
+      } catch { /* smart parser failed, continue */ }
 
-      if (codeParsed && codeParsed.purchase.total > 0 && codeParsed.items.length > 0) {
-        parsed = codeParsed;
-        parserUsed = codeParser;
-        logs.push(`  [${subject.substring(0, 40)}] code parser: ${codeParser} $${codeParsed.purchase.total} (${codeParsed.items.length} items)`);
+      // Step 2: Try code parsers (free, instant)
+      if (!parsed) {
+        const { result: codeParsed, parser: codeParser } = parseReceiptEmail(
+          senderEmail, subject, htmlBody, plainBody
+        );
+        if (codeParsed && codeParsed.purchase.total > 0 && codeParsed.items.length > 0) {
+          parsed = codeParsed;
+          parserUsed = codeParser;
+          logs.push(`  [${subject.substring(0, 40)}] code: ${codeParser} $${codeParsed.purchase.total} (${codeParsed.items.length} items)`);
+        }
       }
 
-      // If code parser got total but no items, or failed entirely — use AI
+      // Step 3: AI parsing (when free parsers fail or miss items)
       if ((!parsed || parsed.items.length === 0) && process.env.OPENAI_API_KEY) {
         try {
           const body = stripHtml(htmlBody) || plainBody;
           if (body.length >= 30) {
-            // Include subject + sender for context
             const aiInput = `From: ${senderEmail}\nSubject: ${subject}\n\n${body}`;
             const aiParsed = await parseReceiptFromText(aiInput);
 
             if (aiParsed.purchase.total > 0) {
-              // Merge: keep AI items but use code parser total if AI total seems wrong
               if (parsed && Math.abs(parsed.purchase.total - aiParsed.purchase.total) < 1) {
-                // Code parser and AI agree — use AI items with code parser totals
                 parsed = {
                   ...parsed,
                   items: aiParsed.items.length > (parsed.items?.length ?? 0) ? aiParsed.items : parsed.items,
                   metadata: { confidence: 0.85, requiresReview: false },
                 };
-                parserUsed = `${codeParser}+ai`;
+                parserUsed += "+ai";
               } else {
-                // Use AI result entirely
                 const retailer = detectRetailer(senderEmail, subject);
                 if (retailer) {
                   aiParsed.merchant.rawName = aiParsed.merchant.rawName || retailer.name;
                   aiParsed.merchant.canonicalName = retailer.name;
                   aiParsed.merchant.category = retailer.category;
                 }
-                parsed = { ...aiParsed, metadata: { confidence: 0.8, requiresReview: false } } as typeof codeParsed;
+                parsed = { ...aiParsed, metadata: { confidence: 0.8, requiresReview: false } } as ParsedReceipt;
                 parserUsed = "ai";
               }
               logs.push(`  [${subject.substring(0, 40)}] AI: $${aiParsed.purchase.total} (${aiParsed.items.length} items)`);
+
+              // Step 4: Learn from AI — generate parser for next time (background, non-blocking)
+              learnParserFromEmail(senderEmail, subject, body, parsed as any).catch(() => {});
             }
           }
         } catch (err) {

@@ -572,3 +572,21 @@ model RetailerConnection {
   @@unique([userId, retailer])
   @@index([userId])
 }
+
+// ─── AI-GENERATED PARSERS ──────────────────────────────────
+
+model RetailerParser {
+  id            String   @id @default(cuid())
+  senderDomain  String   @unique  // e.g., "amazon.com", "bestbuy.com"
+  retailerName  String              // "Amazon", "Best Buy"
+  category      String              // "Shopping", "Electronics"
+  parseRules    Json                // AI-generated extraction rules
+  sampleSubject String?             // example subject for reference
+  successCount  Int      @default(0) // how many times this parser succeeded
+  failCount     Int      @default(0) // how many times it failed
+  lastUsedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([senderDomain])
+}
