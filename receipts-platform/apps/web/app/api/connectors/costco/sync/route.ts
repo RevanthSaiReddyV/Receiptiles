@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import { costcoConnector } from "@/lib/connectors/retailers/costco";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST() {
   const session = await auth();
@@ -19,7 +19,10 @@ export async function POST() {
     return NextResponse.json({ error: "Costco not connected" }, { status: 400 });
   }
 
-  const since = connection.lastSyncAt ?? new Date(Date.now() - 365 * 86400000);
+  // First sync: 5 years back. Subsequent: from last sync minus 7 days overlap
+  const since = connection.lastSyncAt
+    ? new Date(connection.lastSyncAt.getTime() - 7 * 86400000)
+    : new Date(Date.now() - 5 * 365 * 86400000);
   let imported = 0;
   const logs: string[] = [];
 
