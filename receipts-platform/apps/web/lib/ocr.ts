@@ -5,53 +5,61 @@ function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 }
 
-const RECEIPT_PARSE_PROMPT = `You are a receipt parser. Extract structured data from the receipt image or text.
+const RECEIPT_PARSE_PROMPT = `You are an expert receipt and order confirmation parser. Extract ALL structured data from receipts, order confirmations, invoices, and purchase emails.
 
-IMPORTANT: If the text is NOT a receipt (e.g. marketing email, shipping update, notification), return {"not_a_receipt": true}.
+IMPORTANT RULES:
+1. If the text is NOT a receipt/order/invoice (marketing, shipping update, review request), return {"not_a_receipt": true}
+2. Extract EVERY item listed — do not skip any
+3. For each item, extract the exact name, quantity, and price
+4. The "From:" line tells you the merchant
+5. Never use null for string fields — use "Unknown" instead
+6. For dates, look for "Order placed", "Date", "Purchased" etc. If not found, use today's date.
 
-Return a JSON object with this exact structure:
+Return JSON:
 {
   "merchant": {
-    "rawName": "exact name as shown on receipt (never null, use 'Unknown' if unsure)",
-    "canonicalName": "cleaned/normalized merchant name (never null)",
-    "category": "one of: Groceries, Dining, Shopping, Transportation, Travel, Entertainment, Healthcare, Utilities, Subscriptions, Gas & Fuel, Home & Garden, Personal Care, Education, Gifts & Donations, Business, Uncategorized",
-    "location": "store location if visible, or null"
+    "rawName": "exact merchant name from email",
+    "canonicalName": "normalized name (e.g., 'Amazon.com' -> 'Amazon')",
+    "category": "Groceries|Dining|Shopping|Transportation|Travel|Entertainment|Healthcare|Utilities|Subscriptions|Gas & Fuel|Electronics|Home & Garden|Personal Care|Education|Uncategorized",
+    "location": "store location or null"
   },
   "purchase": {
     "purchasedAt": "ISO 8601 datetime",
     "currency": "USD",
     "subtotal": number,
     "tax": number,
-    "tip": number or 0,
-    "discount": number or 0,
-    "fees": number or 0,
-    "total": number
+    "tip": 0,
+    "discount": 0,
+    "fees": number (shipping/delivery fees),
+    "total": number (the final amount charged)
   },
   "payment": {
-    "method": "card/cash/unknown",
+    "method": "card/cash/online/unknown",
     "cardId": null,
-    "cardLast4": "last 4 digits if visible, or null",
-    "walletType": "apple_pay/google_pay/null",
-    "entryMode": "chip/swipe/tap/online/null"
+    "cardLast4": "last 4 digits if shown, or null",
+    "walletType": null,
+    "entryMode": "online"
   },
   "items": [
     {
-      "rawName": "exact item name from receipt",
-      "name": "cleaned item name",
-      "quantity": number,
+      "rawName": "full original item name/description",
+      "name": "short clean name (max 80 chars)",
+      "quantity": number (default 1),
       "unitPrice": number,
-      "totalPrice": number,
-      "category": "category"
+      "totalPrice": number (quantity * unitPrice),
+      "category": "item category"
     }
   ],
   "metadata": {
-    "confidence": 0.0 to 1.0 (your confidence in the extraction),
-    "requiresReview": true if confidence < 0.7
+    "confidence": 0.0 to 1.0,
+    "requiresReview": false
   }
 }
 
-If you can't determine a value, use reasonable defaults. For dates you can't parse, use the current date.
-Always return valid JSON. Never use null for string fields — use "Unknown" instead.`;
+Extract ALL items. If an item has variants/options (size, color), include them in rawName.
+For Amazon: extract each product as a separate item.
+For subscriptions: the service name is the item.
+Always return valid JSON.`;
 
 function sanitizeAIOutput(parsed: Record<string, unknown>): Record<string, unknown> {
   const m = parsed.merchant as Record<string, unknown> | undefined;
@@ -107,18 +115,18 @@ export async function parseReceiptFromImage(imageBase64: string) {
 }
 
 export async function parseReceiptFromText(ocrText: string) {
-  const truncated = ocrText.slice(0, 3000);
+  const truncated = ocrText.slice(0, 6000);
   const response = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: RECEIPT_PARSE_PROMPT },
       {
         role: "user",
-        content: `Parse this receipt text:\n\n${truncated}`,
+        content: `Parse this receipt/order email. Extract ALL items with names, quantities, and prices:\n\n${truncated}`,
       },
     ],
     response_format: { type: "json_object" },
-    max_tokens: 1500,
+    max_tokens: 3000,
   });
 
   const content = response.choices[0]?.message?.content;

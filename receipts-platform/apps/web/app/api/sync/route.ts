@@ -174,26 +174,54 @@ export async function POST() {
         }
       }
 
-      // Try code parsers
-      const { result: codeParsed, parser: parserUsed, needsAI } = parseReceiptEmail(
+      // AI-first parsing — send cleaned email text to GPT-4o-mini
+      // This is more reliable than regex-based code parsers
+      let parsed: typeof codeParsed = null;
+      let parserUsed = "none";
+
+      // Try code parsers first (free, instant)
+      const { result: codeParsed, parser: codeParser } = parseReceiptEmail(
         senderEmail, subject, htmlBody, plainBody
       );
 
-      let parsed = codeParsed;
+      if (codeParsed && codeParsed.purchase.total > 0 && codeParsed.items.length > 0) {
+        parsed = codeParsed;
+        parserUsed = codeParser;
+        logs.push(`  [${subject.substring(0, 40)}] code parser: ${codeParser} $${codeParsed.purchase.total} (${codeParsed.items.length} items)`);
+      }
 
-      if (!parsed && process.env.OPENAI_API_KEY) {
+      // If code parser got total but no items, or failed entirely — use AI
+      if ((!parsed || parsed.items.length === 0) && process.env.OPENAI_API_KEY) {
         try {
-          const body = plainBody || stripHtml(htmlBody);
-          if (body.length >= 50) {
-            const aiParsed = await parseReceiptFromText(body);
-            const retailer = detectRetailer(senderEmail, subject);
-            if (retailer) {
-              aiParsed.merchant.rawName = aiParsed.merchant.rawName || retailer.name;
-              aiParsed.merchant.canonicalName = retailer.name;
-              aiParsed.merchant.category = retailer.category;
+          const body = stripHtml(htmlBody) || plainBody;
+          if (body.length >= 30) {
+            // Include subject + sender for context
+            const aiInput = `From: ${senderEmail}\nSubject: ${subject}\n\n${body}`;
+            const aiParsed = await parseReceiptFromText(aiInput);
+
+            if (aiParsed.purchase.total > 0) {
+              // Merge: keep AI items but use code parser total if AI total seems wrong
+              if (parsed && Math.abs(parsed.purchase.total - aiParsed.purchase.total) < 1) {
+                // Code parser and AI agree — use AI items with code parser totals
+                parsed = {
+                  ...parsed,
+                  items: aiParsed.items.length > (parsed.items?.length ?? 0) ? aiParsed.items : parsed.items,
+                  metadata: { confidence: 0.85, requiresReview: false },
+                };
+                parserUsed = `${codeParser}+ai`;
+              } else {
+                // Use AI result entirely
+                const retailer = detectRetailer(senderEmail, subject);
+                if (retailer) {
+                  aiParsed.merchant.rawName = aiParsed.merchant.rawName || retailer.name;
+                  aiParsed.merchant.canonicalName = retailer.name;
+                  aiParsed.merchant.category = retailer.category;
+                }
+                parsed = { ...aiParsed, metadata: { confidence: 0.8, requiresReview: false } } as typeof codeParsed;
+                parserUsed = "ai";
+              }
+              logs.push(`  [${subject.substring(0, 40)}] AI: $${aiParsed.purchase.total} (${aiParsed.items.length} items)`);
             }
-            parsed = { ...aiParsed, metadata: { confidence: 0.7, requiresReview: true } } as typeof codeParsed;
-            logs.push(`  [${subject.substring(0, 40)}] AI parsed: $${aiParsed.purchase.total}`);
           }
         } catch (err) {
           logs.push(`  [${subject.substring(0, 40)}] AI failed: ${err instanceof Error ? err.message : err}`);
