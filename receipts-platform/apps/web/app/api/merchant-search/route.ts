@@ -28,26 +28,29 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await res.json();
-    const merchants = (data.results ?? []).slice(0, 15).map((place: {
-      name: string;
-      formatted_address: string;
-      types: string[];
-      rating?: number;
-      geometry: { location: { lat: number; lng: number } };
-      place_id: string;
-    }) => {
-      const category = mapPlaceTypeToCategory(place.types);
-      return {
-        name: place.name,
-        address: place.formatted_address,
-        category,
-        rewardCategory: getCardCategory(place.name) || category,
-        rating: place.rating,
-        lat: place.geometry.location.lat,
-        lng: place.geometry.location.lng,
-        placeId: place.place_id,
-      };
-    });
+    const merchants = (data.results ?? [])
+      .filter((place: { types: string[] }) => isRetailPlace(place.types))
+      .slice(0, 15)
+      .map((place: {
+        name: string;
+        formatted_address: string;
+        types: string[];
+        rating?: number;
+        geometry: { location: { lat: number; lng: number } };
+        place_id: string;
+      }) => {
+        const category = mapPlaceTypeToCategory(place.types);
+        return {
+          name: place.name,
+          address: place.formatted_address,
+          category,
+          rewardCategory: getCardCategory(place.name) || category,
+          rating: place.rating,
+          lat: place.geometry.location.lat,
+          lng: place.geometry.location.lng,
+          placeId: place.place_id,
+        };
+      });
 
     return NextResponse.json({ merchants }, {
       headers: { "Cache-Control": "public, max-age=300" },
@@ -57,17 +60,33 @@ export async function GET(request: NextRequest) {
   }
 }
 
+const RETAIL_TYPES = new Set([
+  "restaurant", "food", "cafe", "bakery", "bar", "meal_delivery", "meal_takeaway",
+  "grocery_or_supermarket", "supermarket", "convenience_store", "liquor_store",
+  "gas_station", "shopping_mall", "clothing_store", "department_store", "shoe_store",
+  "jewelry_store", "furniture_store", "home_goods_store", "hardware_store",
+  "book_store", "pet_store", "florist", "electronics_store", "pharmacy", "drugstore",
+  "gym", "movie_theater", "amusement_park", "bowling_alley", "spa", "night_club",
+  "lodging", "airport", "travel_agency", "car_rental", "car_wash", "car_repair",
+  "beauty_salon", "hair_care", "laundry", "store", "parking",
+  "dentist", "doctor", "veterinary_care",
+]);
+
+function isRetailPlace(types: string[]): boolean {
+  return types.some(t => RETAIL_TYPES.has(t));
+}
+
 function mapPlaceTypeToCategory(types: string[]): string {
-  if (types.includes("restaurant") || types.includes("food") || types.includes("cafe") || types.includes("bakery") || types.includes("meal_delivery") || types.includes("meal_takeaway")) return "Dining";
-  if (types.includes("grocery_or_supermarket") || types.includes("supermarket")) return "Groceries";
+  if (types.some(t => ["restaurant", "food", "cafe", "bakery", "bar", "meal_delivery", "meal_takeaway", "night_club"].includes(t))) return "Dining";
+  if (types.some(t => ["grocery_or_supermarket", "supermarket", "convenience_store", "liquor_store"].includes(t))) return "Groceries";
   if (types.includes("gas_station")) return "Gas";
-  if (types.includes("shopping_mall") || types.includes("clothing_store") || types.includes("department_store") || types.includes("shoe_store") || types.includes("jewelry_store")) return "Shopping";
+  if (types.some(t => ["shopping_mall", "clothing_store", "department_store", "shoe_store", "jewelry_store", "furniture_store", "home_goods_store", "hardware_store", "book_store", "pet_store", "florist"].includes(t))) return "Shopping";
   if (types.includes("electronics_store")) return "Electronics";
-  if (types.includes("pharmacy") || types.includes("drugstore") || types.includes("health")) return "Drugstores";
+  if (types.some(t => ["pharmacy", "drugstore"].includes(t))) return "Drugstores";
   if (types.includes("gym")) return "Fitness";
-  if (types.includes("movie_theater") || types.includes("amusement_park") || types.includes("bowling_alley")) return "Entertainment";
-  if (types.includes("lodging") || types.includes("hotel")) return "Hotels";
-  if (types.includes("airport") || types.includes("travel_agency") || types.includes("car_rental")) return "Travel";
+  if (types.some(t => ["movie_theater", "amusement_park", "bowling_alley", "spa"].includes(t))) return "Entertainment";
+  if (types.includes("lodging")) return "Hotels";
+  if (types.some(t => ["airport", "travel_agency", "car_rental"].includes(t))) return "Travel";
   if (types.includes("transit_station") || types.includes("subway_station") || types.includes("bus_station")) return "Transit";
   return "Shopping";
 }
