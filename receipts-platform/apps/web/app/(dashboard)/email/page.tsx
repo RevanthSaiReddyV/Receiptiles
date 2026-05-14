@@ -207,6 +207,21 @@ export default async function ConnectionsPage({
           <ConnectorButton href="/api/connectors/customer/shopify-customer/connect" label="Shopify" />
         </div>
       </section>
+
+      {/* Retailer Accounts */}
+      <section className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b border-zinc-100">
+          <h2 className="font-semibold text-zinc-900">Retailers</h2>
+          <p className="text-xs text-zinc-400 mt-0.5">Connect your retail accounts to import full order history with items</p>
+        </div>
+
+        <div className="px-6 py-4 space-y-3">
+          <RetailerRow retailer="costco" label="Costco" icon="🏪" description="Warehouse receipts with item details" />
+          <RetailerRow retailer="amazon" label="Amazon" icon="📦" description="Order history and invoices" comingSoon />
+          <RetailerRow retailer="walmart" label="Walmart" icon="🛒" description="Purchase history" comingSoon />
+          <RetailerRow retailer="target" label="Target" icon="🎯" description="Circle account orders" comingSoon />
+        </div>
+      </section>
     </div>
   );
 }
@@ -219,6 +234,36 @@ function ConnectorButton({ href, label }: { href: string; label: string }) {
     >
       + {label}
     </a>
+  );
+}
+
+function RetailerRow({ retailer, label, icon, description, comingSoon }: {
+  retailer: string; label: string; icon: string; description: string; comingSoon?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-zinc-100 p-4">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-xl">
+          {icon}
+        </div>
+        <div>
+          <p className="text-sm font-medium text-zinc-900">{label}</p>
+          <p className="text-[10px] text-zinc-400">{description}</p>
+        </div>
+      </div>
+      {comingSoon ? (
+        <span className="text-[10px] font-medium text-zinc-400 bg-zinc-100 rounded-full px-2.5 py-1">
+          Coming Soon
+        </span>
+      ) : (
+        <a
+          href={`/connect/${retailer}`}
+          className="inline-flex items-center gap-1 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 transition-colors"
+        >
+          Connect
+        </a>
+      )}
+    </div>
   );
 }
 

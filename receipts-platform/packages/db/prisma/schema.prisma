@@ -32,6 +32,7 @@ model User {
   spendingSnapshots     SpendingSnapshot[]
   merchantVisits        MerchantVisit[]
   locationInsights      LocationInsight[]
+  retailerConnections   RetailerConnection[]
 }
 
 model PasswordResetToken {
@@ -548,4 +549,26 @@ model LocationInsight {
 
   @@index([userId])
   @@index([merchant])
+}
+
+// ─── RETAILER CONNECTIONS ──────────────────────────────────
+
+model RetailerConnection {
+  id           String    @id @default(cuid())
+  userId       String
+  retailer     String    // "costco", "amazon", "walmart", "target"
+  authToken    String    @db.Text
+  refreshToken String?   @db.Text
+  clientId     String?
+  membershipId String?
+  metadata     Json?
+  lastSyncAt   DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, retailer])
+  @@index([userId])
 }
