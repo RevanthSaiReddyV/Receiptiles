@@ -27,18 +27,26 @@ export const squareConnector: PosConnector = {
   },
 
   async exchangeCode(code: string, redirectUri: string) {
+    const body = {
+      client_id: process.env.SQUARE_APP_ID!,
+      client_secret: process.env.SQUARE_APP_SECRET!,
+      code,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code",
+    };
+    console.log("[Square] Token exchange request:", { ...body, client_secret: "***", code: code.slice(0, 8) + "..." });
+
     const res = await fetch(`${SQUARE_BASE_URL}/oauth2/token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_id: process.env.SQUARE_APP_ID!,
-        client_secret: process.env.SQUARE_APP_SECRET!,
-        code,
-        grant_type: "authorization_code",
-      }),
+      body: JSON.stringify(body),
     });
 
-    if (!res.ok) throw new Error(`Square OAuth failed: ${res.statusText}`);
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error("[Square] Token exchange error:", res.status, errBody);
+      throw new Error(`Square OAuth failed (${res.status}): ${errBody}`);
+    }
     const data = await res.json();
 
     return {
