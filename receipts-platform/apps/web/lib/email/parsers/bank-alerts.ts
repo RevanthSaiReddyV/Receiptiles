@@ -95,8 +95,8 @@ const BANK_PATTERNS: BankAlertPattern[] = [
   // Capital One
   {
     bank: "Capital One",
-    senders: ["alerts@capitalone.com", "noreply@capitalone.com"],
-    subjectPatterns: [/transaction alert/i, /purchase.*alert/i, /new transaction/i],
+    senders: ["alerts@capitalone.com", "noreply@capitalone.com", "no-reply@capitalone.com", "ealerts@capitalone.com"],
+    subjectPatterns: [/transaction/i, /purchase/i, /charge/i, /card.*used/i, /was made/i, /capital one/i, /your.*account/i],
     extractTransaction(text, subject) {
       const amountMatch = text.match(/\$([\d,]+\.\d{2})/) ?? subject.match(/\$([\d,]+\.\d{2})/);
       const merchantMatch = text.match(/(?:at|with|from)\s+(.+?)(?:\s+on|\s+was|\.|$)/im);
