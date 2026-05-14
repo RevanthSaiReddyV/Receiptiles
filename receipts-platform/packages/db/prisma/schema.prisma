@@ -35,6 +35,10 @@ model User {
   retailerConnections   RetailerConnection[]
   budgets               Budget[]
   signupBonusGoals      SignupBonusGoal[]
+  receiptWallet         ReceiptWallet?
+  referralsSent         Referral[]        @relation("referralsSent")
+  referralsReceived     Referral[]        @relation("referralsReceived")
+  referralRewards       ReferralReward[]
 }
 
 model PasswordResetToken {
@@ -111,12 +115,15 @@ enum ReceiptSource {
   POS
   PROCESSOR
   MANUAL
+  RETAILER
 }
 
 model Receipt {
   id        String        @id @default(cuid())
   userId    String
   source    ReceiptSource
+  sourceId  String?       // External ID for dedup (e.g., "costco-2024-01-01-125.99")
+  sourceRetailer String?  // Retailer connector ID (e.g., "amazon", "costco")
   fileUrl   String?
 
   // Merchant
@@ -159,6 +166,9 @@ model Receipt {
   @@index([userId])
   @@index([userId, purchasedAt])
   @@index([merchantCanonicalName])
+  @@index([sourceId])
+  @@index([sourceRetailer])
+  @@unique([userId, sourceId], name: "receipt_source_dedup")
 }
 
 model ReceiptItem {
@@ -382,7 +392,7 @@ model WalletPass {
 
 // ─── Data Monetization ──────────────────────────────────────────────────────
 
-enum DataApiTier {
+enum DataApiTier {\n  FREE
   TRIAL
   STANDARD
   ENTERPRISE
@@ -390,6 +400,7 @@ enum DataApiTier {
 
 model DataApiKey {
   id           String      @id @default(cuid())
+  userId       String?     // Developer who created this key
   key          String      @unique // dat_<hex>
   partnerId    String      @map("partner_id")
   partnerName  String      @map("partner_name")
@@ -407,6 +418,7 @@ model DataApiKey {
 
   @@index([key])
   @@index([partnerId])
+  @@index([userId])
 }
 
 model DataApiUsageLog {
@@ -632,4 +644,167 @@ model SignupBonusGoal {
 
   @@index([userId, isComplete])
   @@index([deadline])
+}
+
+// ─── UNIVERSAL RECEIPT WALLET (Consumer Identity Layer) ─────────────────────
+
+model ReceiptWallet {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  walletId       String   @unique // Public wallet identifier: "rw_<nanoid>"
+  displayName    String?
+  avatarUrl      String?
+  isPublic       Boolean  @default(false) // Allow merchants to push receipts
+  nfcEnabled     Boolean  @default(true)
+  pushEnabled    Boolean  @default(true)
+  totalReceipts  Int      @default(0)
+  totalSpent     Float    @default(0)
+  memberSince    DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchantLinks WalletMerchantLink[]
+  dataGrants    DataApiGrant[]
+
+  @@index([walletId])
+}
+
+// Links a wallet to a merchant's loyalty/receipt system
+model WalletMerchantLink {
+  id             String   @id @default(cuid())
+  walletId       String
+  merchantId     String   // Canonical merchant identifier
+  merchantName   String
+  loyaltyId      String?  // Costco membership, Target Circle ID, etc.
+  externalUserId String?  // User's ID in the merchant's system
+  isVerified     Boolean  @default(false)
+  linkedAt       DateTime @default(now())
+  lastReceiptAt  DateTime?
+  receiptCount   Int      @default(0)
+  metadata       Json?
+
+  wallet ReceiptWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([walletId, merchantId])
+  @@index([walletId])
+  @@index([merchantId])
+}
+
+// OAuth grants for third-party apps accessing user's receipt data
+model DataApiGrant {
+  id          String    @id @default(cuid())
+  walletId    String
+  appId       String    // Third-party app ID
+  appName     String
+  scopes      String[]  // "receipts.read", "spending.read", "items.read"
+  grantedAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+
+  wallet ReceiptWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([walletId, appId])
+  @@index([walletId])
+  @@index([appId])
+}
+
+// Referral system for viral growth
+model Referral {
+  id             String    @id @default(cuid())
+  referrerId     String    // User who shared the referral
+  refereeId      String?   // User who signed up (null until claimed)
+  code           String    @unique // Short code like "TIGER2024"
+  deepLink       String?   // Full deep link URL
+  channel        String?   // "sms", "email", "social", "copy", "qr"
+  status         String    @default("pending") // "pending", "claimed", "rewarded", "expired"
+  rewardType     String    @default("receipt_boost") // Type of reward
+  rewardAmount   Float     @default(0)
+  rewardClaimed  Boolean   @default(false)
+  expiresAt      DateTime?
+  claimedAt      DateTime?
+  rewardedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  referrer User  @relation("referralsSent", fields: [referrerId], references: [id], onDelete: Cascade)
+  referee  User? @relation("referralsReceived", fields: [refereeId], references: [id])
+
+  @@index([referrerId])
+  @@index([refereeId])
+  @@index([code])
+  @@index([status])
+}
+
+// Referral rewards ledger
+model ReferralReward {
+  id          String   @id @default(cuid())
+  userId      String
+  referralId  String
+  type        String   // "referrer_bonus", "referee_welcome", "milestone"
+  description String
+  amount      Float    @default(0)
+  currency    String   @default("points") // "points", "cash", "premium_days"
+  claimedAt   DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([referralId])
+}
+
+// Card-linked offers from merchants
+model CardLinkedOffer {
+  id               String    @id @default(cuid())
+  merchantId       String    // Partner merchant ID
+  merchantName     String
+  merchantLogo     String?
+  title            String
+  description      String
+  type             String    @default("cashback") // "cashback", "points_multiplier", "free_item", "discount"
+  cashbackPercent  Float?    // e.g., 5.0 = 5% back
+  cashbackMax      Float?    // Max cashback amount
+  minSpend         Float?    // Minimum purchase amount
+  category         String?
+  targetAudience   String    @default("all") // "all", "new", "lapsed", "vip"
+  targetCategories String[]  // Categories user must shop in
+  targetMerchants  String[]  // Merchants user must frequent
+  priority         Int       @default(0)
+  active           Boolean   @default(true)
+  activationCount  Int       @default(0)
+  redemptionCount  Int       @default(0)
+  budget           Float?    // Total budget for this offer
+  budgetUsed       Float     @default(0)
+  startsAt         DateTime  @default(now())
+  expiresAt        DateTime
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  activations UserOfferActivation[]
+
+  @@index([merchantId])
+  @@index([active, expiresAt])
+  @@index([category])
+}
+
+// User's activated offers
+model UserOfferActivation {
+  id          String    @id @default(cuid())
+  userId      String
+  offerId     String
+  activatedAt DateTime  @default(now())
+  redeemedAt  DateTime? // When the cashback was earned
+  rewardAmount Float?   // Actual cashback earned
+  receiptId   String?   // Receipt that triggered redemption
+  createdAt   DateTime  @default(now())
+
+  offer CardLinkedOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, offerId])
+  @@index([userId])
+  @@index([offerId])
 }

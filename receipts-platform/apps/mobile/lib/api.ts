@@ -43,3 +43,26 @@ export async function setToken(token: string) {
 export async function clearToken() {
   await SecureStore.deleteItemAsync("auth_token");
 }
+
+// Convenience wrappers
+export async function apiGet<T = any>(path: string): Promise<T> {
+  return api<T>(path, { method: "GET" });
+}
+
+export async function apiPost<T = any>(path: string, body?: any): Promise<T> {
+  return api<T>(path, {
+    method: "POST",
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+export async function apiDelete<T = any>(path: string): Promise<T> {
+  return api<T>(path, { method: "DELETE" });
+}
+
+export async function apiPut<T = any>(path: string, body?: any): Promise<T> {
+  return api<T>(path, {
+    method: "PUT",
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}

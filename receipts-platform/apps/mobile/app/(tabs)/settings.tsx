@@ -42,8 +42,8 @@ export default function MoreScreen() {
     {
       title: "Connections",
       items: [
+        { title: "All Retailers", subtitle: "Amazon, Walmart, Target & 20+ more", icon: "🏪", route: "/(tabs)/connections" },
         { title: "Email (Gmail)", subtitle: "Auto-import receipt emails", icon: "📧" },
-        { title: "Retailers", subtitle: "Costco, Amazon, Target & more", icon: "🏪" },
         { title: "POS Devices", subtitle: "Hardware receipt capture", icon: "🖨️" },
       ],
     },

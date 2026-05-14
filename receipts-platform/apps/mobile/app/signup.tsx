@@ -35,7 +35,7 @@ export default function SignupScreen() {
       });
 
       await setToken(result.token);
-      router.replace("/(tabs)");
+      router.replace("/onboarding");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Signup failed";
       if (message.includes("409")) {

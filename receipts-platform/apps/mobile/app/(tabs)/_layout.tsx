@@ -65,6 +65,10 @@ export default function TabLayout() {
       />
       {/* Hidden from tab bar but accessible via navigation */}
       <Tabs.Screen
+        name="connections"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
         name="receipts"
         options={{ href: null }}
       />

@@ -11,7 +11,7 @@ const MAIN_NAV = [
 ];
 
 const SECONDARY_NAV = [
-  { href: "/email", label: "Connections", icon: EmailIcon },
+  { href: "/connections", label: "Connections", icon: EmailIcon },
   { href: "/upload", label: "Upload", icon: UploadIcon },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];

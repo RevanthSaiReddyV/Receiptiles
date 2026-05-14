@@ -13,7 +13,7 @@ import { db } from '@receipts/db';
  * - enterprise: unlimited requests, full history, raw anonymized data
  */
 
-export type DataApiTier = 'trial' | 'standard' | 'enterprise';
+export type DataApiTier = 'free' | 'trial' | 'standard' | 'enterprise';
 
 export interface DataApiKey {
   id: string;
@@ -29,6 +29,7 @@ export interface DataApiKey {
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 const TIER_LIMITS: Record<DataApiTier, { rateLimit: number; historyDays: number }> = {
+  free: { rateLimit: 50, historyDays: 7 },
   trial: { rateLimit: 100, historyDays: 30 },
   standard: { rateLimit: 10000, historyDays: 365 },
   enterprise: { rateLimit: 1000000, historyDays: 3650 },
