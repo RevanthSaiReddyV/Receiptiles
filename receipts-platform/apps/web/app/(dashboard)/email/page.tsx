@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export default async function ConnectionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; error?: string }>;
+  searchParams: Promise<{ success?: string; error?: string; connected?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -46,14 +46,22 @@ export default async function ConnectionsPage({
       </div>
 
       {/* Banners */}
-      {params.success === "email_connected" && (
+      {params.connected && (
         <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
-          Gmail connected successfully! Your receipts are being imported.
+          {params.connected === "email_connected" || params.success === "email_connected"
+            ? "Gmail connected! Your receipts are being imported."
+            : `${params.connected.charAt(0).toUpperCase() + params.connected.slice(1)} connected successfully!`}
+        </div>
+      )}
+      {params.success === "email_connected" && !params.connected && (
+        <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+          Gmail connected! Your receipts are being imported.
         </div>
       )}
       {params.error && (
-        <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
-          Connection failed: {params.error.replace(/_/g, " ")}
+        <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+          <p className="text-sm font-medium text-red-800">Connection failed</p>
+          <p className="text-xs text-red-600 mt-1">{decodeURIComponent(params.error)}</p>
         </div>
       )}
 
