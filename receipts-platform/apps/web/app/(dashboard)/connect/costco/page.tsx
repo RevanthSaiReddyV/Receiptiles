@@ -4,8 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const BOOKMARKLET_CODE = `javascript:void(function(){var t=localStorage.getItem('idToken');if(t){window.location='${typeof window !== "undefined" ? window.location.origin : "https://receipts-platform.vercel.app"}/api/connectors/costco/extract-token#'+t}else{alert('Please log into Costco first')}})()`;
+
 export default function ConnectCostcoPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [method, setMethod] = useState<"auto" | "desktop" | "mobile">("auto");
   const [token, setToken] = useState("");
   const [clientId, setClientId] = useState("");
   const [status, setStatus] = useState<"idle" | "connecting" | "syncing" | "done" | "error">("idle");
@@ -101,8 +104,93 @@ export default function ConnectCostcoPage() {
         </div>
       )}
 
-      {/* Step 1: Log into Costco */}
-      {step === 1 && (
+      {/* Method selection */}
+      {step === 1 && method === "auto" && (
+        <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-zinc-900 mb-4">How are you connecting?</h2>
+          <div className="space-y-3">
+            <button
+              onClick={() => setMethod("desktop")}
+              className="w-full flex items-center gap-4 rounded-xl border border-zinc-200 p-4 hover:border-violet-300 hover:bg-violet-50/30 transition-all text-left"
+            >
+              <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-lg">💻</div>
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Desktop / Laptop</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Copy token from browser console</p>
+              </div>
+            </button>
+            <button
+              onClick={() => setMethod("mobile")}
+              className="w-full flex items-center gap-4 rounded-xl border border-zinc-200 p-4 hover:border-violet-300 hover:bg-violet-50/30 transition-all text-left"
+            >
+              <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-lg">📱</div>
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Phone / Tablet</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Use bookmarklet to connect automatically</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile flow */}
+      {step === 1 && method === "mobile" && (
+        <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-zinc-900 mb-4">Connect from your phone</h2>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-[10px] font-bold text-zinc-500">1</span>
+              </div>
+              <div>
+                <p className="text-sm text-zinc-700">Save this as a bookmark on your phone:</p>
+                <p className="text-[10px] text-zinc-400 mt-1">Long-press the link below → &quot;Add Bookmark&quot; or &quot;Add to Favorites&quot;</p>
+                <a
+                  href={BOOKMARKLET_CODE}
+                  className="mt-2 inline-block rounded-lg bg-violet-100 px-4 py-2 text-xs font-semibold text-violet-700"
+                  onClick={(e) => { e.preventDefault(); alert("Long-press this link and save it as a bookmark. Name it 'Connect Costco'."); }}
+                >
+                  📌 Connect Costco (save as bookmark)
+                </a>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-[10px] font-bold text-zinc-500">2</span>
+              </div>
+              <div>
+                <p className="text-sm text-zinc-700">Open <a href="https://www.costco.com/myaccount" target="_blank" rel="noopener noreferrer" className="text-violet-600 font-medium">costco.com</a> and log in</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-[10px] font-bold text-zinc-500">3</span>
+              </div>
+              <p className="text-sm text-zinc-700">Once logged in, tap the &quot;Connect Costco&quot; bookmark you saved. It will automatically grab your token and connect your account.</p>
+            </div>
+
+            <div className="rounded-lg bg-amber-50 border border-amber-200/60 px-3 py-2">
+              <p className="text-[11px] text-amber-700">
+                <strong>Alternative:</strong> Open <a href="/api/connectors/costco/extract-token" target="_blank" className="text-amber-800 underline">this link</a> in the same browser where you&apos;re logged into Costco, and paste your token manually.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <button onClick={() => setMethod("auto")} className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 transition-colors">
+              Back
+            </button>
+            <button onClick={() => { setMethod("desktop"); }} className="flex-1 rounded-xl bg-zinc-900 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors">
+              Use Desktop Instead
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 1: Log into Costco (Desktop flow) */}
+      {step === 1 && method === "desktop" && (
         <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm p-6">
           <h2 className="text-sm font-semibold text-zinc-900 mb-4">Step 1: Log into Costco</h2>
 
