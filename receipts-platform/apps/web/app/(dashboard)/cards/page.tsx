@@ -8,6 +8,7 @@ import { AddCardForm } from "./add-card-form";
 import { BenefitTracker } from "./benefit-tracker";
 import { parseCardBenefits } from "./parse-benefits";
 import { CardScanner } from "./card-scanner";
+import { NearbyRecommendations } from "./nearby-recs";
 import { DeleteButton } from "./delete-button";
 import { FlipCard } from "./flip-card";
 
@@ -61,6 +62,13 @@ export default async function CardsPage() {
           </div>
         </div>
       )}
+
+      {/* Location-based recommendations */}
+      <NearbyRecommendations userCards={cards.map(c => ({
+        id: c.id,
+        name: c.name,
+        dbId: CARD_DATABASE.find(d => d.name.toLowerCase() === c.name.toLowerCase())?.id ?? null,
+      }))} />
 
       {/* Card Scanner + Manual Add */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
