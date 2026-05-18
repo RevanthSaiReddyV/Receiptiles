@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#242D28">
+  <meta name="description" content="Receiptiles eliminates wasteful paper receipts with a smart NFC device. Retailers save money, customers get digital wallets.">
   <title>Receiptiles // From Chaos to Clarity</title>
   <!-- Tailwind CSS (inlined for production performance) -->
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
@@ -33,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@latest" defer></script>
 
   <style>
     body {
@@ -161,14 +163,29 @@
         </a>
         <a href="#solutions" class="hover:text-white transition-colors">Solutions</a>
       </div>
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-3">
         <a href="#founding-beta" id="nav-signin" class="hidden sm:block text-sm font-semibold text-white hover:text-white/80 transition-colors">Claim Spot</a>
-        <button id="nav-signup-btn" class="inline-flex items-center justify-center font-medium transition-all rounded-full h-10 px-6 py-2 text-sm border border-[#EBEAE4] bg-white/5 backdrop-blur-xl text-white hover:bg-white/15">
+        <button id="nav-signup-btn" class="hidden sm:inline-flex items-center justify-center font-medium transition-all rounded-full h-10 px-6 py-2 text-sm border border-[#EBEAE4] bg-white/5 backdrop-blur-xl text-white hover:bg-white/15">
           Join Beta
+        </button>
+        <button id="mobile-menu-btn" class="sm:hidden w-10 h-10 flex items-center justify-center rounded-lg text-white hover:bg-white/10 transition-colors">
+          <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
       </div>
     </div>
   </nav>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#242D28]/98 backdrop-blur-xl hidden flex-col items-center justify-center gap-8 text-center">
+    <button id="mobile-menu-close" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-lg text-white hover:bg-white/10">
+      <i data-lucide="x" class="w-6 h-6"></i>
+    </button>
+    <a href="#impact" class="mobile-menu-link text-2xl font-semibold text-white hover:text-[#7BE899] transition-colors">Impact</a>
+    <a href="#how-it-works" class="mobile-menu-link text-2xl font-semibold text-white hover:text-[#7BE899] transition-colors">The Cycle</a>
+    <a href="#founding-beta" class="mobile-menu-link text-2xl font-semibold text-[#7BE899]">Founding 100</a>
+    <a href="#solutions" class="mobile-menu-link text-2xl font-semibold text-white hover:text-[#7BE899] transition-colors">Solutions</a>
+    <a href="#founding-beta" class="mobile-menu-link mt-4 px-8 py-4 bg-[#7BE899] text-[#1C1C1A] rounded-full font-bold text-lg">Claim Beta Spot</a>
+  </div>
 
   <!-- HERO SECTION -->
   <section class="relative pt-32 pb-32 lg:pt-40 lg:pb-40 overflow-hidden min-h-screen rounded-b-[2rem] flex flex-col justify-center bg-[#242D28]">
@@ -179,7 +196,7 @@
         <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#7BE899]/10 text-[#7BE899] text-[11px] font-bold tracking-widest uppercase rounded-full border border-[#7BE899]/20">
           <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Evolution of Retail
         </span>
-        <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] text-[#F7F6F2]">
+        <h1 class="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight leading-[1.05] text-[#F7F6F2]">
           From Chaos to <br>
           <span class="font-serif italic text-[#7BE899] font-medium drop-shadow-sm">Clarity.</span>
         </h1>
@@ -417,7 +434,7 @@
   </section>
 
   <!-- INTERACTIVE DIAGONAL SPLIT SECTION -->
-  <section id="solutions" class="relative w-full h-[120vh] min-h-[750px] overflow-hidden select-none border-y border-[#EBEAE4] cursor-ew-resize bg-black">
+  <section id="solutions" class="relative w-full h-[100vh] md:h-[120vh] min-h-[600px] md:min-h-[750px] overflow-hidden select-none border-y border-[#EBEAE4] cursor-ew-resize bg-black">
 
     <!-- RIGHT COMPONENT SIDE (Underlay Layer / Retailers) -->
     <div class="absolute inset-0 h-full w-full bg-[#242D28] text-[#F7F6F2] z-0">
@@ -510,7 +527,7 @@
 
     <!-- FLOATING INTERACTIVE HINT -->
     <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 bg-[#1C1C1A]/80 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full text-[10px] md:text-xs text-slate-300 pointer-events-none flex items-center gap-2 tracking-wider uppercase font-semibold">
-      <i data-lucide="sparkles" class="text-brand-mint w-3.5 h-3.5 animate-pulse"></i> Slide left or right to explore
+      <i data-lucide="sparkles" class="text-brand-mint w-3.5 h-3.5 animate-pulse"></i> <span class="hidden md:inline">Slide left or right to explore</span><span class="md:hidden">Swipe to explore</span>
     </div>
 
   </section>
@@ -646,8 +663,8 @@ VISA **** 1234</textarea>
     </div>
 
     <!-- Interactive marquee perspective wall -->
-    <div class="relative flex h-[620px] w-full flex-row items-center justify-center overflow-hidden gap-4 [perspective:1000px]">
-      <div id="marquee-wall" class="flex flex-row items-start gap-6 transition-transform duration-500 ease-out" style="transform: translateX(-50px) translateY(0px) translateZ(-100px) rotateX(15deg) rotateY(-8deg) rotateZ(12deg);">
+    <div class="relative flex h-[450px] md:h-[620px] w-full flex-row items-center justify-center overflow-hidden gap-4 [perspective:600px] md:[perspective:1000px]">
+      <div id="marquee-wall" class="flex flex-row items-start gap-4 md:gap-6 transition-transform duration-500 ease-out" style="transform: translateX(-30px) translateY(0px) translateZ(-60px) rotateX(12deg) rotateY(-6deg) rotateZ(10deg);">
 
         <!-- COLUMN 1 -->
         <div class="group flex flex-col overflow-hidden gap-6 h-[1200px]">
@@ -874,7 +891,7 @@ VISA **** 1234</textarea>
 
       <!-- Main Action Content -->
       <div class="relative z-10 flex flex-1 flex-col items-center justify-center px-6 mt-20 w-full max-w-5xl mx-auto">
-        <h2 id="footer-prompt" class="text-4xl md:text-8xl font-black tracking-tighter mb-12 text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-400 transition-all duration-1000 transform translate-y-8 opacity-0">
+        <h2 id="footer-prompt" class="text-3xl md:text-5xl lg:text-8xl font-black tracking-tighter mb-8 md:mb-12 text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-400 transition-all duration-1000 transform translate-y-8 opacity-0">
           Ready to begin?
         </h2>
 
@@ -909,7 +926,9 @@ VISA **** 1234</textarea>
   </div>
 
   <script>
-    lucide.createIcons();
+    document.addEventListener('DOMContentLoaded', () => {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    else document.querySelector('script[src*="lucide"]').addEventListener('load', () => lucide.createIcons());
 
     // 0. TOAST NOTIFICATION SYSTEM
     const toastEl = document.getElementById('toast');
@@ -928,8 +947,33 @@ VISA **** 1234</textarea>
     }
 
     // Wire nav buttons
-    document.getElementById('nav-signup-btn').addEventListener('click', () => {
-      document.getElementById('founding-beta').scrollIntoView({ behavior: 'smooth' });
+    const navSignupBtnEl = document.getElementById('nav-signup-btn');
+    if (navSignupBtnEl) {
+      navSignupBtnEl.addEventListener('click', () => {
+        document.getElementById('founding-beta').scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    // Mobile menu
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.remove('hidden');
+      mobileMenu.classList.add('flex');
+    });
+
+    mobileMenuClose.addEventListener('click', () => {
+      mobileMenu.classList.add('hidden');
+      mobileMenu.classList.remove('flex');
+    });
+
+    document.querySelectorAll('.mobile-menu-link').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        mobileMenu.classList.remove('flex');
+      });
     });
 
     // 1. NAV SCROLL BEHAVIOR
@@ -970,22 +1014,31 @@ VISA **** 1234</textarea>
       }
     });
 
-    // 2. 3D CARD TILT
+    // 2. 3D CARD TILT (mouse on desktop, gyroscope on mobile)
     const card = document.getElementById('interactive-hardware-card');
     const cardInner = document.getElementById('card-inner');
 
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const rotateX = ((y / rect.height) - 0.5) * -30;
-      const rotateY = ((x / rect.width) - 0.5) * 30;
-      cardInner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-    });
-
-    card.addEventListener('mouseleave', () => {
-      cardInner.style.transform = `rotateX(0deg) rotateY(0deg)`;
-    });
+    if (!isMobile) {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const rotateX = ((y / rect.height) - 0.5) * -30;
+        const rotateY = ((x / rect.width) - 0.5) * 30;
+        cardInner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        cardInner.style.transform = `rotateX(0deg) rotateY(0deg)`;
+      });
+    } else {
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', (e) => {
+          const rx = Math.max(-15, Math.min(15, (e.beta - 45) * 0.3));
+          const ry = Math.max(-15, Math.min(15, e.gamma * 0.3));
+          cardInner.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+        });
+      }
+    }
 
     // 3. WAITLIST FLOW
     const showWaitlistBtn = document.getElementById('btn-show-waitlist');
@@ -1086,14 +1139,20 @@ VISA **** 1234</textarea>
     let targetSplitPercent = 60;
     let wTime = 0;
 
-    solutionsSection.addEventListener('mousemove', (e) => {
+    function handleSplitInput(clientX) {
       const rect = solutionsSection.getBoundingClientRect();
-      const mouseXRatio = (e.clientX - rect.left) / rect.width;
-      if (mouseXRatio < 0.45) targetSplitPercent = 90;
-      else if (mouseXRatio > 0.55) targetSplitPercent = 15;
+      const ratio = (clientX - rect.left) / rect.width;
+      if (ratio < 0.45) targetSplitPercent = 90;
+      else if (ratio > 0.55) targetSplitPercent = 15;
       else targetSplitPercent = 55;
-    });
+    }
 
+    solutionsSection.addEventListener('mousemove', (e) => handleSplitInput(e.clientX));
+    solutionsSection.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      handleSplitInput(e.touches[0].clientX);
+    }, { passive: false });
+    solutionsSection.addEventListener('touchend', () => { targetSplitPercent = 60; });
     solutionsSection.addEventListener('mouseleave', () => { targetSplitPercent = 60; });
 
     function updateSplitInterpolation() {
@@ -1123,9 +1182,10 @@ VISA **** 1234</textarea>
     }
     requestAnimationFrame(updateSplitInterpolation);
 
-    // 6. WEBGL SHADER
+    // 6. WEBGL SHADER (skip on mobile for performance)
+    const isMobile = window.innerWidth < 768;
     const glCanvas = document.getElementById('shader-canvas');
-    const gl = glCanvas.getContext('webgl', { premultipliedAlpha: false, alpha: true });
+    const gl = !isMobile ? glCanvas.getContext('webgl', { premultipliedAlpha: false, alpha: true }) : null;
 
     if (gl) {
       const vertexSource = `attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }`;
@@ -1274,6 +1334,7 @@ VISA **** 1234</textarea>
         }
       });
     });
+    }); // end DOMContentLoaded
   </script>
 </body>
 </html>
