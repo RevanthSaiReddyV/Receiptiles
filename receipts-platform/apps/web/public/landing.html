@@ -859,13 +859,13 @@ VISA **** 1234</textarea>
 
   <!-- CINEMATIC FOOTER -->
   <div id="download" class="relative h-screen w-full bg-[#1C1C1A]" style="clip-path: polygon(0% 0, 100% 0%, 100% 100%, 0 100%);">
-    <footer class="fixed bottom-0 left-0 flex h-screen w-full flex-col justify-between overflow-hidden bg-[#1C1C1A] text-[#F7F6F2]">
+    <footer class="fixed bottom-0 left-0 flex h-screen w-full flex-col justify-between overflow-x-clip overflow-y-hidden bg-[#1C1C1A] text-[#F7F6F2]">
 
       <div class="absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0 footer-aurora" style="background: radial-gradient(circle, rgba(123, 232, 153, 0.1) 0%, rgba(232, 196, 123, 0.05) 40%, transparent 70%);"></div>
 
       <div class="footer-bg-grid absolute inset-0 z-0 pointer-events-none"></div>
 
-      <div id="footer-giant-bg-text" class="absolute -bottom-[5vh] left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none text-[20vw] font-black tracking-tighter opacity-10 uppercase text-transparent transition-all duration-700 leading-none" style="transform: translateX(-50%) translateY(10vh) scale(0.85); -webkit-text-stroke: 1px rgba(255,255,255,0.06); background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 70%); -webkit-background-clip: text; background-clip: text;">
+      <div id="footer-giant-bg-text" class="absolute -bottom-[5vh] left-0 right-0 text-center whitespace-nowrap z-0 pointer-events-none select-none text-[18vw] font-black tracking-tighter opacity-10 uppercase text-transparent transition-all duration-700 leading-none" style="transform: translateY(10vh) scale(0.85); -webkit-text-stroke: 1px rgba(255,255,255,0.06); background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 70%); -webkit-background-clip: text; background-clip: text;">
         RECEIPTILES
       </div>
 
@@ -1302,7 +1302,7 @@ VISA **** 1234</textarea>
         const yOffset = Math.max(0, 10 - (scrollPercent * 10));
         const scaleVal = 0.85 + (scrollPercent * 0.15);
         const opacityVal = scrollPercent * 1.5;
-        footerGiantText.style.transform = `translateX(-50%) translateY(${yOffset}vh) scale(${scaleVal})`;
+        footerGiantText.style.transform = `translateY(${yOffset}vh) scale(${scaleVal})`;
         footerGiantText.style.opacity = Math.min(0.12, opacityVal);
       }
     });
