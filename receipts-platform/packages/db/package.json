@@ -11,11 +11,15 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^6.19.3"
   },
   "devDependencies": {
     "prisma": "^6.19.3",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
 }

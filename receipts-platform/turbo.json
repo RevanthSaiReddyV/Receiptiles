@@ -12,6 +12,10 @@
       "persistent": true
     },
     "lint": {},
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {},
     "db:generate": {
       "cache": false
     },

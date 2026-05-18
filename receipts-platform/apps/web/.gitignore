@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment files with actual secrets
+.env
+.env.local
+.env*.local
+
+# Keep template env files (they contain no secrets, only placeholders)
+# .env.development, .env.staging, .env.production are tracked as templates
+
+# Sentry
+.sentryclirc
+
+# Vercel
+.vercel
+
+# Build artifacts
+*.tsbuildinfo
