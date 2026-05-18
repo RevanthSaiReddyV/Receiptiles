@@ -865,7 +865,7 @@ VISA **** 1234</textarea>
 
       <div class="footer-bg-grid absolute inset-0 z-0 pointer-events-none"></div>
 
-      <div id="footer-giant-bg-text" class="absolute bottom-[2vh] left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-0 pointer-events-none select-none text-[16vw] font-black tracking-tighter uppercase text-transparent transition-all duration-700 leading-none" style="opacity: 0.08; -webkit-text-stroke: 1.5px rgba(255,255,255,0.12); background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 70%); -webkit-background-clip: text; background-clip: text;">
+      <div id="footer-giant-bg-text" class="absolute bottom-[2vh] left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-[1] pointer-events-none select-none text-[16vw] font-black tracking-tighter uppercase leading-none" style="color: rgba(255,255,255,0.06); -webkit-text-stroke: 1px rgba(255,255,255,0.08);">
         RECEIPTILES
       </div>
 
@@ -1301,10 +1301,8 @@ VISA **** 1234</textarea>
       const viewportHeight = window.innerHeight;
       if (rect.top < viewportHeight) {
         const scrollPercent = Math.min(1, 1 - (rect.top / viewportHeight));
-        const scaleVal = 0.92 + (scrollPercent * 0.08);
-        const opacityVal = 0.04 + (scrollPercent * 0.08);
+        const scaleVal = 0.95 + (scrollPercent * 0.05);
         footerGiantText.style.transform = `translateX(-50%) scale(${scaleVal})`;
-        footerGiantText.style.opacity = Math.min(0.12, opacityVal);
       }
     });
 
