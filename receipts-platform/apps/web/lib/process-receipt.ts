@@ -1,5 +1,6 @@
 import { db } from "@receipts/db";
 import { parseReceiptFromImage } from "@/lib/ocr";
+import { sendReceiptEmail } from "@/lib/email/send";
 
 export async function processReceiptJob(params: {
   jobId: string;
@@ -61,6 +62,13 @@ export async function processReceiptJob(params: {
         receiptId: receipt.id,
       },
     });
+
+    if (process.env.RESEND_API_KEY) {
+      const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+      if (user?.email) {
+        sendReceiptEmail(user.email, { ...parsed, source: "upload" }).catch(() => {});
+      }
+    }
   } catch (error) {
     await db.ingestionJob.update({
       where: { id: jobId },
