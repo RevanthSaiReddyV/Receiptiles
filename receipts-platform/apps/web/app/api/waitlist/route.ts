@@ -1,19 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@receipts/db";
 
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 });
+    return false;
+  }
+  entry.count++;
+  return entry.count > 5;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { email, source } = await req.json();
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
 
-    if (!email || !email.includes("@")) {
+    if (isRateLimited(ip)) {
+      return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
+    }
+
+    const body = await req.json();
+    const { email, source, website } = body;
+
+    // Honeypot: if `website` field is filled, it's a bot
+    if (website) {
+      return NextResponse.json({ success: true, id: "fake", remaining: 74 });
+    }
+
+    if (!email || !email.includes("@") || email.length > 254) {
       return NextResponse.json({ error: "Valid email required" }, { status: 400 });
     }
 
+    const normalized = email.toLowerCase().trim();
+
     const entry = await db.waitlistEntry.upsert({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: normalized },
       update: {},
       create: {
-        email: email.toLowerCase().trim(),
+        email: normalized,
         source: source || "landing",
       },
     });

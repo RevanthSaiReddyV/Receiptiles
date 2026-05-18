@@ -1,5 +1,9 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export default function RootPage() {
-  redirect("/landing.html");
+import dynamic from "next/dynamic";
+
+const LandingPageContent = dynamic(() => import("./landing-page"), { ssr: false });
+
+export default function LandingPage() {
+  return <LandingPageContent />;
 }

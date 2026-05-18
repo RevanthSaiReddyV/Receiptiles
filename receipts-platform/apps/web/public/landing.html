@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Receiptiles // From Chaos to Clarity</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS (inlined for production performance) -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -136,6 +136,14 @@
 </head>
 <body class="bg-[#F7F6F2] text-[#1C1C1A] overflow-x-hidden selection:bg-[#4A5D4E]/20">
 
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none opacity-0 translate-y-[-20px] transition-all duration-300">
+    <div class="bg-[#242D28] text-white px-6 py-3 rounded-full shadow-2xl border border-[#323E36] flex items-center gap-3 text-sm font-medium pointer-events-auto">
+      <i data-lucide="clock" class="w-4 h-4 text-[#7BE899]"></i>
+      <span id="toast-message">Coming Soon</span>
+    </div>
+  </div>
+
   <!-- NAVIGATION HEADER -->
   <nav id="main-nav" class="fixed top-0 w-full z-50 transition-all duration-500 bg-transparent border-b border-transparent h-28 flex items-center">
     <div class="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
@@ -228,6 +236,7 @@
                 </div>
 
                 <div id="waitlist-state-form" class="hidden transition-all duration-300 w-11/12 max-w-[240px] bg-white/95 backdrop-blur-md rounded-full shadow-2xl overflow-hidden border border-white/50 flex">
+                  <input type="text" name="website" id="hp-card" class="absolute -left-[9999px] opacity-0 w-0 h-0" tabindex="-1" autocomplete="off">
                   <input type="email" id="waitlist-email" placeholder="Enter email..." class="flex-1 px-4 py-2.5 text-xs focus:outline-none min-w-0 bg-transparent text-[#1C1C1A] placeholder:text-[#6B6A65]" required>
                   <button id="btn-submit-waitlist" class="px-4 bg-[#7BE899] text-[#1C1C1A] hover:bg-[#4A5D4E] hover:text-white transition-colors flex items-center justify-center">
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -382,6 +391,7 @@
 
           <!-- Interactive Beta Spot reservation form -->
           <div class="pt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 max-w-lg">
+            <input type="text" name="website" id="hp-beta" class="absolute -left-[9999px] opacity-0 w-0 h-0" tabindex="-1" autocomplete="off">
             <div class="flex-1 bg-white/5 border border-white/10 rounded-full overflow-hidden flex px-4 items-center focus-within:ring-2 focus-within:ring-[#7BE899] transition-all">
               <i data-lucide="mail" class="text-brand-sage w-4 h-4 shrink-0 mr-3"></i>
               <input type="email" id="beta-email-input" placeholder="Join program with your email..." class="bg-transparent text-white placeholder:text-[#82907A] text-sm py-3.5 w-full focus:outline-none">
@@ -901,6 +911,27 @@ VISA **** 1234</textarea>
   <script>
     lucide.createIcons();
 
+    // 0. TOAST NOTIFICATION SYSTEM
+    const toastEl = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-message');
+    let toastTimer = null;
+
+    function showToast(message, duration = 3000) {
+      if (toastTimer) clearTimeout(toastTimer);
+      toastMsg.textContent = message;
+      toastEl.classList.remove('opacity-0', 'translate-y-[-20px]');
+      toastEl.classList.add('opacity-100', 'translate-y-0');
+      toastTimer = setTimeout(() => {
+        toastEl.classList.add('opacity-0', 'translate-y-[-20px]');
+        toastEl.classList.remove('opacity-100', 'translate-y-0');
+      }, duration);
+    }
+
+    // Wire nav buttons
+    document.getElementById('nav-signup-btn').addEventListener('click', () => {
+      document.getElementById('founding-beta').scrollIntoView({ behavior: 'smooth' });
+    });
+
     // 1. NAV SCROLL BEHAVIOR
     const mainNav = document.getElementById('main-nav');
     const navIcon = document.getElementById('nav-icon');
@@ -974,11 +1005,12 @@ VISA **** 1234</textarea>
     submitWaitlistBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (wEmail.value && wEmail.value.includes('@')) {
+        const honeypot = document.getElementById('hp-card').value;
         try {
           const res = await fetch('/api/waitlist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: wEmail.value, source: 'hero-card' })
+            body: JSON.stringify({ email: wEmail.value, source: 'hero-card', website: honeypot })
           });
           const data = await res.json();
           if (data.success && data.remaining !== undefined) {
@@ -988,6 +1020,7 @@ VISA **** 1234</textarea>
         } catch {}
         wForm.classList.add('hidden');
         wSuccess.classList.remove('hidden');
+        showToast('Welcome aboard! Check your inbox soon.');
       }
     });
 
@@ -1008,23 +1041,36 @@ VISA **** 1234</textarea>
     betaSubmitBtn.addEventListener('click', async () => {
       const email = betaEmailInput.value.trim();
       if (email && email.includes('@')) {
+        const honeypot = document.getElementById('hp-beta').value;
         betaSubmitBtn.disabled = true;
         betaSubmitBtn.textContent = "Reserving...";
         try {
           const res = await fetch('/api/waitlist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, source: 'founding-beta' })
+            body: JSON.stringify({ email, source: 'founding-beta', website: honeypot })
           });
           const data = await res.json();
-          if (data.success && data.remaining !== undefined) {
+          if (data.remaining !== undefined) {
             remainingSlots = data.remaining;
             slotsCounterText.textContent = `${remainingSlots} / 100`;
           }
-        } catch {}
+          if (data.error) {
+            showToast(data.error);
+            betaSubmitBtn.disabled = false;
+            betaSubmitBtn.textContent = "Claim Beta Spot";
+            return;
+          }
+        } catch {
+          showToast('Network error. Please try again.');
+          betaSubmitBtn.disabled = false;
+          betaSubmitBtn.textContent = "Claim Beta Spot";
+          return;
+        }
         betaSubmitBtn.textContent = "✓ Spot Reserved";
         betaSubmitBtn.classList.replace('bg-[#7BE899]', 'bg-[#4A5D4E]');
         betaSubmitBtn.classList.add('text-white');
+        showToast('Your founding spot is confirmed!');
       }
     });
 
@@ -1203,6 +1249,30 @@ VISA **** 1234</textarea>
 
     document.getElementById('btn-scroll-top').addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // 9. WIRE ALL REMAINING BUTTONS — "Coming Soon" for unbuilt features
+    document.querySelectorAll('a[href="#"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        showToast('Coming Soon — Join the beta to get early access!');
+      });
+    });
+
+    // Footer "Apply to Beta" and "Eco Impact" already have real #href anchors — they work.
+    // "Download iOS" / "Download Android" links would show coming soon but they're already gone from this version.
+
+    // Wire the hero CTA buttons (they already have valid anchors, but let's ensure smooth scroll)
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href === '#') return; // handled above
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
     });
   </script>
 </body>
