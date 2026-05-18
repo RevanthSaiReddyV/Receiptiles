@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@receipts/db";
+import { sendWaitlistConfirmationEmail } from "@/lib/email/waitlist-confirmation";
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
@@ -36,6 +37,11 @@ export async function POST(req: NextRequest) {
 
     const normalized = email.toLowerCase().trim();
 
+    // Check if already exists to avoid re-sending confirmation
+    const existing = await db.waitlistEntry.findUnique({
+      where: { email: normalized },
+    });
+
     const entry = await db.waitlistEntry.upsert({
       where: { email: normalized },
       update: {},
@@ -46,11 +52,17 @@ export async function POST(req: NextRequest) {
     });
 
     const count = await db.waitlistEntry.count();
+    const remaining = Math.max(0, 100 - count);
+
+    // Send confirmation email only for new signups
+    if (!existing) {
+      sendWaitlistConfirmationEmail(normalized, remaining).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,
       id: entry.id,
-      remaining: Math.max(0, 100 - count),
+      remaining,
     });
   } catch {
     return NextResponse.json({ error: "Failed to join waitlist" }, { status: 500 });

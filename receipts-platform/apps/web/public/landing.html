@@ -165,7 +165,7 @@
       </div>
       <div class="flex items-center space-x-3">
         <a href="#founding-beta" id="nav-signin" class="hidden sm:block text-sm font-semibold text-white hover:text-white/80 transition-colors">Claim Spot</a>
-        <button id="nav-signup-btn" class="hidden sm:inline-flex items-center justify-center font-medium transition-all rounded-full h-10 px-6 py-2 text-sm border border-[#EBEAE4] bg-white/5 backdrop-blur-xl text-white hover:bg-white/15">
+        <button id="nav-signup-btn" class="hidden sm:inline-flex items-center justify-center font-medium transition-all rounded-full h-10 px-6 py-2 text-sm border border-[#7BE899]/40 bg-[#7BE899] text-[#1C1C1A] hover:bg-[#E8C47B] hover:border-[#E8C47B]/40 shadow-lg shadow-[#7BE899]/20">
           Join Beta
         </button>
         <button id="mobile-menu-btn" class="sm:hidden w-10 h-10 flex items-center justify-center rounded-lg text-white hover:bg-white/10 transition-colors">
@@ -434,7 +434,7 @@
   </section>
 
   <!-- INTERACTIVE DIAGONAL SPLIT SECTION -->
-  <section id="solutions" class="relative w-full h-[100vh] md:h-[120vh] min-h-[600px] md:min-h-[750px] overflow-hidden select-none border-y border-[#EBEAE4] cursor-ew-resize bg-black">
+  <section id="solutions" class="relative w-full h-[80vh] md:h-[90vh] min-h-[550px] md:min-h-[650px] overflow-hidden select-none border-y border-[#EBEAE4] cursor-ew-resize bg-black">
 
     <!-- RIGHT COMPONENT SIDE (Underlay Layer / Retailers) -->
     <div class="absolute inset-0 h-full w-full bg-[#242D28] text-[#F7F6F2] z-0">
@@ -509,10 +509,10 @@
     </div>
 
     <!-- SPLIT INTERACTIVE LINE OVERLAY SVG -->
-    <svg id="lightning-overlay" class="absolute inset-0 w-full h-full pointer-events-none z-30 select-none" preserveAspectRatio="none">
+    <svg id="lightning-overlay" class="absolute inset-0 w-full h-full pointer-events-none z-30 select-none" viewBox="0 0 100 100" preserveAspectRatio="none">
       <defs>
         <filter id="electric-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feGaussianBlur stdDeviation="0.4" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -520,9 +520,9 @@
         </filter>
       </defs>
       <!-- Base Glowing lightning trails -->
-      <polyline id="lightning-outer" points="60,0 35,100" fill="none" stroke="rgba(123, 232, 153, 0.4)" stroke-width="4" vector-effect="non-scaling-stroke" filter="url(#electric-glow)" />
-      <polyline id="lightning-mid" points="60,0 35,100" fill="none" stroke="rgba(74, 93, 78, 0.6)" stroke-width="2.5" vector-effect="non-scaling-stroke" />
-      <polyline id="lightning-core" points="60,0 35,100" fill="none" stroke="white" stroke-width="1.2" vector-effect="non-scaling-stroke" />
+      <polyline id="lightning-outer" points="60,0 35,100" fill="none" stroke="rgba(123, 232, 153, 0.4)" stroke-width="0.5" filter="url(#electric-glow)" />
+      <polyline id="lightning-mid" points="60,0 35,100" fill="none" stroke="rgba(74, 93, 78, 0.6)" stroke-width="0.3" />
+      <polyline id="lightning-core" points="60,0 35,100" fill="none" stroke="white" stroke-width="0.15" />
     </svg>
 
     <!-- FLOATING INTERACTIVE HINT -->
@@ -865,7 +865,7 @@ VISA **** 1234</textarea>
 
       <div class="footer-bg-grid absolute inset-0 z-0 pointer-events-none"></div>
 
-      <div id="footer-giant-bg-text" class="absolute -bottom-[5vh] left-0 right-0 text-center whitespace-nowrap z-0 pointer-events-none select-none text-[18vw] font-black tracking-tighter opacity-10 uppercase text-transparent transition-all duration-700 leading-none" style="transform: translateY(10vh) scale(0.85); -webkit-text-stroke: 1px rgba(255,255,255,0.06); background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 70%); -webkit-background-clip: text; background-clip: text;">
+      <div id="footer-giant-bg-text" class="absolute bottom-[2vh] left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-0 pointer-events-none select-none text-[16vw] font-black tracking-tighter uppercase text-transparent transition-all duration-700 leading-none" style="opacity: 0.08; -webkit-text-stroke: 1.5px rgba(255,255,255,0.12); background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 70%); -webkit-background-clip: text; background-clip: text;">
         RECEIPTILES
       </div>
 
@@ -996,7 +996,7 @@ VISA **** 1234</textarea>
         navLinks.classList.add('text-[#6B6A65]');
         navSignin.classList.remove('text-white', 'hover:text-white/80');
         navSignin.classList.add('text-[#1C1C1A]', 'hover:text-[#4A5D4E]');
-        navSignupBtn.classList.remove('border-white/10', 'bg-white/5', 'text-white', 'hover:bg-white/15');
+        navSignupBtn.classList.remove('border-[#7BE899]/40', 'bg-[#7BE899]', 'text-[#1C1C1A]', 'hover:bg-[#E8C47B]', 'hover:border-[#E8C47B]/40', 'shadow-lg', 'shadow-[#7BE899]/20');
         navSignupBtn.classList.add('border-[#EBEAE4]', 'bg-[#242D28]', 'text-white', 'hover:bg-[#1C1C1A]');
       } else {
         mainNav.classList.add('bg-transparent', 'border-transparent', 'h-28');
@@ -1009,12 +1009,13 @@ VISA **** 1234</textarea>
         navLinks.classList.remove('text-[#6B6A65]');
         navSignin.classList.add('text-white', 'hover:text-white/80');
         navSignin.classList.remove('text-[#1C1C1A]', 'hover:text-[#4A5D4E]');
-        navSignupBtn.classList.add('border-white/10', 'bg-white/5', 'text-white', 'hover:bg-white/15');
+        navSignupBtn.classList.add('border-[#7BE899]/40', 'bg-[#7BE899]', 'text-[#1C1C1A]', 'hover:bg-[#E8C47B]', 'hover:border-[#E8C47B]/40', 'shadow-lg', 'shadow-[#7BE899]/20');
         navSignupBtn.classList.remove('border-[#EBEAE4]', 'bg-[#242D28]', 'text-white', 'hover:bg-[#1C1C1A]');
       }
     });
 
     // 2. 3D CARD TILT (mouse on desktop, gyroscope on mobile)
+    const isMobile = window.innerWidth < 768;
     const card = document.getElementById('interactive-hardware-card');
     const cardInner = document.getElementById('card-inner');
 
@@ -1141,13 +1142,15 @@ VISA **** 1234</textarea>
 
     function handleSplitInput(clientX) {
       const rect = solutionsSection.getBoundingClientRect();
-      const ratio = (clientX - rect.left) / rect.width;
-      if (ratio < 0.45) targetSplitPercent = 90;
-      else if (ratio > 0.55) targetSplitPercent = 15;
-      else targetSplitPercent = 55;
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      // Map mouse position linearly: left edge = 90 (consumers revealed), right edge = 20 (retailers revealed)
+      targetSplitPercent = 90 - (ratio * 70);
     }
 
     solutionsSection.addEventListener('mousemove', (e) => handleSplitInput(e.clientX));
+    solutionsSection.addEventListener('touchstart', (e) => {
+      handleSplitInput(e.touches[0].clientX);
+    }, { passive: true });
     solutionsSection.addEventListener('touchmove', (e) => {
       e.preventDefault();
       handleSplitInput(e.touches[0].clientX);
@@ -1172,7 +1175,7 @@ VISA **** 1234</textarea>
         const offsetWave1 = 1.2 * Math.sin(10 * normY + wTime * 4.2);
         const offsetWave2 = 0.6 * Math.sin(25 * normY - wTime * 12);
         const finalX = baseLineX + offsetWave1 + offsetWave2;
-        pointsStr += `${finalX}%,${normY * 100}% `;
+        pointsStr += `${finalX},${normY * 100} `;
       }
 
       polyOuter.setAttribute('points', pointsStr);
@@ -1183,7 +1186,6 @@ VISA **** 1234</textarea>
     requestAnimationFrame(updateSplitInterpolation);
 
     // 6. WEBGL SHADER (skip on mobile for performance)
-    const isMobile = window.innerWidth < 768;
     const glCanvas = document.getElementById('shader-canvas');
     const gl = !isMobile ? glCanvas.getContext('webgl', { premultipliedAlpha: false, alpha: true }) : null;
 
@@ -1298,11 +1300,10 @@ VISA **** 1234</textarea>
       const rect = downloadWrapper.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       if (rect.top < viewportHeight) {
-        const scrollPercent = 1 - (rect.top / viewportHeight);
-        const yOffset = Math.max(0, 10 - (scrollPercent * 10));
-        const scaleVal = 0.85 + (scrollPercent * 0.15);
-        const opacityVal = scrollPercent * 1.5;
-        footerGiantText.style.transform = `translateY(${yOffset}vh) scale(${scaleVal})`;
+        const scrollPercent = Math.min(1, 1 - (rect.top / viewportHeight));
+        const scaleVal = 0.92 + (scrollPercent * 0.08);
+        const opacityVal = 0.04 + (scrollPercent * 0.08);
+        footerGiantText.style.transform = `translateX(-50%) scale(${scaleVal})`;
         footerGiantText.style.opacity = Math.min(0.12, opacityVal);
       }
     });
