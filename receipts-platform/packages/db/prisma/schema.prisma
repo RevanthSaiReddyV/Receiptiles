@@ -808,3 +808,10 @@ model UserOfferActivation {
   @@index([userId])
   @@index([offerId])
 }
+
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("landing")
+  createdAt DateTime @default(now())
+}

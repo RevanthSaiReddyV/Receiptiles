@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receiptiles // From Chaos to Clarity</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#1C1C1A',
+              cream: '#F7F6F2',
+              green: '#242D28',
+              forest: '#4A5D4E',
+              sage: '#82907A',
+              mint: '#7BE899',
+              accent: '#E8C47B'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            serif: ['Georgia', 'ui-serif', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Floating Animations */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-12px); }
+    }
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    /* Scan line effects */
+    @keyframes scan-line {
+      0% { top: 0%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+    .animate-scan-line {
+      animation: scan-line 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Bar growth */
+    @keyframes grow-bar {
+      from { height: 0%; }
+      to { height: var(--target-height); }
+    }
+    .animate-grow-bar {
+      animation: grow-bar 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Infinite Marquee text - vertical loop */
+    @keyframes marquee-vertical {
+      from { transform: translateY(0); }
+      to { transform: translateY(-50%); }
+    }
+    .animate-marquee-vertical {
+      animation: marquee-vertical 25s linear infinite;
+    }
+    .direction-reverse {
+      animation-direction: reverse;
+    }
+
+    /* Footer animations */
+    @keyframes footer-breathe {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    }
+    @keyframes footer-scroll-marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    @keyframes footer-heartbeat {
+      0%, 100% { transform: scale(1); }
+      15%, 45% { transform: scale(1.2); }
+      30% { transform: scale(1); }
+    }
+    .animate-footer-breathe {
+      animation: footer-breathe 8s ease-in-out infinite alternate;
+    }
+    .animate-footer-scroll-marquee {
+      animation: footer-scroll-marquee 40s linear infinite;
+    }
+    .animate-footer-heartbeat {
+      animation: footer-heartbeat 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+    }
+
+    /* Custom Glass pill */
+    .footer-glass-pill {
+      background: rgba(247, 246, 242, 0.03);
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .footer-glass-pill:hover {
+      background: rgba(247, 246, 242, 0.08);
+      border-color: rgba(255,255,255,0.2);
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.7);
+    }
+
+    /* Grid BG */
+    .footer-bg-grid {
+      background-size: 60px 60px;
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+    }
+
+    /* Custom scroll wiggles & clipping */
+    .clip-transition {
+      transition: clip-path 0.35s cubic-bezier(0.16, 1, 0.3, 1), -webkit-clip-path 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  </style>
+</head>
+<body class="bg-[#F7F6F2] text-[#1C1C1A] overflow-x-hidden selection:bg-[#4A5D4E]/20">
+
+  <!-- NAVIGATION HEADER -->
+  <nav id="main-nav" class="fixed top-0 w-full z-50 transition-all duration-500 bg-transparent border-b border-transparent h-28 flex items-center">
+    <div class="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div id="nav-icon" class="w-8 h-8 rounded-md flex items-center justify-center bg-white text-[#242D28] transition-colors duration-500 shadow-sm">
+          <i data-lucide="printer" class="w-4.5 h-4.5"></i>
+        </div>
+        <span id="nav-logo" class="text-lg font-semibold tracking-wide text-white transition-colors duration-500">Receiptiles</span>
+      </div>
+      <div id="nav-links" class="hidden md:flex items-center space-x-10 text-sm font-medium text-white/80 transition-colors duration-500">
+        <a href="#impact" class="hover:text-white transition-colors">Impact</a>
+        <a href="#how-it-works" class="hover:text-white transition-colors">The Cycle</a>
+        <a href="#founding-beta" class="hover:text-white transition-colors flex items-center gap-1.5 text-brand-mint">
+          <span class="w-2 h-2 rounded-full bg-brand-mint animate-pulse"></span> Founding 100
+        </a>
+        <a href="#solutions" class="hover:text-white transition-colors">Solutions</a>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="#founding-beta" id="nav-signin" class="hidden sm:block text-sm font-semibold text-white hover:text-white/80 transition-colors">Claim Spot</a>
+        <button id="nav-signup-btn" class="inline-flex items-center justify-center font-medium transition-all rounded-full h-10 px-6 py-2 text-sm border border-[#EBEAE4] bg-white/5 backdrop-blur-xl text-white hover:bg-white/15">
+          Join Beta
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section class="relative pt-32 pb-32 lg:pt-40 lg:pb-40 overflow-hidden min-h-screen rounded-b-[2rem] flex flex-col justify-center bg-[#242D28]">
+    <!-- Layered atmospheric gradient background -->
+    <div class="absolute inset-0 bg-gradient-to-b from-[#242D28]/80 via-[#242D28]/40 to-[#F7F6F2] pointer-events-none z-0"></div>
+    <div class="max-w-7xl mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-16 items-center w-full my-auto">
+      <div class="space-y-8 z-20">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#7BE899]/10 text-[#7BE899] text-[11px] font-bold tracking-widest uppercase rounded-full border border-[#7BE899]/20">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Evolution of Retail
+        </span>
+        <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] text-[#F7F6F2]">
+          From Chaos to <br>
+          <span class="font-serif italic text-[#7BE899] font-medium drop-shadow-sm">Clarity.</span>
+        </h1>
+        <p class="text-lg text-[#EBEAE4] max-w-xl leading-relaxed opacity-90 drop-shadow-sm">
+          A smart, eco-friendly device that eliminates wasteful paper receipts. Retailers instantly save money and shrink their carbon footprint, while customers get all their purchases beautifully organized in one place.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="#founding-beta" class="px-6 py-3 bg-[#7BE899] text-[#1C1C1A] hover:bg-white rounded-full font-semibold text-sm transition-all shadow-lg active:scale-95">
+            Claim Founding Space
+          </a>
+          <a href="#how-it-works" class="px-6 py-3 border border-white/20 bg-white/5 text-white hover:bg-white/10 rounded-full font-semibold text-sm transition-all active:scale-95">
+            See the Loop
+          </a>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE NFC CARD (3D GYROSCOPIC TILT EFFECT) -->
+      <div class="flex items-center justify-center z-10 py-12 lg:py-0 w-full">
+        <div id="interactive-hardware-card" class="relative w-full max-w-sm cursor-pointer transition-all duration-300" style="perspective: 1000px;">
+          <div id="card-inner" class="bg-white p-2 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] relative overflow-hidden transition-all duration-300 transform-gpu" style="transform-style: preserve-3d;">
+
+            <!-- Dynamic Glare overlay -->
+            <div class="absolute inset-0 z-20 pointer-events-none transition-opacity duration-500 rounded-[1.5rem]" style="background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 100%);"></div>
+
+            <div class="bg-[#FAF9F6] rounded-[1.5rem] p-10 aspect-square flex flex-col items-center justify-center relative overflow-hidden border border-white/20" style="transform-style: preserve-3d;">
+              <!-- Scanning effect line -->
+              <div class="absolute left-0 w-full h-[2px] bg-[#4A5D4E] shadow-[0_2px_15px_3px_rgba(74,93,78,0.5)] z-30 animate-scan-line"></div>
+
+              <div class="absolute top-12 flex flex-col items-center space-y-4 opacity-40">
+                <div class="w-16 h-16 rounded-full border border-[#4A5D4E] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+              </div>
+
+              <!-- Main card interior -->
+              <div class="flex flex-col items-center justify-center z-10">
+                <div class="w-28 h-28 rounded-full bg-[#EAF0E6] flex items-center justify-center mb-8 shadow-md border border-[#CFDCC8]">
+                  <i data-lucide="smartphone-nfc" class="w-12 h-12 text-[#4A5D4E]" stroke-width="1.5"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-[#1C1C1A] mb-2 drop-shadow-sm">Tap for Receipt</h3>
+                <p class="text-[#6B6A65] text-center text-sm max-w-[200px]">Apple Wallet & Google Pay</p>
+              </div>
+
+              <div class="absolute bottom-6 flex justify-center space-x-3 z-10">
+                <div class="w-1.5 h-1.5 rounded-full bg-[#4A5D4E] shadow-[0_0_8px_#4A5D4E]"></div>
+              </div>
+
+              <!-- Overlay Gatekeeper screen -->
+              <div class="absolute inset-0 z-40 bg-[#FAF9F6]/60 backdrop-blur-[8px] flex flex-col items-center justify-center rounded-[1.5rem]">
+                <span class="text-[#1C1C1A] text-xs font-bold tracking-widest uppercase whitespace-nowrap mb-4 drop-shadow-md">Launching Soon</span>
+
+                <div id="waitlist-state-initial" class="transition-all duration-300 flex flex-col items-center">
+                  <button id="btn-show-waitlist" class="px-6 py-2.5 bg-[#242D28] text-white hover:bg-[#1C1C1A] rounded-full text-xs font-bold tracking-wide shadow-md transition-all active:scale-95">
+                    Join Waitlist
+                  </button>
+                </div>
+
+                <div id="waitlist-state-form" class="hidden transition-all duration-300 w-11/12 max-w-[240px] bg-white/95 backdrop-blur-md rounded-full shadow-2xl overflow-hidden border border-white/50 flex">
+                  <input type="email" id="waitlist-email" placeholder="Enter email..." class="flex-1 px-4 py-2.5 text-xs focus:outline-none min-w-0 bg-transparent text-[#1C1C1A] placeholder:text-[#6B6A65]" required>
+                  <button id="btn-submit-waitlist" class="px-4 bg-[#7BE899] text-[#1C1C1A] hover:bg-[#4A5D4E] hover:text-white transition-colors flex items-center justify-center">
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  </button>
+                </div>
+
+                <div id="waitlist-state-success" class="hidden transition-all duration-300 px-5 py-2.5 bg-[#7BE899]/90 backdrop-blur-md text-[#1C1C1A] rounded-full text-xs font-bold shadow-xl">
+                  You are on the list!
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENVIRONMENTAL IMPACT SECTION -->
+  <section id="impact" class="bg-[#242D28] py-20 border-y border-[#323E36] relative z-20">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-[#7BE899] font-serif italic text-2xl md:text-3xl tracking-tight">The True Ecological Cost of Paper Receipts</h2>
+        <p class="text-slate-400 text-sm mt-2">Every year, massive amounts of natural resources are converted into immediate waste.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-10">
+
+        <div class="flex flex-col items-center justify-center p-6 bg-[#1C231F] rounded-2xl border border-[#323E36] shadow-lg hover:border-brand-mint/40 transition-colors duration-300">
+          <i data-lucide="leaf" class="text-[#7BE899] mb-4 w-8 h-8"></i>
+          <div class="text-3xl md:text-4xl font-bold text-[#F7F6F2] mb-1">12.4M</div>
+          <div class="text-[10px] md:text-xs text-[#A0AFAA] tracking-widest uppercase text-center font-semibold">Trees Wasted/Year</div>
+        </div>
+
+        <div class="flex flex-col items-center justify-center p-6 bg-[#1C231F] rounded-2xl border border-[#323E36] shadow-lg hover:border-brand-mint/40 transition-colors duration-300">
+          <i data-lucide="trash-2" class="text-[#E8C47B] mb-4 w-8 h-8"></i>
+          <div class="text-3xl md:text-4xl font-bold text-[#F7F6F2] mb-1">3 Bil+</div>
+          <div class="text-[10px] md:text-xs text-[#A0AFAA] tracking-widest uppercase text-center font-semibold">Lbs of Waste/Year</div>
+        </div>
+
+        <div class="flex flex-col items-center justify-center p-6 bg-[#1C231F] rounded-2xl border border-[#323E36] shadow-lg hover:border-brand-mint/40 transition-colors duration-300">
+          <i data-lucide="shield-alert" class="text-red-400 mb-4 w-8 h-8"></i>
+          <div class="text-3xl md:text-4xl font-bold text-[#F7F6F2] mb-1">93%</div>
+          <div class="text-[10px] md:text-xs text-[#A0AFAA] tracking-widest uppercase text-center font-semibold">Contain Toxic BPA</div>
+        </div>
+
+        <div class="flex flex-col items-center justify-center p-6 bg-[#1C231F] rounded-2xl border border-[#323E36] shadow-lg hover:border-brand-mint/40 transition-colors duration-300">
+          <i data-lucide="wind" class="text-blue-400 mb-4 w-8 h-8"></i>
+          <div class="text-3xl md:text-4xl font-bold text-[#F7F6F2] mb-1">90%</div>
+          <div class="text-[10px] md:text-xs text-[#A0AFAA] tracking-widest uppercase text-center font-semibold">Discarded Instantly</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- THE CLOSED LOOP SECTION (SIMPLE CYCLE) -->
+  <section id="how-it-works" class="py-24 bg-white border-y border-[#EBEAE4]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="max-w-3xl mx-auto text-center mb-20">
+        <span class="text-brand-forest font-bold text-xs tracking-widest uppercase block mb-3 text-[#4A5D4E]">The Closed Loop</span>
+        <h2 class="text-3xl md:text-5xl font-extrabold text-brand-basalt tracking-tight mb-4 text-[#1C1C1A]">
+          One tap. Done.
+        </h2>
+        <p class="text-[#5A635C] text-lg max-w-xl mx-auto">
+          No cashier changes. No complicated accounts. A simple, organic ecosystem loop in three natural steps.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-12 relative z-10">
+
+        <!-- Step 1 -->
+        <div class="flex flex-col items-center text-center group">
+          <div class="w-20 h-20 rounded-full bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-8 shadow-sm group-hover:scale-105 transition-transform duration-300">
+            <i data-lucide="cable" class="w-8 h-8 text-[#4A5D4E]"></i>
+          </div>
+          <h3 class="text-lg font-bold text-brand-basalt mb-2">1. Connect Hardware</h3>
+          <p class="text-[#5A635C] text-sm leading-relaxed max-w-xs">
+            The Receiptiles dongle plugs directly into your existing register printer slot. It looks and acts like an ordinary printer.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="flex flex-col items-center text-center group">
+          <div class="w-20 h-20 rounded-full bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-8 shadow-sm group-hover:scale-105 transition-transform duration-300">
+            <i data-lucide="sparkles" class="w-8 h-8 text-[#4A5D4E] animate-pulse"></i>
+          </div>
+          <h3 class="text-lg font-bold text-[#1C1C1A] mb-2">2. Local Translation</h3>
+          <p class="text-[#5A635C] text-sm leading-relaxed max-w-xs">
+            Our onboard microchip extracts raw transaction streams locally, sorting them immediately into digital receipts.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flex flex-col items-center text-center group">
+          <div class="w-20 h-20 rounded-full bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-8 shadow-sm group-hover:scale-105 transition-transform duration-300">
+            <i data-lucide="smartphone" class="w-8 h-8 text-[#4A5D4E]"></i>
+          </div>
+          <h3 class="text-lg font-bold text-[#1C1C1A] mb-2">3. Immediate Wallet Delivery</h3>
+          <p class="text-[#5A635C] text-sm leading-relaxed max-w-xs">
+            The customer simply taps their phone near the checkout screen. A beautiful system-native wallet receipt appears immediately.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FOUNDING 100 BETA LAUNCH REGISTRATION SECTION -->
+  <section id="founding-beta" class="py-24 bg-[#EBEAE4] border-t border-b border-[#DFDCD2] relative">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="bg-[#242D28] rounded-[2.5rem] p-8 md:p-16 text-white relative overflow-hidden shadow-2xl">
+        <div class="absolute -right-24 -top-24 w-72 h-72 bg-[#7BE899]/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute -left-24 -bottom-24 w-72 h-72 bg-[#E8C47B]/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+        <div class="max-w-2xl relative z-10 space-y-6">
+          <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#7BE899]/10 text-[#7BE899] text-[11px] font-bold tracking-widest uppercase rounded-full border border-[#7BE899]/15">
+            <span class="w-2 h-2 rounded-full bg-[#7BE899] animate-pulse"></span> Exclusive Founding Tester Program
+          </div>
+          <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight text-[#FAF9F5]">
+            Be one of our first 100 founding testers.
+          </h2>
+          <p class="text-[#859688] text-sm md:text-base leading-relaxed">
+            We are looking for boutique merchants, local cafes, independent stores, and extreme digital-nomad shoppers to trial Receiptiles. Your feedback will refine our direct wallet software updates.
+          </p>
+
+          <div class="grid sm:grid-cols-2 gap-6 pt-4 text-xs md:text-sm text-[#F7F6F2]/90">
+            <div class="flex items-start gap-3">
+              <i data-lucide="check-circle" class="text-[#7BE899] shrink-0 mt-0.5"></i>
+              <div>
+                <strong>Zero-Cost Hardware:</strong> Free Receiptiles adapter box included for merchant setups.
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i data-lucide="check-circle" class="text-[#7BE899] shrink-0 mt-0.5"></i>
+              <div>
+                <strong>Direct feedback channel:</strong> Collaborate closely with our core technology group.
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i data-lucide="check-circle" class="text-[#7BE899] shrink-0 mt-0.5"></i>
+              <div>
+                <strong>Lifetime Analytics Suite:</strong> Free dashboard accounts for all your stores forever.
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i data-lucide="check-circle" class="text-[#7BE899] shrink-0 mt-0.5"></i>
+              <div>
+                <strong>Founding Status:</strong> Premium custom badges printed inside digital receipts.
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Beta Spot reservation form -->
+          <div class="pt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 max-w-lg">
+            <div class="flex-1 bg-white/5 border border-white/10 rounded-full overflow-hidden flex px-4 items-center focus-within:ring-2 focus-within:ring-[#7BE899] transition-all">
+              <i data-lucide="mail" class="text-brand-sage w-4 h-4 shrink-0 mr-3"></i>
+              <input type="email" id="beta-email-input" placeholder="Join program with your email..." class="bg-transparent text-white placeholder:text-[#82907A] text-sm py-3.5 w-full focus:outline-none">
+            </div>
+            <button id="btn-beta-submit" class="px-8 py-4 bg-[#7BE899] text-[#1C1C1A] hover:bg-white transition-all font-bold text-sm rounded-full active:scale-95 shadow-lg shadow-[#7BE899]/10">
+              Claim Beta Spot
+            </button>
+          </div>
+
+          <!-- Interactive claiming indicators counter -->
+          <div class="pt-4 flex items-center gap-4 text-xs text-brand-sage">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#7BE899] animate-pulse"></span>
+              Remaining slots: <strong id="slots-counter-text" class="text-[#FAF9F5] font-black">74 / 100</strong>
+            </span>
+            <span>•</span>
+            <span>Estimated shipment: Summer 2026</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE DIAGONAL SPLIT SECTION -->
+  <section id="solutions" class="relative w-full h-[120vh] min-h-[750px] overflow-hidden select-none border-y border-[#EBEAE4] cursor-ew-resize bg-black">
+
+    <!-- RIGHT COMPONENT SIDE (Underlay Layer / Retailers) -->
+    <div class="absolute inset-0 h-full w-full bg-[#242D28] text-[#F7F6F2] z-0">
+      <div class="absolute right-0 w-[85vw] md:w-[50vw] h-full flex flex-col justify-center px-6 md:px-16 lg:px-24">
+        <div class="max-w-xl mx-auto space-y-6 w-full">
+          <div class="text-[#82907A] font-semibold tracking-widest uppercase text-xs md:text-sm flex items-center gap-2">
+            <i data-lucide="printer" class="w-4 h-4"></i> For Retailers
+          </div>
+          <h2 class="text-3xl md:text-5xl font-bold tracking-tight leading-[1.1] text-white">
+            Grow loyalty.<br>Save paper.
+          </h2>
+          <p class="text-sm md:text-lg text-[#A0AFAA] leading-relaxed">
+            Eliminate operational paper roll expenses completely while establishing direct, secure engagement channels. Offer smart benefits, track repeat visits, and unlock rich automated reports.
+          </p>
+
+          <div class="rounded-2xl bg-[#1C231F] p-6 shadow-2xl ring-1 ring-[#323E36] mt-4 max-w-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-3 opacity-20"><i data-lucide="bar-chart-3" class="w-8 h-8"></i></div>
+            <div class="text-xs md:text-sm text-[#A0AFAA]">AI Insight: Loyalty Sign-ups</div>
+            <div class="mt-2 text-2xl md:text-3xl font-semibold tracking-tight text-[#F7F6F2]">
+              1,204 <span class="text-xs md:text-sm font-medium text-[#82907A] align-middle">New Customers</span>
+            </div>
+            <div class="mt-2 text-xs md:text-sm text-[#7BE899] font-medium flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#7BE899] animate-pulse"></span> Targeted marketing campaigns active
+            </div>
+
+            <!-- Dynamic Mini visualizer -->
+            <div class="mt-6 flex h-20 items-end gap-3 rounded-xl bg-gradient-to-b from-[#242D28] to-[#1C231F] p-4 border border-[#323E36]">
+              <div class="w-full rounded-xl bg-gradient-to-t from-[#4A5D4E] to-[#7BE899] opacity-80 animate-grow-bar" style="--target-height: 25%;"></div>
+              <div class="w-full rounded-xl bg-gradient-to-t from-[#4A5D4E] to-[#7BE899] opacity-80 animate-grow-bar" style="--target-height: 55%; animation-delay: 150ms;"></div>
+              <div class="w-full rounded-xl bg-gradient-to-t from-[#4A5D4E] to-[#7BE899] opacity-80 animate-grow-bar" style="--target-height: 78%; animation-delay: 300ms;"></div>
+              <div class="w-full rounded-xl bg-gradient-to-t from-[#4A5D4E] to-[#7BE899] opacity-100 animate-grow-bar" style="--target-height: 95%; animation-delay: 450ms;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEFT COMPONENT SIDE (Overlay Layer / Consumers) -->
+    <div id="consumer-overlay" class="absolute inset-0 h-full w-full bg-white text-[#1C1C1A] z-10 clip-transition" style="clip-path: polygon(0% 0%, 60% 0%, 35% 100%, 0% 100%);">
+      <div class="absolute left-0 w-[85vw] md:w-[50vw] h-full flex flex-col justify-center px-6 md:px-16 lg:px-24">
+        <div class="max-w-xl mx-auto space-y-6 w-full">
+          <div class="text-[#4A5D4E] font-semibold tracking-widest uppercase text-xs md:text-sm flex items-center gap-2">
+            <i data-lucide="smartphone-nfc" class="w-4 h-4"></i> For Consumers
+          </div>
+          <h2 class="text-3xl md:text-5xl font-bold tracking-tight leading-[1.1]">
+            Perfect clarity.<br>In your pocket.
+          </h2>
+          <p class="text-sm md:text-lg text-[#6B6A65] leading-relaxed">
+            Ditch fragile paper printouts, missing return slips, and faded ink. Every purchase details is securely logged, automatically structured, and backed up inside your native system wallet.
+          </p>
+          <ul class="space-y-4 pt-4 text-sm md:text-base font-medium">
+            <li class="flex items-center space-x-3">
+              <i data-lucide="shield-check" class="text-[#4A5D4E] w-5 h-5 flex-shrink-0"></i>
+              <span>Apple Wallet & Google Wallet Integration</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i data-lucide="shield-check" class="text-[#4A5D4E] w-5 h-5 flex-shrink-0"></i>
+              <span>Seamless automated line-item breakdowns</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i data-lucide="shield-check" class="text-[#4A5D4E] w-5 h-5 flex-shrink-0"></i>
+              <span>Smart warranty alerts & expense logging</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- DYNAMIC WEBGL SHADER CONTAINER ON SPLIT LINE -->
+    <div id="webgl-divider-wrapper" class="absolute top-0 bottom-0 w-24 -translate-x-12 z-20 pointer-events-none transition-all duration-500 transform-gpu" style="left: 60%;">
+      <canvas id="shader-canvas" class="w-full h-full opacity-60"></canvas>
+    </div>
+
+    <!-- SPLIT INTERACTIVE LINE OVERLAY SVG -->
+    <svg id="lightning-overlay" class="absolute inset-0 w-full h-full pointer-events-none z-30 select-none" preserveAspectRatio="none">
+      <defs>
+        <filter id="electric-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <!-- Base Glowing lightning trails -->
+      <polyline id="lightning-outer" points="60,0 35,100" fill="none" stroke="rgba(123, 232, 153, 0.4)" stroke-width="4" vector-effect="non-scaling-stroke" filter="url(#electric-glow)" />
+      <polyline id="lightning-mid" points="60,0 35,100" fill="none" stroke="rgba(74, 93, 78, 0.6)" stroke-width="2.5" vector-effect="non-scaling-stroke" />
+      <polyline id="lightning-core" points="60,0 35,100" fill="none" stroke="white" stroke-width="1.2" vector-effect="non-scaling-stroke" />
+    </svg>
+
+    <!-- FLOATING INTERACTIVE HINT -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 bg-[#1C1C1A]/80 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full text-[10px] md:text-xs text-slate-300 pointer-events-none flex items-center gap-2 tracking-wider uppercase font-semibold">
+      <i data-lucide="sparkles" class="text-brand-mint w-3.5 h-3.5 animate-pulse"></i> Slide left or right to explore
+    </div>
+
+  </section>
+
+  <!-- MOCK ESC/POS ANALYZER SECTION -->
+  <section class="py-32 bg-[#1C1C1A] overflow-hidden relative">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#4A5D4E]/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-6 relative z-10">
+      <div class="text-center mb-16">
+        <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[#7BE899] text-xs font-semibold uppercase tracking-wider mb-6">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> <span>Structured Edge Parsing Demo</span>
+        </div>
+        <h2 class="text-3xl md:text-5xl font-bold text-[#F7F6F2] tracking-tight mb-5">From raw thermal streams to digital wallet cards.</h2>
+        <p class="text-[#A0AFAA] text-base md:text-lg max-w-2xl mx-auto">See how Receiptiles firmware wrings actionable metrics and clean layouts out of chaotic legacy register streams instantly.</p>
+      </div>
+
+      <!-- Live Simulation Board -->
+      <div class="w-full max-w-5xl mx-auto bg-[#F7F6F2] rounded-3xl border border-[#EBEAE4] shadow-2xl overflow-hidden flex flex-col md:flex-row">
+        <!-- Left panel: Raw input editor -->
+        <div class="w-full md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-[#EBEAE4] bg-white flex flex-col">
+          <div class="flex items-center gap-2 mb-4">
+            <i data-lucide="terminal-square" class="text-[#4A5D4E]"></i>
+            <h3 class="font-semibold text-[#1C1C1A]">POS Printer Log</h3>
+          </div>
+          <p class="text-xs text-[#6B6A65] mb-4">Modify the plain ESC/POS log to test the edge extraction algorithms:</p>
+
+          <textarea id="raw-receipt-input" class="flex-1 w-full bg-[#F7F6F2] border border-[#EBEAE4] rounded-xl p-4 font-mono text-xs md:text-sm text-[#1C1C1A] resize-none focus:outline-none focus:border-[#4A5D4E] focus:ring-1 focus:ring-[#4A5D4E] transition-all min-h-[250px] leading-relaxed">STARBUCKS STORE #12345
+10/24/2026 08:14 AM
+
+1 GRD CARAMEL MACCHIATO  $5.45
+1 CHOC CROISSANT         $3.25
+1 TALL BLONDE ROAST      $2.95
+
+SUBTOTAL                 $11.65
+TAX 8%                   $0.93
+TOTAL                    $12.58
+VISA **** 1234</textarea>
+
+          <button id="btn-parse-receipt" class="mt-6 w-full py-3 bg-[#242D28] hover:bg-[#1C1C1A] text-white rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2">
+            <i data-lucide="sparkles" class="text-[#7BE899] w-4 h-4"></i> Run Receipt Extraction
+          </button>
+        </div>
+
+        <!-- Right panel: Interactive Smart Device View -->
+        <div class="w-full md:w-1/2 p-8 bg-[#FAF9F6] flex flex-col justify-between relative">
+          <div class="flex items-center gap-2 mb-6">
+            <i data-lucide="smartphone-nfc" class="text-[#4A5D4E]"></i>
+            <h3 class="font-semibold text-[#1C1C1A]">Interactive iOS Wallet Node</h3>
+          </div>
+
+          <!-- Default screen state -->
+          <div id="device-state-idle" class="flex-1 flex flex-col items-center justify-center text-center opacity-80 py-8">
+            <i data-lucide="wallet-cards" class="mb-6 text-[#82907A] w-12 h-12"></i>
+            <h4 class="font-semibold text-[#1C1C1A] mb-2">Edge Ecosystem Parser</h4>
+            <p class="text-[#6B6A65] text-xs max-w-[260px] mb-6">Click parsed visualization to render transactional schema inside a high-fidelity digital wallet.</p>
+
+            <div class="grid grid-cols-2 gap-3 w-full max-w-sm">
+              <div class="bg-white border border-[#EBEAE4] rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-sm">
+                <i data-lucide="folder-open" class="text-[#4A5D4E] w-5 h-5"></i>
+                <span class="text-[10px] font-semibold text-[#4A5D4E]">Auto-Categorized</span>
+              </div>
+              <div class="bg-white border border-[#EBEAE4] rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-sm">
+                <i data-lucide="hard-drive" class="text-[#4A5D4E] w-5 h-5"></i>
+                <span class="text-[10px] font-semibold text-[#4A5D4E]">Secure Offline</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active parser processing state -->
+          <div id="device-state-loading" class="hidden flex-1 flex flex-col items-center justify-center space-y-4 py-8">
+            <div class="flex gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-[#4A5D4E] animate-bounce" style="animation-delay: 0ms"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-[#4A5D4E] animate-bounce" style="animation-delay: 150ms"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-[#4A5D4E] animate-bounce" style="animation-delay: 300ms"></div>
+            </div>
+            <p class="text-xs text-[#4A5D4E] font-medium animate-pulse">Edge structuring program active...</p>
+          </div>
+
+          <!-- Structured receipt state -->
+          <div id="device-state-result" class="hidden flex-1 flex flex-col justify-between">
+            <div class="bg-white rounded-2xl shadow-md border border-[#EBEAE4] p-6 relative overflow-hidden">
+              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#4A5D4E] to-[#7BE899]"></div>
+
+              <div class="flex justify-between items-start mb-6">
+                <div>
+                  <h4 id="receipt-merchant" class="text-lg font-extrabold text-[#1C1C1A]">STARBUCKS</h4>
+                  <p id="receipt-date" class="text-[10px] text-[#82907A] mt-1">10/24/2026 08:14 AM</p>
+                </div>
+                <div id="receipt-badge" class="w-9 h-9 rounded-full bg-[#F7F6F2] flex items-center justify-center text-[#4A5D4E] font-black text-sm">S</div>
+              </div>
+
+              <!-- Product Table -->
+              <div id="receipt-items-container" class="space-y-3 mb-6 border-b border-dashed border-[#EBEAE4] pb-4">
+                <!-- Injected elements go here dynamically -->
+              </div>
+
+              <div class="flex justify-between items-center mt-4">
+                <span class="font-bold text-sm text-[#1C1C1A]">Structured Total</span>
+                <span id="receipt-total" class="text-xl font-extrabold text-[#1C1C1A]">$12.58</span>
+              </div>
+
+              <div class="mt-4 grid grid-cols-2 gap-2">
+                <div class="bg-[#F7F6F2] p-2 rounded-lg flex items-center gap-2 text-[10px] font-bold text-[#4A5D4E]">
+                  <i data-lucide="folder-open" class="w-3.5 h-3.5"></i> Auto-Organized
+                </div>
+                <div class="bg-[#F7F6F2] p-2 rounded-lg flex items-center gap-2 text-[10px] font-bold text-[#4A5D4E]">
+                  <i data-lucide="clock" class="w-3.5 h-3.5"></i> Warranty Logged
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Insights element -->
+            <div class="mt-6 p-4 rounded-xl bg-gradient-to-br from-[#EAF0E6] to-[#F7F6F2] border border-[#CFDCC8] flex items-start gap-3">
+              <i data-lucide="sparkles" class="text-[#4A5D4E] shrink-0 mt-0.5 w-4 h-4"></i>
+              <div>
+                <span class="text-[10px] font-extrabold text-[#4A5D4E] uppercase tracking-wider block mb-1">Aura Spent Insights</span>
+                <p id="receipt-insight" class="text-xs text-[#242D28] leading-relaxed font-medium">Your coffee shop habit logs around ~3 hits a week. Tap here to register reward systems.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS SLIDING MARQUEE SECTION -->
+  <section class="py-32 bg-[#F7F6F2] relative overflow-hidden border-b border-[#EBEAE4]">
+    <div class="max-w-7xl mx-auto px-6 mb-16 text-center relative z-20">
+      <h2 class="text-3xl md:text-5xl font-bold text-[#1C1C1A] tracking-tight mb-4">Loved on both sides of the counter.</h2>
+      <p class="text-base md:text-lg text-[#6B6A65]">Authentic feedback rendered on actual mock terminal receipt roll styles.</p>
+    </div>
+
+    <!-- Interactive marquee perspective wall -->
+    <div class="relative flex h-[620px] w-full flex-row items-center justify-center overflow-hidden gap-4 [perspective:1000px]">
+      <div id="marquee-wall" class="flex flex-row items-start gap-6 transition-transform duration-500 ease-out" style="transform: translateX(-50px) translateY(0px) translateZ(-100px) rotateX(15deg) rotateY(-8deg) rotateZ(12deg);">
+
+        <!-- COLUMN 1 -->
+        <div class="group flex flex-col overflow-hidden gap-6 h-[1200px]">
+          <div class="flex flex-col shrink-0 gap-6 animate-marquee-vertical">
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Customer ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">SARAH JENKINS</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"Tapping my phone and instantly seeing my structured food receipts inside my native Apple wallet is pure witchcraft."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>PAPER DISCARD</span><span class="text-[#4A5D4E]">0%</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Customer ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">JAMES WILSON</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"No app registration is the ultimate feature. I just tap standard wallet mechanics and everything is parsed offline."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>EASE FACTOR</span><span class="text-[#4A5D4E]">10/10</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Lead Barista ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">LEO MENDOZA</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"No more changing thermal paper mid-rush. Direct taps are three times faster than printing receipt rolls."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>SPEED UP</span><span class="text-[#4A5D4E]">300%</span></div>
+            </div>
+            <!-- Clones -->
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Customer ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">SARAH JENKINS</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"Tapping my phone and instantly seeing my structured food receipts inside my native Apple wallet is pure witchcraft."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>PAPER DISCARD</span><span class="text-[#4A5D4E]">0%</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Customer ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">JAMES WILSON</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"No app registration is the ultimate feature. I just tap standard wallet mechanics and everything is parsed offline."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>EASE FACTOR</span><span class="text-[#4A5D4E]">10/10</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Lead Barista ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">LEO MENDOZA</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"No more changing thermal paper mid-rush. Direct taps are three times faster than printing receipt rolls."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>SPEED UP</span><span class="text-[#4A5D4E]">300%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMN 2 (REVERSE) -->
+        <div class="group flex flex-col overflow-hidden gap-6 h-[1200px]">
+          <div class="flex flex-col shrink-0 gap-6 animate-marquee-vertical direction-reverse">
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** General Manager ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">ELENA RODRIGUEZ</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"Installation of Receiptiles hardware took 2 minutes. Unplugged existing printer, bridged this node, and done."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>SETUP DELAY</span><span class="text-[#4A5D4E]">2 MIN</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Regular Shopper ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">MARCUS TAYLOR</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"The integrated AI system caught a duplicate register charge before I walked out the door. Truly incredible."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>ACCURACY LOG</span><span class="text-[#4A5D4E]">99.9%</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Sustainability VP ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">CLARA VANDERGRIFF</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"Finally, a smart solution that prevents waste before it is created. Zero toxic thermal receipt compounds in landfill."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>CARBON PREVENTED</span><span class="text-[#4A5D4E]">8.4 TONS</span></div>
+            </div>
+            <!-- Clones -->
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** General Manager ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">ELENA RODRIGUEZ</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"Installation of Receiptiles hardware took 2 minutes. Unplugged existing printer, bridged this node, and done."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>SETUP DELAY</span><span class="text-[#4A5D4E]">2 MIN</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Regular Shopper ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">MARCUS TAYLOR</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"The integrated AI system caught a duplicate register charge before I walked out the door. Truly incredible."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>ACCURACY LOG</span><span class="text-[#4A5D4E]">99.9%</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Sustainability VP ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">CLARA VANDERGRIFF</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"Finally, a smart solution that prevents waste before it is created. Zero toxic thermal receipt compounds in landfill."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>CARBON PREVENTED</span><span class="text-[#4A5D4E]">8.4 TONS</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMN 3 -->
+        <div class="group flex flex-col overflow-hidden gap-6 h-[1200px]">
+          <div class="flex flex-col shrink-0 gap-6 animate-marquee-vertical">
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Boutique Owner ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">DAVID CHEN</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"We completely dropped physical receipt roll costs to zero. Setup was immediate; the system matched legacy registers seamlessly."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>HARDWARE SAVINGS</span><span class="text-[#4A5D4E]">100%</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Operations Director ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">PRIYA PATEL</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"Customers love the quick tap interaction. It feels far premium compared to demanding email addresses at the counter."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>RETENTION RETRACT</span><span class="text-[#4A5D4E]">+45%</span></div>
+            </div>
+            <!-- Clones -->
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Boutique Owner ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">DAVID CHEN</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"We completely dropped physical receipt roll costs to zero. Setup was immediate; the system matched legacy registers seamlessly."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>HARDWARE SAVINGS</span><span class="text-[#4A5D4E]">100%</span></div>
+            </div>
+            <div class="w-72 bg-white shadow-lg shrink-0 flex flex-col font-mono text-xs border-t border-b border-[#EBEAE4] relative py-6 px-6">
+              <div class="text-center mb-2"><div class="font-bold text-xl uppercase tracking-widest flex items-center justify-center mb-2"><i data-lucide="printer" class="w-6 h-6 text-emerald-700"></i></div><div class="font-bold tracking-widest text-[#1C1C1A]">RECEIPTILES</div><div class="text-[9px] text-[#82907A] uppercase mt-1">*** Operations Director ***</div></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">CLIENT:</span><span class="font-semibold text-right">PRIYA PATEL</span></div>
+              <div class="flex justify-between text-[10px]"><span class="text-[#6B6A65]">STATUS:</span><span class="text-emerald-700 font-bold">VERIFIED</span></div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="text-xs uppercase leading-relaxed py-2 text-[#1C1C1A]">"Customers love the quick tap interaction. It feels far premium compared to demanding email addresses at the counter."</div>
+              <div class="border-b border-dashed border-[#EBEAE4] my-2"></div>
+              <div class="flex justify-between font-bold text-xs"><span>RETENTION RETRACT</span><span class="text-[#4A5D4E]">+45%</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Fading Overlays -->
+      <div class="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-[#F7F6F2] z-10"></div>
+      <div class="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#F7F6F2] z-10"></div>
+      <div class="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-[#F7F6F2] z-10"></div>
+      <div class="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-[#F7F6F2] z-10"></div>
+    </div>
+  </section>
+
+  <!-- CINEMATIC FOOTER -->
+  <div id="download" class="relative h-screen w-full bg-[#1C1C1A]" style="clip-path: polygon(0% 0, 100% 0%, 100% 100%, 0 100%);">
+    <footer class="fixed bottom-0 left-0 flex h-screen w-full flex-col justify-between overflow-hidden bg-[#1C1C1A] text-[#F7F6F2]">
+
+      <div class="absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0 footer-aurora" style="background: radial-gradient(circle, rgba(123, 232, 153, 0.1) 0%, rgba(232, 196, 123, 0.05) 40%, transparent 70%);"></div>
+
+      <div class="footer-bg-grid absolute inset-0 z-0 pointer-events-none"></div>
+
+      <div id="footer-giant-bg-text" class="absolute -bottom-[5vh] left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none text-[20vw] font-black tracking-tighter opacity-10 uppercase text-transparent transition-all duration-700 leading-none" style="transform: translateX(-50%) translateY(10vh) scale(0.85); -webkit-text-stroke: 1px rgba(255,255,255,0.06); background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 70%); -webkit-background-clip: text; background-clip: text;">
+        RECEIPTILES
+      </div>
+
+      <!-- Marquee ribbon -->
+      <div class="absolute top-12 left-0 w-full overflow-hidden border-y border-[#323E36]/50 bg-[#1C1C1A]/60 backdrop-blur-md py-4 z-10 -rotate-2 scale-110 shadow-2xl">
+        <div class="flex w-max animate-footer-scroll-marquee text-xs md:text-sm font-bold tracking-[0.3em] text-[#A0AFAA] uppercase">
+          <div class="flex items-center space-x-12 px-6">
+            <span>Chaos to Clarity</span> <span class="text-[#7BE899]/60">+</span>
+            <span>Intelligent Analytics</span> <span class="text-[#E8C47B]/60">+</span>
+            <span>Zero Paper Waste</span> <span class="text-[#7BE899]/60">+</span>
+            <span>Bank-Grade Security</span> <span class="text-[#E8C47B]/60">+</span>
+            <span>Seamless Integration</span> <span class="text-[#7BE899]/60">+</span>
+          </div>
+          <div class="flex items-center space-x-12 px-6">
+            <span>Chaos to Clarity</span> <span class="text-[#7BE899]/60">+</span>
+            <span>Intelligent Analytics</span> <span class="text-[#E8C47B]/60">+</span>
+            <span>Zero Paper Waste</span> <span class="text-[#7BE899]/60">+</span>
+            <span>Bank-Grade Security</span> <span class="text-[#E8C47B]/60">+</span>
+            <span>Seamless Integration</span> <span class="text-[#7BE899]/60">+</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Action Content -->
+      <div class="relative z-10 flex flex-1 flex-col items-center justify-center px-6 mt-20 w-full max-w-5xl mx-auto">
+        <h2 id="footer-prompt" class="text-4xl md:text-8xl font-black tracking-tighter mb-12 text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-400 transition-all duration-1000 transform translate-y-8 opacity-0">
+          Ready to begin?
+        </h2>
+
+        <div class="flex flex-col items-center gap-6 w-full">
+          <div class="flex flex-wrap justify-center gap-4 w-full">
+            <a href="#founding-beta" class="footer-glass-pill px-10 py-5 rounded-full text-[#F7F6F2] font-bold text-sm md:text-base flex items-center gap-3">
+              Apply to the Beta <i data-lucide="chevron-right" class="w-4 h-4 text-[#7BE899]"></i>
+            </a>
+            <a href="#impact" class="footer-glass-pill px-10 py-5 rounded-full text-[#F7F6F2] font-bold text-sm md:text-base flex items-center gap-3">
+              Eco Impact Metrics <i data-lucide="chevron-right" class="w-4 h-4 text-[#7BE899]"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Credits row -->
+      <div class="relative z-20 w-full pb-8 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="text-[#A0AFAA] text-[10px] md:text-xs font-semibold tracking-widest uppercase order-2 md:order-1">2026 Receiptiles. All rights reserved.</div>
+
+        <div class="footer-glass-pill px-6 py-3 rounded-full flex items-center gap-2 order-1 md:order-2 border-transparent">
+          <span class="text-[#A0AFAA] text-[10px] md:text-xs font-bold uppercase tracking-widest">Engineered with</span>
+          <span class="animate-footer-heartbeat text-sm md:text-base text-red-500">&hearts;</span>
+          <span class="text-[#F7F6F2] font-black text-xs md:text-sm tracking-normal ml-1">Green Ecosystem</span>
+        </div>
+
+        <button id="btn-scroll-top" class="w-12 h-12 rounded-full footer-glass-pill flex items-center justify-center text-[#A0AFAA] hover:text-[#F7F6F2] transition-colors order-3">
+          <i data-lucide="chevron-up" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+    </footer>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // 1. NAV SCROLL BEHAVIOR
+    const mainNav = document.getElementById('main-nav');
+    const navIcon = document.getElementById('nav-icon');
+    const navLogo = document.getElementById('nav-logo');
+    const navLinks = document.getElementById('nav-links');
+    const navSignin = document.getElementById('nav-signin');
+    const navSignupBtn = document.getElementById('nav-signup-btn');
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 80) {
+        mainNav.classList.remove('bg-transparent', 'border-transparent', 'h-28');
+        mainNav.classList.add('bg-[#F7F6F2]/90', 'backdrop-blur-md', 'border-[#EBEAE4]', 'h-20');
+        navIcon.classList.remove('bg-white', 'text-[#242D28]');
+        navIcon.classList.add('bg-[#242D28]', 'text-[#F7F6F2]');
+        navLogo.classList.remove('text-white');
+        navLogo.classList.add('text-[#1C1C1A]');
+        navLinks.classList.remove('text-white/80');
+        navLinks.classList.add('text-[#6B6A65]');
+        navSignin.classList.remove('text-white', 'hover:text-white/80');
+        navSignin.classList.add('text-[#1C1C1A]', 'hover:text-[#4A5D4E]');
+        navSignupBtn.classList.remove('border-white/10', 'bg-white/5', 'text-white', 'hover:bg-white/15');
+        navSignupBtn.classList.add('border-[#EBEAE4]', 'bg-[#242D28]', 'text-white', 'hover:bg-[#1C1C1A]');
+      } else {
+        mainNav.classList.add('bg-transparent', 'border-transparent', 'h-28');
+        mainNav.classList.remove('bg-[#F7F6F2]/90', 'backdrop-blur-md', 'border-[#EBEAE4]', 'h-20');
+        navIcon.classList.add('bg-white', 'text-[#242D28]');
+        navIcon.classList.remove('bg-[#242D28]', 'text-[#F7F6F2]');
+        navLogo.classList.add('text-white');
+        navLogo.classList.remove('text-[#1C1C1A]');
+        navLinks.classList.add('text-white/80');
+        navLinks.classList.remove('text-[#6B6A65]');
+        navSignin.classList.add('text-white', 'hover:text-white/80');
+        navSignin.classList.remove('text-[#1C1C1A]', 'hover:text-[#4A5D4E]');
+        navSignupBtn.classList.add('border-white/10', 'bg-white/5', 'text-white', 'hover:bg-white/15');
+        navSignupBtn.classList.remove('border-[#EBEAE4]', 'bg-[#242D28]', 'text-white', 'hover:bg-[#1C1C1A]');
+      }
+    });
+
+    // 2. 3D CARD TILT
+    const card = document.getElementById('interactive-hardware-card');
+    const cardInner = document.getElementById('card-inner');
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const rotateX = ((y / rect.height) - 0.5) * -30;
+      const rotateY = ((x / rect.width) - 0.5) * 30;
+      cardInner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      cardInner.style.transform = `rotateX(0deg) rotateY(0deg)`;
+    });
+
+    // 3. WAITLIST FLOW
+    const showWaitlistBtn = document.getElementById('btn-show-waitlist');
+    const submitWaitlistBtn = document.getElementById('btn-submit-waitlist');
+    const wInitial = document.getElementById('waitlist-state-initial');
+    const wForm = document.getElementById('waitlist-state-form');
+    const wSuccess = document.getElementById('waitlist-state-success');
+    const wEmail = document.getElementById('waitlist-email');
+
+    showWaitlistBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      wInitial.classList.add('hidden');
+      wForm.classList.remove('hidden');
+      wEmail.focus();
+    });
+
+    submitWaitlistBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (wEmail.value && wEmail.value.includes('@')) {
+        try {
+          const res = await fetch('/api/waitlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: wEmail.value, source: 'hero-card' })
+          });
+          const data = await res.json();
+          if (data.success && data.remaining !== undefined) {
+            remainingSlots = data.remaining;
+            slotsCounterText.textContent = `${remainingSlots} / 100`;
+          }
+        } catch {}
+        wForm.classList.add('hidden');
+        wSuccess.classList.remove('hidden');
+      }
+    });
+
+    // 4. BETA COUNTER
+    let remainingSlots = 74;
+    const slotsCounterText = document.getElementById('slots-counter-text');
+    const betaEmailInput = document.getElementById('beta-email-input');
+    const betaSubmitBtn = document.getElementById('btn-beta-submit');
+
+    // Load real count on page load
+    fetch('/api/waitlist').then(r => r.json()).then(data => {
+      if (data.remaining !== undefined) {
+        remainingSlots = data.remaining;
+        slotsCounterText.textContent = `${remainingSlots} / 100`;
+      }
+    }).catch(() => {});
+
+    betaSubmitBtn.addEventListener('click', async () => {
+      const email = betaEmailInput.value.trim();
+      if (email && email.includes('@')) {
+        betaSubmitBtn.disabled = true;
+        betaSubmitBtn.textContent = "Reserving...";
+        try {
+          const res = await fetch('/api/waitlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, source: 'founding-beta' })
+          });
+          const data = await res.json();
+          if (data.success && data.remaining !== undefined) {
+            remainingSlots = data.remaining;
+            slotsCounterText.textContent = `${remainingSlots} / 100`;
+          }
+        } catch {}
+        betaSubmitBtn.textContent = "✓ Spot Reserved";
+        betaSubmitBtn.classList.replace('bg-[#7BE899]', 'bg-[#4A5D4E]');
+        betaSubmitBtn.classList.add('text-white');
+      }
+    });
+
+    // 5. LIGHTNING SPLIT
+    const solutionsSection = document.getElementById('solutions');
+    const consumerOverlay = document.getElementById('consumer-overlay');
+    const webglWrapper = document.getElementById('webgl-divider-wrapper');
+    const polyOuter = document.getElementById('lightning-outer');
+    const polyMid = document.getElementById('lightning-mid');
+    const polyCore = document.getElementById('lightning-core');
+
+    let currentSplitPercent = 60;
+    let targetSplitPercent = 60;
+    let wTime = 0;
+
+    solutionsSection.addEventListener('mousemove', (e) => {
+      const rect = solutionsSection.getBoundingClientRect();
+      const mouseXRatio = (e.clientX - rect.left) / rect.width;
+      if (mouseXRatio < 0.45) targetSplitPercent = 90;
+      else if (mouseXRatio > 0.55) targetSplitPercent = 15;
+      else targetSplitPercent = 55;
+    });
+
+    solutionsSection.addEventListener('mouseleave', () => { targetSplitPercent = 60; });
+
+    function updateSplitInterpolation() {
+      currentSplitPercent += (targetSplitPercent - currentSplitPercent) * 0.08;
+      const topX = Math.max(0, Math.min(100, currentSplitPercent));
+      const bottomX = Math.max(0, Math.min(100, currentSplitPercent - 25));
+
+      consumerOverlay.style.clipPath = `polygon(0% 0%, ${topX}% 0%, ${bottomX}% 100%, 0% 100%)`;
+      webglWrapper.style.left = `${topX}%`;
+
+      wTime += 0.03;
+      const segments = 12;
+      let pointsStr = "";
+      for (let i = 0; i <= segments; i++) {
+        const normY = i / segments;
+        const baseLineX = topX * (1 - normY) + bottomX * normY;
+        const offsetWave1 = 1.2 * Math.sin(10 * normY + wTime * 4.2);
+        const offsetWave2 = 0.6 * Math.sin(25 * normY - wTime * 12);
+        const finalX = baseLineX + offsetWave1 + offsetWave2;
+        pointsStr += `${finalX}%,${normY * 100}% `;
+      }
+
+      polyOuter.setAttribute('points', pointsStr);
+      polyMid.setAttribute('points', pointsStr);
+      polyCore.setAttribute('points', pointsStr);
+      requestAnimationFrame(updateSplitInterpolation);
+    }
+    requestAnimationFrame(updateSplitInterpolation);
+
+    // 6. WEBGL SHADER
+    const glCanvas = document.getElementById('shader-canvas');
+    const gl = glCanvas.getContext('webgl', { premultipliedAlpha: false, alpha: true });
+
+    if (gl) {
+      const vertexSource = `attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }`;
+      const fragmentSource = `
+        precision highp float;
+        uniform float iTime;
+        uniform vec2 iResolution;
+        vec3 random3(vec3 c) { float j = 4096.0*sin(dot(c,vec3(17.0, 59.4, 15.0))); vec3 r; r.z = fract(512.0*j); j *= .125; r.x = fract(512.0*j); j *= .125; r.y = fract(512.0*j); return r-0.5; }
+        const float F3 = 0.3333333; const float G3 = 0.1666667;
+        float simplex3d(vec3 p) { vec3 s = floor(p + dot(p, vec3(F3))); vec3 x = p - s + dot(s, vec3(G3)); vec3 e = step(vec3(0.0), x - x.yzx); vec3 i1 = e*(1.0 - e.zxy); vec3 i2 = 1.0 - e.zxy*(1.0 - e); vec3 x1 = x - i1 + G3; vec3 x2 = x - i2 + 2.0*G3; vec3 x3 = x - 1.0 + 3.0*G3; vec4 w, d; w.x = dot(x, x); w.y = dot(x1, x1); w.z = dot(x2, x2); w.w = dot(x3, x3); w = max(0.6 - w, 0.0); d.x = dot(random3(s), x); d.y = dot(random3(s + i1), x1); d.z = dot(random3(s + i2), x2); d.w = dot(random3(s + 1.0), x3); w *= w; w *= w; d *= w; return dot(d, vec4(52.0)); }
+        float noise(vec3 m) { return 0.5333*simplex3d(m) + 0.2667*simplex3d(2.0*m) + 0.1333*simplex3d(4.0*m); }
+        void main() { vec2 uv = gl_FragCoord.xy / iResolution.xy; uv = uv * 2. - 1.0; vec3 p3 = vec3(uv.x, uv.y, iTime * 0.3); float intensity = noise(p3 * 4.0); float aura = 1.0 - abs(uv.x); vec3 col = vec3(0.48, 0.91, 0.60); vec3 mixed = col * (intensity * 0.6 + 0.4) * aura; gl_FragColor = vec4(mixed, mixed.r * 0.5); }
+      `;
+
+      function compileShader(gl, source, type) { const s = gl.createShader(type); gl.shaderSource(s, source); gl.compileShader(s); return s; }
+      const vs = compileShader(gl, vertexSource, gl.VERTEX_SHADER);
+      const fs = compileShader(gl, fragmentSource, gl.FRAGMENT_SHADER);
+      const program = gl.createProgram();
+      gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program);
+
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+
+      const posAttr = gl.getAttribLocation(program, 'position');
+      const timeUniform = gl.getUniformLocation(program, 'iTime');
+      const resUniform = gl.getUniformLocation(program, 'iResolution');
+
+      function resizeWebGLCanvas() { const dpr = window.devicePixelRatio || 1; glCanvas.width = glCanvas.clientWidth * dpr; glCanvas.height = glCanvas.clientHeight * dpr; gl.viewport(0, 0, glCanvas.width, glCanvas.height); }
+      resizeWebGLCanvas();
+      window.addEventListener('resize', resizeWebGLCanvas);
+
+      function renderWebGL(t) {
+        gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.useProgram(program); gl.enableVertexAttribArray(posAttr); gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
+        gl.uniform1f(timeUniform, t * 0.001); gl.uniform2f(resUniform, glCanvas.width, glCanvas.height);
+        gl.drawArrays(gl.TRIANGLES, 0, 6); requestAnimationFrame(renderWebGL);
+      }
+      requestAnimationFrame(renderWebGL);
+    }
+
+    // 7. RECEIPT PARSER
+    const rawReceiptInput = document.getElementById('raw-receipt-input');
+    const parseBtn = document.getElementById('btn-parse-receipt');
+    const dIdle = document.getElementById('device-state-idle');
+    const dLoading = document.getElementById('device-state-loading');
+    const dResult = document.getElementById('device-state-result');
+    const receiptMerchant = document.getElementById('receipt-merchant');
+    const receiptDate = document.getElementById('receipt-date');
+    const receiptBadge = document.getElementById('receipt-badge');
+    const receiptItemsContainer = document.getElementById('receipt-items-container');
+    const receiptTotal = document.getElementById('receipt-total');
+    const receiptInsight = document.getElementById('receipt-insight');
+
+    parseBtn.addEventListener('click', () => {
+      const txt = rawReceiptInput.value.trim();
+      if (!txt) return;
+      dIdle.classList.add('hidden'); dResult.classList.add('hidden'); dLoading.classList.remove('hidden');
+
+      setTimeout(() => {
+        dLoading.classList.add('hidden'); dResult.classList.remove('hidden');
+        try {
+          const lines = txt.split('\n').filter(l => l.trim());
+          const merchant = lines[0] ? lines[0].replace(/store\s*#?\d+/i, '').trim() : "STORE";
+          const dateStr = lines[1] ? lines[1].trim() : "Date Unknown";
+          receiptMerchant.textContent = merchant.toUpperCase();
+          receiptDate.textContent = dateStr;
+          receiptBadge.textContent = merchant.charAt(0).toUpperCase();
+          receiptItemsContainer.innerHTML = "";
+          let itemsTotal = "$0.00";
+          lines.forEach(line => {
+            const itemPriceMatch = line.match(/(.*?)\s+\$?([0-9]+\.[0-9]{2})/);
+            if (itemPriceMatch) {
+              const label = itemPriceMatch[1].trim();
+              const val = "$" + itemPriceMatch[2];
+              if (!label.match(/subtotal|tax|total|visa|change|cash/i)) {
+                let cat = "Other";
+                if (label.match(/macchiato|roast|latte|coffee|espresso|brew/i)) cat = "Coffee";
+                else if (label.match(/croissant|muffin|cake|scone|bacon|panini/i)) cat = "Food";
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between text-xs md:text-sm";
+                row.innerHTML = `<div class="flex items-center gap-3"><span class="text-[9px] text-[#82907A] bg-[#F7F6F2] px-2 py-0.5 rounded font-bold uppercase">${cat}</span><span class="text-[#1C1C1A] font-semibold">${label}</span></div><span class="text-[#1C1C1A] font-medium">${val}</span>`;
+                receiptItemsContainer.appendChild(row);
+              }
+              if (label.match(/total/i)) itemsTotal = val;
+            }
+          });
+          receiptTotal.textContent = itemsTotal;
+          receiptInsight.textContent = `Your coffee shop habit logs around ~3 hits a week. Tap here to register reward systems.`;
+        } catch (err) { receiptMerchant.textContent = "GENERIC MERCHANT"; receiptTotal.textContent = "$0.00"; }
+      }, 1500);
+    });
+
+    // 8. FOOTER ANIMATIONS
+    const footerPrompt = document.getElementById('footer-prompt');
+    const footerGiantText = document.getElementById('footer-giant-bg-text');
+    const downloadWrapper = document.getElementById('download');
+
+    const footerObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          footerPrompt.classList.remove('translate-y-8', 'opacity-0');
+          footerPrompt.classList.add('translate-y-0', 'opacity-100');
+        }
+      });
+    }, { threshold: 0.15 });
+    footerObserver.observe(downloadWrapper);
+
+    window.addEventListener('scroll', () => {
+      const rect = downloadWrapper.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      if (rect.top < viewportHeight) {
+        const scrollPercent = 1 - (rect.top / viewportHeight);
+        const yOffset = Math.max(0, 10 - (scrollPercent * 10));
+        const scaleVal = 0.85 + (scrollPercent * 0.15);
+        const opacityVal = scrollPercent * 1.5;
+        footerGiantText.style.transform = `translateX(-50%) translateY(${yOffset}vh) scale(${scaleVal})`;
+        footerGiantText.style.opacity = Math.min(0.12, opacityVal);
+      }
+    });
+
+    document.getElementById('btn-scroll-top').addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>
