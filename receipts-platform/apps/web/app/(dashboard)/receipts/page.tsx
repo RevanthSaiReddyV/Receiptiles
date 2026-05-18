@@ -3,17 +3,20 @@ import { db } from "@receipts/db";
 import Link from "next/link";
 import { detectSubscriptions } from "@/lib/subscriptions/detect";
 import { ReceiptCalendar } from "./receipt-calendar";
+import { LiveReceiptsFeed } from "./live-feed";
+import { ViewToggle } from "./view-toggle";
 
 export const dynamic = 'force-dynamic';
 
 export default async function ReceiptsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; view?: string }>;
 }) {
   const session = await auth();
   const userId = session!.user!.id!;
   const params = await searchParams;
+  const activeView = params.view ?? "feed";
 
   const where: Record<string, unknown> = { userId };
   if (params.q) {
@@ -65,6 +68,14 @@ export default async function ReceiptsPage({
 
   return (
     <div>
+      <style>{`
+        @keyframes slide-in {
+          from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-slide-in { animation: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      `}</style>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -73,15 +84,18 @@ export default async function ReceiptsPage({
             {receipts.length} receipt{receipts.length !== 1 ? "s" : ""} &middot; ${totalAmount.toFixed(2)} total
           </p>
         </div>
-        <Link
-          href="/upload"
-          className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors shadow-sm"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Upload
-        </Link>
+        <div className="flex items-center gap-3">
+          <ViewToggle activeView={activeView} />
+          <Link
+            href="/upload"
+            className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Upload
+          </Link>
+        </div>
       </div>
 
       {/* Search */}
@@ -112,6 +126,8 @@ export default async function ReceiptsPage({
             Go to Connections to sync
           </Link>
         </div>
+      ) : activeView === "feed" ? (
+        <LiveReceiptsFeed initialReceipts={serialized} />
       ) : (
         <ReceiptCalendar receipts={serialized} subscriptions={serializedSubscriptions} />
       )}

@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 
-const ReceiptStorm = dynamic(() => import("./receipt-storm"), { ssr: false });
+const LandingPageContent = dynamic(() => import("./landing-page"), { ssr: false });
 
 export default function LandingPage() {
-  return <ReceiptStorm />;
+  return <LandingPageContent />;
 }
