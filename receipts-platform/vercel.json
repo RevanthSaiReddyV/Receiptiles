@@ -22,7 +22,7 @@
     },
     {
       "path": "/api/cron/health-ping",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 }
