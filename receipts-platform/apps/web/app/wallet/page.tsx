@@ -219,19 +219,12 @@ function WalletAddFlow() {
     setPlatform(detectPlatform());
   }, []);
 
-  // Check if user already has a pass
+  // Check if pass was added on THIS device (localStorage)
   useEffect(() => {
-    fetch("/api/wallet/add", { method: "GET" })
-      .then((r) => {
-        if (r.ok) return r.json();
-        return null;
-      })
-      .then((data) => {
-        if (data?.hasPass) {
-          setHasExistingPass(true);
-        }
-      })
-      .catch(() => {});
+    const addedOnDevice = localStorage.getItem("receiptiles_wallet_added");
+    if (addedOnDevice) {
+      setHasExistingPass(true);
+    }
   }, []);
 
   const handleAdd = useCallback(async (targetPlatform: "apple" | "google") => {
@@ -260,6 +253,7 @@ function WalletAddFlow() {
 
       setAdded(true);
       setShowConfetti(true);
+      localStorage.setItem("receiptiles_wallet_added", Date.now().toString());
       setTimeout(() => setShowConfetti(false), 3000);
     } catch (err) {
       console.error("Wallet add error:", err);
@@ -280,13 +274,22 @@ function WalletAddFlow() {
         </div>
 
         <h2 className="text-2xl font-bold text-[#F7F6F2] mb-2">
-          {hasExistingPass && !added ? "Pass already added" : "You're all set!"}
+          {hasExistingPass && !added ? "Pass added on this device" : "You're all set!"}
         </h2>
-        <p className="text-[#82907A] text-sm mb-8 max-w-xs mx-auto">
+        <p className="text-[#82907A] text-sm mb-4 max-w-xs mx-auto">
           {hasExistingPass && !added
             ? "Your Receiptiles pass is active in your wallet. Tap at any terminal to receive receipts."
             : "Tap at any Receiptiles terminal to receive digital receipts instantly. No manual selection needed."}
         </p>
+        {hasExistingPass && !added && (
+          <button
+            onClick={() => { localStorage.removeItem("receiptiles_wallet_added"); setHasExistingPass(false); }}
+            className="text-[#7BE899] text-xs font-medium underline underline-offset-2 mb-6 hover:text-white transition-colors"
+          >
+            Add to this device too →
+          </button>
+        )}
+        {!hasExistingPass && !added && null}
 
         <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 max-w-sm mx-auto">
           <div className="flex items-center gap-3 mb-4">
