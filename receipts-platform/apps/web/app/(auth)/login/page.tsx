@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { login } from "@/lib/actions/auth";
 import { GoogleSignInButton } from "../google-button";
+import { ClearSessionOnMount } from "./clear-session";
 
 export default async function LoginPage({
   searchParams,
@@ -9,8 +11,16 @@ export default async function LoginPage({
 }) {
   const { error, reset } = await searchParams;
 
+  // Clear any existing session cookie so a fresh login always works
+  const cookieStore = await cookies();
+  const sessionCookies = cookieStore.getAll().filter(c =>
+    c.name.includes("authjs") || c.name.includes("next-auth")
+  );
+  const hasExistingSession = sessionCookies.length > 0;
+
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-[#050507] p-4 overflow-hidden">
+      {hasExistingSession && <ClearSessionOnMount />}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-600/20 blur-3xl" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-purple-600/10 blur-3xl" />
 
