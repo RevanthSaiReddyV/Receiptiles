@@ -141,13 +141,18 @@ export async function POST(request: NextRequest) {
       pass.authToken
     );
 
+    // Apple Wallet requires signed .pkpass — until certs are configured, don't redirect to raw JSON
+    const hasCerts = !!(process.env.APPLE_PASS_CERTIFICATE && process.env.APPLE_PASS_KEY);
     const baseUrl = process.env.NEXTAUTH_URL || "https://receipts-platform.vercel.app";
-    const passUrl = `${baseUrl}/api/wallet/apple/pass?serial=${pass.serialNumber}`;
+    const passUrl = hasCerts
+      ? `${baseUrl}/api/wallet/apple/pass?serial=${pass.serialNumber}`
+      : null;
 
     return NextResponse.json({
       success: true,
       passUrl,
       passData: passJson,
+      message: passUrl ? undefined : "Pass registered. Apple Wallet download requires signing certificates (APPLE_PASS_CERTIFICATE). Your pass is saved and will be downloadable once configured.",
       deviceId,
       isNewDevice: !existingDevicePass,
     });

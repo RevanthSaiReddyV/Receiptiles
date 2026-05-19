@@ -59,8 +59,11 @@ export default function DashboardWalletPage() {
       if (data.passUrl) {
         if (targetPlatform === "apple") window.location.href = data.passUrl;
         else window.open(data.passUrl, "_blank");
+        setAdded(true);
+      } else {
+        // Pass created but can't download yet (Apple certs not configured)
+        setAdded(true);
       }
-      setAdded(true);
       localStorage.setItem("receiptiles_wallet_added", Date.now().toString());
     } catch (err) {
       console.error(err);
