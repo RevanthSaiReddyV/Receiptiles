@@ -95,6 +95,44 @@ function calculateEcoImpact(receiptCount: number) {
   };
 }
 
+async function getWarrantyItems(userId: string): Promise<Array<{ key: string; label: string; value: string }>> {
+  const now = new Date();
+  const receiptsWithWarranty = await db.receipt.findMany({
+    where: {
+      userId,
+      OR: [
+        { warrantyExpiresAt: { gt: now } },
+        { returnExpiresAt: { gt: now } },
+      ],
+    },
+    orderBy: { warrantyExpiresAt: "asc" },
+    take: 5,
+    select: {
+      id: true,
+      merchantCanonicalName: true,
+      total: true,
+      warrantyExpiresAt: true,
+      returnExpiresAt: true,
+      merchantCategory: true,
+    },
+  });
+
+  if (receiptsWithWarranty.length === 0) {
+    return [{ key: "noWarranty", label: "No active warranties", value: "Electronics purchases get auto-tracked" }];
+  }
+
+  return receiptsWithWarranty.map((r, i) => {
+    const expiry = r.warrantyExpiresAt || r.returnExpiresAt;
+    const type = r.warrantyExpiresAt ? "Warranty" : "Return";
+    const daysLeft = expiry ? Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+    return {
+      key: `w${i}`,
+      label: `${r.merchantCanonicalName} · ${formatCurrency(r.total)}`,
+      value: `${type} expires ${formatDate(expiry!)} (${daysLeft} days left)`,
+    };
+  });
+}
+
 /**
  * Generate pass.json for the Master Receipt Pass.
  */
@@ -146,82 +184,88 @@ export async function generateMasterPassJson(
     generic: {
       headerFields: [
         {
-          key: "monthSpend",
-          label: "This Month",
-          value: formatCurrency(monthTotal),
-        },
-        {
           key: "receiptCount",
-          label: "Receipts",
-          value: `${monthReceipts.length}`,
+          label: "RECEIPTS",
+          value: `${totalReceiptCount}`,
         },
       ],
       primaryFields: [
         {
-          key: "lastMerchant",
-          label: "LATEST",
-          value: lastReceipt
-            ? `${lastReceipt.merchantCanonicalName}  ·  ${formatCurrency(lastReceipt.total)}`
-            : "Tap to receive your first receipt",
+          key: "message",
+          label: "DIGITAL RECEIPT WALLET",
+          value: "Tap ℹ️ for your receipts",
         },
       ],
       secondaryFields: [
         {
-          key: "totalSaved",
-          label: "TOTAL SAVED",
-          value: `${totalReceiptCount} receipts`,
+          key: "monthSpend",
+          label: "THIS MONTH",
+          value: formatCurrency(monthTotal),
         },
         {
+          key: "lastPurchase",
+          label: "LATEST",
+          value: lastReceipt ? lastReceipt.merchantCanonicalName : "—",
+        },
+      ],
+      auxiliaryFields: [
+        {
           key: "trees",
-          label: "TREES SAVED",
+          label: "🌳 TREES",
           value: eco.treesSaved,
         },
         {
           key: "co2",
-          label: "CO₂ PREVENTED",
+          label: "💨 CO₂",
           value: eco.co2Saved,
         },
+        {
+          key: "paper",
+          label: "📄 PAPER",
+          value: eco.paperAvoided,
+        },
       ],
-      auxiliaryFields: receipts.slice(0, 4).map((r, i) => ({
-        key: `recent${i}`,
-        label: formatDate(r.purchasedAt),
-        value: `${r.merchantCanonicalName}  ${formatCurrency(r.total)}`,
-      })),
       backFields: [
+        {
+          key: "recentTitle",
+          label: "📋 RECENT RECEIPTS",
+          value: "",
+        },
         ...receipts.map((r, i) => ({
-          key: `receipt${i}`,
-          label: `${r.merchantCanonicalName}  ·  ${formatDate(r.purchasedAt)}`,
-          value: `${formatCurrency(r.total)}  ·  ${r.merchantCategory || "Purchase"}`,
+          key: `r${i}`,
+          label: `${r.merchantCanonicalName}`,
+          value: `${formatCurrency(r.total)}  ·  ${formatDate(r.purchasedAt)}  ·  ${r.merchantCategory || "Purchase"}`,
         })),
         {
-          key: "divider1",
-          label: "━━━━━━━━━━━━━━━━━━━━━━━━━━",
-          value: "",
+          key: "sep1",
+          label: " ",
+          value: "─────────────────────────",
         },
         {
-          key: "ecoTitle",
-          label: "🌱 YOUR IMPACT",
-          value: `${totalReceiptCount} paper receipts eliminated`,
+          key: "warrantyTitle",
+          label: "🛡️ WARRANTY & RETURNS",
+          value: "Items with active coverage:",
+        },
+        ...await getWarrantyItems(userId),
+        {
+          key: "sep2",
+          label: " ",
+          value: "─────────────────────────",
         },
         {
-          key: "ecoStats",
-          label: "Environmental Savings",
-          value: `🌳 ${eco.treesSaved} trees  ·  ♻️ ${eco.paperAvoided} paper  ·  💨 ${eco.co2Saved} CO₂`,
+          key: "impact",
+          label: "🌱 YOUR ECO IMPACT",
+          value: `${totalReceiptCount} paper receipts eliminated\n🌳 ${eco.treesSaved} trees saved\n♻️ ${eco.paperAvoided} paper avoided\n💨 ${eco.co2Saved} CO₂ prevented`,
         },
         {
-          key: "divider2",
-          label: "━━━━━━━━━━━━━━━━━━━━━━━━━━",
-          value: "",
+          key: "sep3",
+          label: " ",
+          value: "─────────────────────────",
         },
         {
-          key: "howItWorks",
-          label: "HOW IT WORKS",
-          value: "Hold your phone near any Receiptiles terminal at checkout. Your receipt appears here automatically — no app needed.",
-        },
-        {
-          key: "manage",
-          label: "MANAGE RECEIPTS",
-          value: "receiptiles.com/receipts",
+          key: "how",
+          label: "ℹ️ HOW TO USE",
+          value: "Hold your phone near any Receiptiles terminal at checkout. Your receipt appears here instantly.\n\nView all receipts: receiptiles.com/receipts",
         },
       ],
     },
