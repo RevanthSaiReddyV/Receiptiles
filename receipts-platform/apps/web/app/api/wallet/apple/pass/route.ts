@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PKPass } from "passkit-generator";
+import fs from "fs";
+import path from "path";
 import { generateMasterPassJson } from "@/lib/wallet/apple-pass";
 import { db } from "@receipts/db";
+
+function loadPassAssets(): Record<string, Buffer> {
+  const assetsDir = path.join(process.cwd(), "public", "pass-assets");
+  const buffers: Record<string, Buffer> = {};
+  try {
+    const files = fs.readdirSync(assetsDir);
+    for (const file of files) {
+      if (file.endsWith(".png")) {
+        buffers[file] = fs.readFileSync(path.join(assetsDir, file));
+      }
+    }
+  } catch {
+    // Assets dir may not exist in all environments
+  }
+  return buffers;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -53,8 +71,9 @@ export async function GET(request: NextRequest) {
     const signerKey = Buffer.from(keyB64, "base64");
     const wwdr = Buffer.from(wwdrB64, "base64");
 
+    const assets = loadPassAssets();
     const pkpass = new PKPass(
-      {},
+      assets,
       {
         wwdr,
         signerCert,
