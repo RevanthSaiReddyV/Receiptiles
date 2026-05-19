@@ -157,6 +157,10 @@ model Receipt {
   rawParseResult Json?
   receiptUrl     String?  // Original receipt URL from POS (e.g., Square receipt_url)
 
+  // Warranty & Return Tracking (for Apple Wallet Orders)
+  warrantyExpiresAt  DateTime?  // Calculated warranty expiry based on category
+  returnExpiresAt    DateTime?  // Return window expiry
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
