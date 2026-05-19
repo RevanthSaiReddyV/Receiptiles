@@ -7,7 +7,7 @@ function getResend() {
 }
 
 const FROM_ADDRESS =
-  process.env.EMAIL_FROM ?? "receipts@updates.receiptsvault.com";
+  process.env.EMAIL_FROM ?? "Receiptiles <onboarding@resend.dev>";
 
 function buildWaitlistConfirmationHtml(remaining: number): string {
   const spotNumber = 100 - remaining;
