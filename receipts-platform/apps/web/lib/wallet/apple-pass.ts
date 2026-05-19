@@ -159,55 +159,69 @@ export async function generateMasterPassJson(
       primaryFields: [
         {
           key: "lastMerchant",
-          label: "Last Purchase",
+          label: "LATEST",
           value: lastReceipt
-            ? lastReceipt.merchantCanonicalName
-            : "No receipts yet",
+            ? `${lastReceipt.merchantCanonicalName}  ·  ${formatCurrency(lastReceipt.total)}`
+            : "Tap to receive your first receipt",
         },
       ],
       secondaryFields: [
         {
-          key: "lastAmount",
-          label: "Amount",
-          value: lastReceipt ? formatCurrency(lastReceipt.total) : "-",
+          key: "totalSaved",
+          label: "TOTAL SAVED",
+          value: `${totalReceiptCount} receipts`,
         },
         {
-          key: "lastDate",
-          label: "Date",
-          value: lastReceipt ? formatDate(lastReceipt.purchasedAt) : "-",
+          key: "trees",
+          label: "TREES SAVED",
+          value: eco.treesSaved,
+        },
+        {
+          key: "co2",
+          label: "CO₂ PREVENTED",
+          value: eco.co2Saved,
         },
       ],
-      auxiliaryFields: receipts.slice(1, 4).map((r, i) => ({
+      auxiliaryFields: receipts.slice(0, 4).map((r, i) => ({
         key: `recent${i}`,
-        label: r.merchantCanonicalName,
-        value: formatCurrency(r.total),
+        label: formatDate(r.purchasedAt),
+        value: `${r.merchantCanonicalName}  ${formatCurrency(r.total)}`,
       })),
       backFields: [
+        ...receipts.map((r, i) => ({
+          key: `receipt${i}`,
+          label: `${r.merchantCanonicalName}  ·  ${formatDate(r.purchasedAt)}`,
+          value: `${formatCurrency(r.total)}  ·  ${r.merchantCategory || "Purchase"}`,
+        })),
         {
-          key: "history",
-          label: "Recent History",
-          value: receipts
-            .map(
-              (r) =>
-                `${formatDate(r.purchasedAt)} — ${r.merchantCanonicalName}: ${formatCurrency(r.total)}`
-            )
-            .join("\n"),
+          key: "divider1",
+          label: "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+          value: "",
         },
         {
-          key: "ecoImpact",
-          label: "Your Eco Impact",
-          value: [
-            `Trees saved: ${eco.treesSaved}`,
-            `Paper avoided: ${eco.paperAvoided}`,
-            `CO₂ prevented: ${eco.co2Saved}`,
-            `Digital receipts: ${totalReceiptCount}`,
-          ].join("\n"),
+          key: "ecoTitle",
+          label: "🌱 YOUR IMPACT",
+          value: `${totalReceiptCount} paper receipts eliminated`,
         },
         {
-          key: "info",
-          label: "About Receiptiles",
-          value:
-            "This pass updates automatically when new receipts are added. Tap at compatible terminals to receive digital receipts instantly.\n\nhttps://receiptiles.com",
+          key: "ecoStats",
+          label: "Environmental Savings",
+          value: `🌳 ${eco.treesSaved} trees  ·  ♻️ ${eco.paperAvoided} paper  ·  💨 ${eco.co2Saved} CO₂`,
+        },
+        {
+          key: "divider2",
+          label: "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+          value: "",
+        },
+        {
+          key: "howItWorks",
+          label: "HOW IT WORKS",
+          value: "Hold your phone near any Receiptiles terminal at checkout. Your receipt appears here automatically — no app needed.",
+        },
+        {
+          key: "manage",
+          label: "MANAGE RECEIPTS",
+          value: "receiptiles.com/receipts",
         },
       ],
     },
