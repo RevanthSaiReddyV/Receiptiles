@@ -55,6 +55,56 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google" && profile?.email) {
+        // Check if this Google account is already linked to a different user
+        const existingAccount = await db.account.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider: "google",
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          include: { user: true },
+        });
+
+        if (existingAccount) {
+          // Already linked — allow sign-in to that user
+          return true;
+        }
+
+        // New Google account — check if email already exists as a user
+        const existingUser = await db.user.findUnique({
+          where: { email: profile.email },
+        });
+
+        if (existingUser) {
+          // Email exists but this Google account isn't linked — link it
+          await db.account.create({
+            data: {
+              userId: existingUser.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token,
+              refresh_token: account.refresh_token,
+              expires_at: account.expires_at,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+            },
+          });
+          // Override the user object so JWT gets the correct user ID
+          user.id = existingUser.id;
+          user.email = existingUser.email;
+          return true;
+        }
+
+        // Brand new email — create a new user (adapter handles this)
+        return true;
+      }
+      return true;
+    },
     async session({ session, token }) {
       if (token.sub) {
         session.user.id = token.sub;
