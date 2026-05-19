@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { auth } from "@/lib/auth";
 import { db } from "@receipts/db";
 import {
@@ -11,9 +12,36 @@ import {
 } from "@/lib/wallet/google-pass";
 import { generateGoogleWalletLink } from "@/lib/wallet/google-wallet";
 
+interface DeviceInfo {
+  platform: string;
+  deviceName?: string;
+  deviceType?: string;
+  osName?: string;
+  osVersion?: string;
+  browserName?: string;
+  screenWidth?: number;
+  screenHeight?: number;
+  userAgent?: string;
+  timezone?: string;
+  language?: string;
+}
+
+function generateDeviceId(info: DeviceInfo, userId: string): string {
+  const fingerprint = [
+    userId,
+    info.osName || "",
+    info.deviceName || "",
+    info.screenWidth || "",
+    info.screenHeight || "",
+    info.browserName || "",
+    info.timezone || "",
+  ].join("|");
+  return crypto.createHash("sha256").update(fingerprint).digest("hex").slice(0, 16);
+}
+
 /**
  * GET /api/wallet/add
- * Check if the user already has an active wallet pass.
+ * List user's wallet passes across all devices.
  */
 export async function GET() {
   const session = await auth();
@@ -21,22 +49,33 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const existingPass = await db.walletPass.findFirst({
+  const passes = await db.walletPass.findMany({
     where: { userId: session.user.id, isActive: true },
+    select: {
+      id: true,
+      platform: true,
+      deviceName: true,
+      deviceType: true,
+      osName: true,
+      browserName: true,
+      createdAt: true,
+      lastActiveAt: true,
+      deviceId: true,
+    },
+    orderBy: { createdAt: "desc" },
   });
 
   return NextResponse.json({
-    hasPass: !!existingPass,
-    platform: existingPass?.platform ?? null,
+    hasPass: passes.length > 0,
+    count: passes.length,
+    devices: passes,
   });
 }
 
 /**
  * POST /api/wallet/add
- * Create or retrieve the user's wallet pass for the specified platform.
- *
- * Request body: { platform: "apple" | "google" }
- * Response: { success: true, passUrl?: string, passData?: object }
+ * Create a wallet pass for this specific device.
+ * Allows multiple passes per user (one per device).
  */
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -45,8 +84,9 @@ export async function POST(request: NextRequest) {
   }
 
   const userId = session.user.id;
+  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null;
 
-  let body: { platform?: string };
+  let body: DeviceInfo;
   try {
     body = await request.json();
   } catch {
@@ -64,13 +104,35 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (platform === "apple") {
-    const pass = await getOrCreateWalletPass(userId);
+  const deviceId = generateDeviceId(body, userId);
 
-    // Mark as active
+  // Check if this exact device already has a pass
+  const existingDevicePass = await db.walletPass.findFirst({
+    where: { userId, deviceId, platform, isActive: true },
+  });
+
+  if (platform === "apple") {
+    const pass = existingDevicePass
+      ? existingDevicePass
+      : await getOrCreateWalletPass(userId);
+
+    // Update with device info
     await db.walletPass.update({
       where: { id: pass.id },
-      data: { isActive: true },
+      data: {
+        isActive: true,
+        deviceId,
+        deviceName: body.deviceName || null,
+        deviceType: body.deviceType || null,
+        osName: body.osName || null,
+        osVersion: body.osVersion || null,
+        browserName: body.browserName || null,
+        screenWidth: body.screenWidth || null,
+        screenHeight: body.screenHeight || null,
+        userAgent: body.userAgent?.slice(0, 500) || null,
+        ipAddress: ip,
+        lastActiveAt: new Date(),
+      },
     });
 
     const passJson = await generateMasterPassJson(
@@ -79,26 +141,41 @@ export async function POST(request: NextRequest) {
       pass.authToken
     );
 
-    // The download URL for the .pkpass file
     const passUrl = `https://receiptiles.com/api/wallet/apple/pass?serial=${pass.serialNumber}`;
 
     return NextResponse.json({
       success: true,
       passUrl,
       passData: passJson,
+      deviceId,
+      isNewDevice: !existingDevicePass,
     });
   }
 
   // Google Wallet
-  const pass = await getOrCreateGoogleWalletPass(userId);
+  const pass = existingDevicePass
+    ? existingDevicePass
+    : await getOrCreateGoogleWalletPass(userId);
 
-  // Mark as active
+  // Update with device info
   await db.walletPass.update({
     where: { id: pass.id },
-    data: { isActive: true },
+    data: {
+      isActive: true,
+      deviceId,
+      deviceName: body.deviceName || null,
+      deviceType: body.deviceType || null,
+      osName: body.osName || null,
+      osVersion: body.osVersion || null,
+      browserName: body.browserName || null,
+      screenWidth: body.screenWidth || null,
+      screenHeight: body.screenHeight || null,
+      userAgent: body.userAgent?.slice(0, 500) || null,
+      ipAddress: ip,
+      lastActiveAt: new Date(),
+    },
   });
 
-  // Generate Google Wallet save link
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { name: true, createdAt: true },
@@ -128,5 +205,7 @@ export async function POST(request: NextRequest) {
     success: true,
     passUrl,
     passData: passObject,
+    deviceId,
+    isNewDevice: !existingDevicePass,
   });
 }

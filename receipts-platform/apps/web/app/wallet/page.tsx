@@ -208,6 +208,49 @@ function LoginForm() {
   );
 }
 
+function getDeviceName(ua: string): string {
+  if (/iPhone/.test(ua)) return ua.match(/iPhone\s?(\d+)?/)?.[0] || "iPhone";
+  if (/iPad/.test(ua)) return "iPad";
+  if (/Macintosh/.test(ua)) return "Mac";
+  if (/Pixel/.test(ua)) return ua.match(/Pixel\s?\w*/)?.[0] || "Pixel";
+  if (/Samsung/.test(ua)) return ua.match(/SM-\w+/)?.[0] || "Samsung";
+  if (/Windows/.test(ua)) return "Windows PC";
+  if (/Android/.test(ua)) return "Android Device";
+  return "Unknown Device";
+}
+
+function getDeviceType(): string {
+  const w = window.innerWidth;
+  if (/Mobi|Android.*Mobile|iPhone/.test(navigator.userAgent)) return "mobile";
+  if (/iPad|Android(?!.*Mobile)|Tablet/.test(navigator.userAgent) || (w >= 600 && w <= 1024)) return "tablet";
+  if (/Watch/.test(navigator.userAgent)) return "watch";
+  return "desktop";
+}
+
+function getOSName(ua: string): string {
+  if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
+  if (/Mac OS X/.test(ua)) return "macOS";
+  if (/Android/.test(ua)) return "Android";
+  if (/Windows/.test(ua)) return "Windows";
+  if (/Linux/.test(ua)) return "Linux";
+  return "Unknown";
+}
+
+function getOSVersion(ua: string): string {
+  const match = ua.match(/(?:iPhone OS|Mac OS X|Android|Windows NT)\s?([\d_.]+)/);
+  return match ? match[1].replace(/_/g, ".") : "";
+}
+
+function getBrowserName(ua: string): string {
+  if (/CriOS/.test(ua)) return "Chrome (iOS)";
+  if (/FxiOS/.test(ua)) return "Firefox (iOS)";
+  if (/EdgiOS|Edg/.test(ua)) return "Edge";
+  if (/Chrome/.test(ua) && !/Chromium/.test(ua)) return "Chrome";
+  if (/Safari/.test(ua) && !/Chrome/.test(ua)) return "Safari";
+  if (/Firefox/.test(ua)) return "Firefox";
+  return "Unknown";
+}
+
 function WalletAddFlow() {
   const [platform, setPlatform] = useState<Platform>("desktop");
   const [isAdding, setIsAdding] = useState(false);
@@ -231,10 +274,26 @@ function WalletAddFlow() {
     setIsAdding(true);
 
     try {
+      // Collect device info
+      const ua = navigator.userAgent;
+      const deviceInfo = {
+        platform: targetPlatform,
+        deviceName: getDeviceName(ua),
+        deviceType: getDeviceType(),
+        osName: getOSName(ua),
+        osVersion: getOSVersion(ua),
+        browserName: getBrowserName(ua),
+        screenWidth: window.screen.width,
+        screenHeight: window.screen.height,
+        userAgent: ua,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+      };
+
       const res = await fetch("/api/wallet/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform: targetPlatform }),
+        body: JSON.stringify(deviceInfo),
       });
 
       if (!res.ok) {

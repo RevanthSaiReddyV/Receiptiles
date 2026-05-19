@@ -383,11 +383,24 @@ model WalletPass {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // Device info for multi-device tracking
+  deviceId       String?  // fingerprint hash for this device
+  deviceName     String?  // "iPhone 15 Pro", "Pixel 8", "MacBook Pro"
+  deviceType     String?  // "mobile", "tablet", "desktop", "watch"
+  osName         String?  // "iOS", "Android", "macOS", "Windows"
+  osVersion      String?  // "17.4", "14", "14.5"
+  browserName    String?  // "Safari", "Chrome", "Mobile App"
+  screenWidth    Int?
+  screenHeight   Int?
+  userAgent      String?
+  ipAddress      String?
+  lastActiveAt   DateTime?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, platform])
   @@index([serialNumber])
   @@index([userId])
+  @@index([deviceId])
 }
 
 // ─── Data Monetization ──────────────────────────────────────────────────────
