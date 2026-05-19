@@ -1,8 +1,22 @@
 import jwt from "jsonwebtoken";
 
+/**
+ * Google Wallet Master Pass — Receiptiles membership card.
+ * Uses the Generic Pass type for receipt ledger display.
+ *
+ * Google Smart Tap:
+ * - Pass includes a Smart Tap ID for NFC handover at compatible terminals
+ * - When tapped, triggers receipt delivery to the phone
+ */
+
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID ?? "";
-const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL ?? "";
-const PRIVATE_KEY = (process.env.GOOGLE_WALLET_PRIVATE_KEY ?? "").replace(/\\n/g, "\n");
+const SERVICE_ACCOUNT_EMAIL =
+  process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL ?? "";
+const PRIVATE_KEY = (process.env.GOOGLE_WALLET_PRIVATE_KEY ?? "").replace(
+  /\\n/g,
+  "\n"
+);
+const BASE_URL = "https://receiptiles.com";
 
 interface WalletPassData {
   userId: string;
@@ -14,25 +28,25 @@ interface WalletPassData {
 }
 
 export function generateGoogleWalletLink(data: WalletPassData): string {
-  const objectId = `${ISSUER_ID}.allmyreceipts-${data.userId}`;
-  const classId = `${ISSUER_ID}.allmyreceipts-card`;
+  const objectId = `${ISSUER_ID}.receiptiles-${data.userId}`;
+  const classId = `${ISSUER_ID}.receiptiles-member`;
 
   const genericObject = {
     id: objectId,
     classId: classId,
     cardTitle: {
-      defaultValue: { language: "en", value: "AllMyReceipts" },
+      defaultValue: { language: "en", value: "Receiptiles" },
     },
     subheader: {
-      defaultValue: { language: "en", value: "Digital Wallet" },
+      defaultValue: { language: "en", value: "Digital Receipts" },
     },
     header: {
       defaultValue: { language: "en", value: data.userName },
     },
-    hexBackgroundColor: "#0a0a0a",
+    hexBackgroundColor: "#242D28",
     logo: {
       sourceUri: {
-        uri: `${process.env.NEXTAUTH_URL}/icon-wallet.png`,
+        uri: `${BASE_URL}/icon-wallet.png`,
       },
     },
     textModulesData: [
@@ -49,26 +63,48 @@ export function generateGoogleWalletLink(data: WalletPassData): string {
       {
         id: "co2",
         header: "CO₂ Saved",
-        body: data.co2Saved >= 1 ? `${data.co2Saved.toFixed(1)} kg` : `${(data.co2Saved * 1000).toFixed(0)} g`,
+        body:
+          data.co2Saved >= 1
+            ? `${data.co2Saved.toFixed(1)} kg`
+            : `${(data.co2Saved * 1000).toFixed(0)} g`,
+      },
+      {
+        id: "member",
+        header: "Member Since",
+        body: data.memberSince,
       },
     ],
+    linksModuleData: {
+      uris: [
+        {
+          uri: `${BASE_URL}/receipts`,
+          description: "View all receipts",
+          id: "view-receipts",
+        },
+        {
+          uri: BASE_URL,
+          description: "Receiptiles",
+          id: "website",
+        },
+      ],
+    },
     barcode: {
       type: "QR_CODE",
-      value: `https://receipts-platform.vercel.app/wallet?user=${data.userId}`,
-      alternateText: "AllMyReceipts",
+      value: `${BASE_URL}/wallet?user=${data.userId}`,
+      alternateText: "Receiptiles",
     },
   };
 
   const genericClass = {
     id: classId,
-    issuerName: "AllMyReceipts",
+    issuerName: "Receiptiles",
     reviewStatus: "UNDER_REVIEW",
   };
 
   const claims = {
     iss: SERVICE_ACCOUNT_EMAIL,
     aud: "google",
-    origins: [process.env.NEXTAUTH_URL ?? "https://receipts-platform.vercel.app"],
+    origins: [BASE_URL],
     typ: "savetowallet",
     payload: {
       genericObjects: [genericObject],
@@ -77,6 +113,7 @@ export function generateGoogleWalletLink(data: WalletPassData): string {
   };
 
   if (!PRIVATE_KEY || !SERVICE_ACCOUNT_EMAIL) {
+    // Fallback: unsigned JWT encoded as base64url (for dev/testing)
     return `https://pay.google.com/gp/v/save/${Buffer.from(JSON.stringify(claims)).toString("base64url")}`;
   }
 

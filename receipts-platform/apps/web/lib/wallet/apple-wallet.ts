@@ -1,5 +1,5 @@
 /**
- * Apple Wallet Pass Generation
+ * Apple Wallet Pass Generation Utilities
  *
  * Requires Apple Developer account ($99/year) with:
  * - Pass Type ID certificate
@@ -7,8 +7,9 @@
  *
  * Environment variables needed:
  * - APPLE_TEAM_ID
- * - APPLE_PASS_TYPE_ID (e.g., pass.com.allmyreceipts.card)
- * - APPLE_PASS_CERT (base64 encoded .p12 certificate)
+ * - APPLE_PASS_TYPE_ID (e.g., pass.com.receiptiles.receipts)
+ * - APPLE_PASS_CERTIFICATE (base64 encoded .p12 certificate)
+ * - APPLE_PASS_KEY (base64 encoded private key PEM)
  * - APPLE_PASS_CERT_PASSWORD
  */
 
@@ -26,24 +27,25 @@ interface ApplePassData {
 export function generateApplePassJson(data: ApplePassData) {
   return {
     formatVersion: 1,
-    passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID ?? "pass.com.allmyreceipts.card",
+    passTypeIdentifier:
+      process.env.APPLE_PASS_TYPE_ID ?? "pass.com.receiptiles.receipts",
     serialNumber: data.serialNumber,
     teamIdentifier: process.env.APPLE_TEAM_ID ?? "",
-    organizationName: "AllMyReceipts",
-    description: "AllMyReceipts Digital Wallet",
-    logoText: "AllMyReceipts",
-    foregroundColor: "rgb(255, 255, 255)",
-    backgroundColor: "rgb(10, 10, 10)",
-    labelColor: "rgb(16, 185, 129)",
+    organizationName: "Receiptiles",
+    description: "Receiptiles Digital Receipt Wallet",
+    logoText: "Receiptiles",
+    foregroundColor: "rgb(247, 246, 242)", // #F7F6F2
+    backgroundColor: "rgb(36, 45, 40)", // #242D28
+    labelColor: "rgb(130, 144, 122)", // #82907A
 
     authenticationToken: data.authToken,
-    webServiceURL: `${process.env.NEXTAUTH_URL}/api/wallet/apple`,
+    webServiceURL: "https://receiptiles.com/api/wallet/apple",
 
     barcode: {
       format: "PKBarcodeFormatQR",
-      message: `https://receipts-platform.vercel.app/wallet?user=${data.userId}`,
+      message: `https://receiptiles.com/wallet?user=${data.userId}`,
       messageEncoding: "iso-8859-1",
-      altText: "AllMyReceipts",
+      altText: "Receiptiles",
     },
 
     generic: {
@@ -63,7 +65,10 @@ export function generateApplePassJson(data: ApplePassData) {
         {
           key: "co2",
           label: "CO₂ Saved",
-          value: data.co2Saved >= 1 ? `${data.co2Saved.toFixed(1)} kg` : `${(data.co2Saved * 1000).toFixed(0)} g`,
+          value:
+            data.co2Saved >= 1
+              ? `${data.co2Saved.toFixed(1)} kg`
+              : `${(data.co2Saved * 1000).toFixed(0)} g`,
         },
       ],
       auxiliaryFields: [
@@ -86,13 +91,14 @@ export function generateApplePassJson(data: ApplePassData) {
         },
         {
           key: "about",
-          label: "About AllMyReceipts",
-          value: "AllMyReceipts automatically captures and organizes all your receipts from email, POS systems, and uploads. Save trees, track spending, and optimize your credit card rewards.",
+          label: "About Receiptiles",
+          value:
+            "Receiptiles automatically captures and organizes all your receipts from email, POS systems, and uploads. Save trees, track spending, and optimize your credit card rewards.",
         },
         {
           key: "website",
           label: "Website",
-          value: "https://allmyreceipts.com",
+          value: "https://receiptiles.com",
         },
       ],
     },
@@ -103,6 +109,6 @@ export function isAppleWalletConfigured(): boolean {
   return !!(
     process.env.APPLE_TEAM_ID &&
     process.env.APPLE_PASS_TYPE_ID &&
-    process.env.APPLE_PASS_CERT
+    process.env.APPLE_PASS_CERTIFICATE
   );
 }

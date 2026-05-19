@@ -7,9 +7,10 @@ import { db } from "@receipts/db";
  *
  * Pass structure: Generic pass with:
  * - headerFields: total spend this month, receipt count
- * - primaryFields: last merchant + amount
- * - secondaryFields: last 3 receipts summary
- * - backFields: full receipt history (last 10)
+ * - primaryFields: last merchant name
+ * - secondaryFields: last amount + date
+ * - auxiliaryFields: last 3 receipts summary
+ * - backFields: full receipt history (last 10) + eco impact stats
  *
  * For Apple VAS (Value Added Services) at NFC terminals:
  * - The pass includes a VAS protocol handler
@@ -25,6 +26,10 @@ export interface ApplePassData {
   description: string;
   authenticationToken: string;
   webServiceURL: string;
+  backgroundColor: string;
+  foregroundColor: string;
+  labelColor: string;
+  logoText: string;
   generic: {
     headerFields: Array<{ key: string; label: string; value: string }>;
     primaryFields: Array<{ key: string; label: string; value: string }>;
@@ -36,16 +41,59 @@ export interface ApplePassData {
     message: string;
     encryptionPublicKey?: string;
   };
-  barcode?: {
+  barcodes?: Array<{
     message: string;
     format: string;
     messageEncoding: string;
-  };
+    altText?: string;
+  }>;
 }
 
-const PASS_TYPE_ID = process.env.APPLE_PASS_TYPE_ID ?? "pass.com.receipts.master";
+const PASS_TYPE_ID =
+  process.env.APPLE_PASS_TYPE_ID ?? "pass.com.receiptiles.receipts";
 const TEAM_ID = process.env.APPLE_TEAM_ID ?? "";
-const WEB_SERVICE_URL = process.env.NEXTAUTH_URL ?? "https://receipts.app";
+const WEB_SERVICE_URL = "https://receiptiles.com/api/wallet/apple";
+
+/**
+ * Format a number as USD currency string.
+ */
+function formatCurrency(amount: number): string {
+  return `$${amount.toFixed(2)}`;
+}
+
+/**
+ * Format a date as human-readable (e.g., "May 18").
+ */
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/**
+ * Calculate eco impact stats based on receipt count.
+ * Average paper receipt: ~3.15g paper, ~0.0057 kg CO2
+ * 1 tree = ~8,333 sheets of paper
+ */
+function calculateEcoImpact(receiptCount: number) {
+  const treesSaved = receiptCount / 8333;
+  const paperAvoided = receiptCount * 3.15; // grams
+  const co2Saved = receiptCount * 0.0057; // kg
+
+  return {
+    treesSaved:
+      treesSaved >= 0.01 ? treesSaved.toFixed(2) : treesSaved.toFixed(4),
+    paperAvoided:
+      paperAvoided >= 1000
+        ? `${(paperAvoided / 1000).toFixed(1)} kg`
+        : `${paperAvoided.toFixed(0)} g`,
+    co2Saved:
+      co2Saved >= 1
+        ? `${co2Saved.toFixed(1)} kg`
+        : `${(co2Saved * 1000).toFixed(0)} g`,
+  };
+}
 
 /**
  * Generate pass.json for the Master Receipt Pass.
@@ -78,21 +126,29 @@ export async function generateMasterPassJson(
 
   const lastReceipt = receipts[0];
 
+  // Total receipt count for eco impact
+  const totalReceiptCount = await db.receipt.count({ where: { userId } });
+  const eco = calculateEcoImpact(totalReceiptCount);
+
   return {
     formatVersion: 1,
     passTypeIdentifier: PASS_TYPE_ID,
     serialNumber,
     teamIdentifier: TEAM_ID,
-    organizationName: "Receipts",
-    description: "Master Receipt Pass",
+    organizationName: "Receiptiles",
+    description: "Receiptiles Digital Receipt Pass",
     authenticationToken: authToken,
-    webServiceURL: `${WEB_SERVICE_URL}/api/wallet/apple`,
+    webServiceURL: WEB_SERVICE_URL,
+    backgroundColor: "#242D28",
+    foregroundColor: "#F7F6F2",
+    labelColor: "#82907A",
+    logoText: "Receiptiles",
     generic: {
       headerFields: [
         {
           key: "monthSpend",
           label: "This Month",
-          value: `$${monthTotal.toFixed(2)}`,
+          value: formatCurrency(monthTotal),
         },
         {
           key: "receiptCount",
@@ -105,7 +161,7 @@ export async function generateMasterPassJson(
           key: "lastMerchant",
           label: "Last Purchase",
           value: lastReceipt
-            ? `${lastReceipt.merchantCanonicalName}`
+            ? lastReceipt.merchantCanonicalName
             : "No receipts yet",
         },
       ],
@@ -113,25 +169,18 @@ export async function generateMasterPassJson(
         {
           key: "lastAmount",
           label: "Amount",
-          value: lastReceipt
-            ? `$${lastReceipt.total.toFixed(2)}`
-            : "-",
+          value: lastReceipt ? formatCurrency(lastReceipt.total) : "-",
         },
         {
           key: "lastDate",
           label: "Date",
-          value: lastReceipt
-            ? lastReceipt.purchasedAt.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })
-            : "-",
+          value: lastReceipt ? formatDate(lastReceipt.purchasedAt) : "-",
         },
       ],
       auxiliaryFields: receipts.slice(1, 4).map((r, i) => ({
         key: `recent${i}`,
         label: r.merchantCanonicalName,
-        value: `$${r.total.toFixed(2)}`,
+        value: formatCurrency(r.total),
       })),
       backFields: [
         {
@@ -140,26 +189,39 @@ export async function generateMasterPassJson(
           value: receipts
             .map(
               (r) =>
-                `${r.purchasedAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })} — ${r.merchantCanonicalName}: $${r.total.toFixed(2)}`
+                `${formatDate(r.purchasedAt)} — ${r.merchantCanonicalName}: ${formatCurrency(r.total)}`
             )
             .join("\n"),
         },
         {
+          key: "ecoImpact",
+          label: "Your Eco Impact",
+          value: [
+            `Trees saved: ${eco.treesSaved}`,
+            `Paper avoided: ${eco.paperAvoided}`,
+            `CO₂ prevented: ${eco.co2Saved}`,
+            `Digital receipts: ${totalReceiptCount}`,
+          ].join("\n"),
+        },
+        {
           key: "info",
-          label: "About",
+          label: "About Receiptiles",
           value:
-            "This pass updates automatically when new receipts are added. Tap at compatible terminals to receive digital receipts instantly.",
+            "This pass updates automatically when new receipts are added. Tap at compatible terminals to receive digital receipts instantly.\n\nhttps://receiptiles.com",
         },
       ],
     },
     nfc: {
-      message: serialNumber, // VAS protocol message
+      message: serialNumber, // VAS protocol message for tap-to-receive
     },
-    barcode: {
-      message: `${WEB_SERVICE_URL}/claim/${serialNumber}`,
-      format: "PKBarcodeFormatQR",
-      messageEncoding: "iso-8859-1",
-    },
+    barcodes: [
+      {
+        message: `https://receiptiles.com/claim/${serialNumber}`,
+        format: "PKBarcodeFormatQR",
+        messageEncoding: "iso-8859-1",
+        altText: "Receiptiles",
+      },
+    ],
   };
 }
 
