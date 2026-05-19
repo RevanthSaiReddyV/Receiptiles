@@ -45,7 +45,7 @@ export async function signup(formData: FormData): Promise<void> {
   await signIn("credentials", {
     email: parsed.data.email,
     password: parsed.data.password,
-    redirectTo: "/wallet",
+    redirectTo: "/dashboard",
   });
 }
 

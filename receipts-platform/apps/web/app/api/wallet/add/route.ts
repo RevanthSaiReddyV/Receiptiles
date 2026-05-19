@@ -141,7 +141,8 @@ export async function POST(request: NextRequest) {
       pass.authToken
     );
 
-    const passUrl = `https://receiptiles.com/api/wallet/apple/pass?serial=${pass.serialNumber}`;
+    const baseUrl = process.env.NEXTAUTH_URL || "https://receipts-platform.vercel.app";
+    const passUrl = `${baseUrl}/api/wallet/apple/pass?serial=${pass.serialNumber}`;
 
     return NextResponse.json({
       success: true,
