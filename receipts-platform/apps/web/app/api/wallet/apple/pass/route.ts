@@ -24,6 +24,7 @@ function loadPassAssets(): Record<string, Buffer> {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const serial = searchParams.get("serial");
+  const tok = searchParams.get("tok");
 
   if (!serial) {
     return NextResponse.json({ error: "Missing serial" }, { status: 400 });
@@ -36,10 +37,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Pass not found" }, { status: 404 });
   }
 
+  // Auth: either Apple's "ApplePass <token>" header (for pass updates from iOS)
+  // or a signed `tok` query param (for initial download from browser)
   const authHeader = request.headers.get("authorization");
-  const token = authHeader?.replace("ApplePass ", "");
-  if (authHeader && token !== pass.authToken) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const appleToken = authHeader?.replace("ApplePass ", "");
+
+  if (authHeader) {
+    if (appleToken !== pass.authToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  } else if (tok !== pass.authToken) {
+    return NextResponse.json({ error: "Unauthorized — invalid or missing token" }, { status: 401 });
   }
 
   const passJson = await generateMasterPassJson(

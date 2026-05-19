@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     const hasCerts = !!(process.env.APPLE_PASS_CERTIFICATE && process.env.APPLE_PASS_KEY);
     const baseUrl = process.env.NEXTAUTH_URL || "https://receipts-platform.vercel.app";
     const passUrl = hasCerts
-      ? `${baseUrl}/api/wallet/apple/pass?serial=${pass.serialNumber}`
+      ? `${baseUrl}/api/wallet/apple/pass?serial=${pass.serialNumber}&tok=${pass.authToken}`
       : null;
 
     return NextResponse.json({
