@@ -23,6 +23,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "select_account",
+        },
+      },
     }),
     Credentials({
       credentials: {
@@ -54,11 +59,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.sub) {
         session.user.id = token.sub;
       }
+      if (token.email) {
+        session.user.email = token.email as string;
+      }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.sub = user.id;
+        token.email = user.email;
+      }
+      if (account) {
+        token.accessToken = account.access_token;
       }
       return token;
     },
