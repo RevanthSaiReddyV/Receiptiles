@@ -212,7 +212,8 @@ export async function generateMasterPassJson(
       ],
     },
     nfc: {
-      message: serialNumber, // VAS protocol message for tap-to-receive
+      message: "com.receiptiles.tap", // VAS merchant identifier for auto-present
+      encryptionPublicKey: process.env.APPLE_NFC_ENCRYPTION_KEY || undefined,
     },
     barcodes: [
       {

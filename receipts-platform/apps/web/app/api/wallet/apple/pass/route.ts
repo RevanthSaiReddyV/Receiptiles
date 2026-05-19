@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateMasterPassJson } from "@/lib/wallet/apple-pass";
 import { db } from "@receipts/db";
-import crypto from "crypto";
 
 /**
  * GET /api/wallet/apple/pass?serial=<serialNumber>
@@ -124,19 +123,3 @@ export async function GET(request: NextRequest) {
   });
 }
 
-/**
- * Generate a manifest.json with SHA-256 hashes (used for .pkpass signing).
- * Ready to use once passkit-generator or manual signing is implemented.
- */
-export function generateManifest(
-  files: Record<string, Buffer>
-): Record<string, string> {
-  const manifest: Record<string, string> = {};
-  for (const [filename, buffer] of Object.entries(files)) {
-    manifest[filename] = crypto
-      .createHash("sha256")
-      .update(buffer)
-      .digest("hex");
-  }
-  return manifest;
-}

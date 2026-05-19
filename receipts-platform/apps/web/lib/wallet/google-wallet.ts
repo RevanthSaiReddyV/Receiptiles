@@ -93,12 +93,17 @@ export function generateGoogleWalletLink(data: WalletPassData): string {
       value: `${BASE_URL}/wallet?user=${data.userId}`,
       alternateText: "Receiptiles",
     },
+    // Smart Tap: enables auto-present on NFC tap at Receiptiles terminals
+    smartTapRedemptionValue: `receiptiles-${data.userId}`,
   };
 
   const genericClass = {
     id: classId,
     issuerName: "Receiptiles",
     reviewStatus: "UNDER_REVIEW",
+    // Enable Smart Tap for this class
+    enableSmartTap: true,
+    redemptionIssuers: [ISSUER_ID],
   };
 
   const claims = {

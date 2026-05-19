@@ -30,7 +30,7 @@ export default async function SignupPage({
             </div>
           )}
 
-          <GoogleSignInButton label="Sign up with Google" />
+          <GoogleSignInButton label="Sign up with Google" callbackUrl="/wallet" />
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

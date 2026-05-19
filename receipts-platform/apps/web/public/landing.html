@@ -260,8 +260,15 @@
                   </button>
                 </div>
 
-                <div id="waitlist-state-success" class="hidden transition-all duration-300 px-5 py-2.5 bg-[#7BE899]/90 backdrop-blur-md text-[#1C1C1A] rounded-full text-xs font-bold shadow-xl">
-                  You are on the list!
+                <div id="waitlist-state-success" class="hidden transition-all duration-300 flex flex-col items-center">
+                  <div class="px-5 py-2.5 bg-[#7BE899]/90 backdrop-blur-md text-[#1C1C1A] rounded-full text-xs font-bold shadow-xl">
+                    You are on the list!
+                  </div>
+                  <div id="waitlist-wallet-cta" class="mt-3 text-center opacity-0 transition-opacity duration-700">
+                    <a href="/wallet" class="text-[10px] text-[#7BE899] underline underline-offset-2 hover:text-white transition-colors">
+                      Add to Wallet for instant updates &rarr;
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -1075,6 +1082,11 @@ VISA **** 1234</textarea>
         wForm.classList.add('hidden');
         wSuccess.classList.remove('hidden');
         showToast('Welcome aboard! Check your inbox soon.');
+        // Fade in wallet CTA after a brief delay
+        setTimeout(() => {
+          const walletCta = document.getElementById('waitlist-wallet-cta');
+          if (walletCta) walletCta.style.opacity = '1';
+        }, 800);
       }
     });
 
