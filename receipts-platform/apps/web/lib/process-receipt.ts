@@ -2,6 +2,7 @@ import { db } from "@receipts/db";
 import { parseReceiptFromImage } from "@/lib/ocr";
 import { sendReceiptEmail } from "@/lib/email/send";
 import { syncReceiptToWalletOrder } from "@/lib/wallet/order-sync";
+import { notifyAllUserPasses } from "@/lib/wallet/push-pass-updates";
 
 /**
  * Warranty duration rules by merchant category.
@@ -109,6 +110,9 @@ export async function processReceiptJob(params: {
 
     // Sync to Apple Wallet Order (non-blocking)
     syncReceiptToWalletOrder(receipt.id, userId).catch(() => {});
+
+    // Push APNs notification so the pass refreshes instantly
+    notifyAllUserPasses(userId).catch(() => {});
 
     if (process.env.RESEND_API_KEY) {
       const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });

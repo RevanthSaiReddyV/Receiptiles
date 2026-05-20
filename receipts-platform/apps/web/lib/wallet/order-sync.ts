@@ -1,5 +1,6 @@
 import { db } from "@receipts/db";
 import { generateOrderFromReceipt } from "./apple-order";
+import { notifyAllUserPasses } from "./push-pass-updates";
 
 /**
  * Sync a receipt to Apple Wallet as an Order.
@@ -45,6 +46,9 @@ export async function syncReceiptToWalletOrder(
         receiptCount: { increment: 1 },
       },
     });
+
+    // Push to APNs so the pass refreshes instantly on the user's device
+    await notifyAllUserPasses(userId);
   } catch (error) {
     // Order generation failed — receipt might be missing required fields.
     // This is non-critical; the receipt is still saved, just not synced to wallet.

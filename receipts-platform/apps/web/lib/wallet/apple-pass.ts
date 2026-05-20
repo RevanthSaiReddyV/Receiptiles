@@ -95,53 +95,27 @@ function calculateEcoImpact(receiptCount: number) {
   };
 }
 
-async function getWarrantyItems(userId: string): Promise<Array<{ key: string; label: string; value: string }>> {
-  const now = new Date();
-  const receiptsWithWarranty = await db.receipt.findMany({
-    where: {
-      userId,
-      OR: [
-        { warrantyExpiresAt: { gt: now } },
-        { returnExpiresAt: { gt: now } },
-      ],
-    },
-    orderBy: { warrantyExpiresAt: "asc" },
-    take: 5,
-    select: {
-      id: true,
-      merchantCanonicalName: true,
-      total: true,
-      warrantyExpiresAt: true,
-      returnExpiresAt: true,
-      merchantCategory: true,
-    },
-  });
-
-  if (receiptsWithWarranty.length === 0) {
-    return [{ key: "noWarranty", label: "No active warranties", value: "Electronics purchases get auto-tracked" }];
-  }
-
-  return receiptsWithWarranty.map((r, i) => {
-    const expiry = r.warrantyExpiresAt || r.returnExpiresAt;
-    const type = r.warrantyExpiresAt ? "Warranty" : "Return";
-    const daysLeft = expiry ? Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-    return {
-      key: `w${i}`,
-      label: `${r.merchantCanonicalName} · ${formatCurrency(r.total)}`,
-      value: `${type} expires ${formatDate(expiry!)} (${daysLeft} days left)`,
-    };
-  });
-}
 
 /**
  * Generate pass.json for the Master Receipt Pass.
+ *
+ * Design philosophy: MINIMAL front, DETAILED back.
+ * - Front: Big receipt count + month spend + latest merchant. That's it.
+ * - Back: Each receipt with itemized detail, warranty/return inline, eco footer.
+ *
+ * NOTE on Express Mode (tap without Face ID):
+ * Express Mode cannot be enabled programmatically. It requires:
+ * 1. Apple partnership application for "Access" or "Transit" category
+ * 2. Apple reviews and approves the application
+ * 3. They provide a special entitlement
+ * Apply at: developer.apple.com/wallet/access
  */
 export async function generateMasterPassJson(
   userId: string,
   serialNumber: string,
   authToken: string
 ): Promise<ApplePassData> {
-  // Fetch latest receipts for pass content
+  // Fetch latest receipts with items for detailed back fields
   const receipts = await db.receipt.findMany({
     where: { userId },
     orderBy: { purchasedAt: "desc" },
@@ -153,6 +127,15 @@ export async function generateMasterPassJson(
       currency: true,
       purchasedAt: true,
       merchantCategory: true,
+      warrantyExpiresAt: true,
+      returnExpiresAt: true,
+      items: {
+        select: {
+          name: true,
+          quantity: true,
+          totalPrice: true,
+        },
+      },
     },
   });
 
@@ -168,6 +151,51 @@ export async function generateMasterPassJson(
   const totalReceiptCount = await db.receipt.count({ where: { userId } });
   const eco = calculateEcoImpact(totalReceiptCount);
 
+  // Build back fields — each receipt is its own field with itemized detail
+  const backFields: Array<{ key: string; label: string; value: string }> = [];
+
+  for (let i = 0; i < receipts.length; i++) {
+    const r = receipts[i];
+    const label = `${r.merchantCanonicalName} · ${formatDate(r.purchasedAt)}`;
+
+    // Build value: total + item names
+    const itemNames = r.items
+      .map((item) =>
+        item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name
+      )
+      .join(", ");
+
+    let value = `${formatCurrency(r.total)}`;
+    if (itemNames) {
+      value += ` — ${itemNames}`;
+    }
+
+    // Inline warranty/return info
+    if (r.warrantyExpiresAt && r.warrantyExpiresAt > now) {
+      value += `\n🛡️ Warranty until ${formatDate(r.warrantyExpiresAt)}`;
+    }
+    if (r.returnExpiresAt && r.returnExpiresAt > now) {
+      value += `\n↩️ Return by ${formatDate(r.returnExpiresAt)}`;
+    }
+
+    backFields.push({ key: `r${i}`, label, value });
+  }
+
+  // Footer section
+  backFields.push({
+    key: "ecoFooter",
+    label: "─────────────",
+    value: `🌱 ${totalReceiptCount} receipts saved · ${eco.co2Saved} CO₂ prevented\nTap at any terminal · receiptiles.com`,
+  });
+
+  // Express Mode informational note
+  backFields.push({
+    key: "expressMode",
+    label: "Express Mode",
+    value:
+      "Apply at developer.apple.com/wallet/access to enable tap without Face ID",
+  });
+
   return {
     formatVersion: 1,
     passTypeIdentifier: PASS_TYPE_ID,
@@ -180,94 +208,30 @@ export async function generateMasterPassJson(
     backgroundColor: "#242D28",
     foregroundColor: "#F7F6F2",
     labelColor: "#82907A",
-    logoText: "Receiptiles",
+    logoText: "",
     generic: {
-      headerFields: [
-        {
-          key: "receiptCount",
-          label: "RECEIPTS",
-          value: `${totalReceiptCount}`,
-        },
-      ],
+      headerFields: [],
       primaryFields: [
         {
-          key: "message",
-          label: "DIGITAL RECEIPT WALLET",
-          value: "Tap ℹ️ for your receipts",
+          key: "count",
+          label: "",
+          value: `${totalReceiptCount} Receipts`,
         },
       ],
       secondaryFields: [
         {
           key: "monthSpend",
-          label: "THIS MONTH",
+          label: "this month",
           value: formatCurrency(monthTotal),
         },
         {
-          key: "lastPurchase",
-          label: "LATEST",
+          key: "latest",
+          label: "latest",
           value: lastReceipt ? lastReceipt.merchantCanonicalName : "—",
         },
       ],
-      auxiliaryFields: [
-        {
-          key: "trees",
-          label: "🌳 TREES",
-          value: eco.treesSaved,
-        },
-        {
-          key: "co2",
-          label: "💨 CO₂",
-          value: eco.co2Saved,
-        },
-        {
-          key: "paper",
-          label: "📄 PAPER",
-          value: eco.paperAvoided,
-        },
-      ],
-      backFields: [
-        {
-          key: "recentTitle",
-          label: "📋 RECENT RECEIPTS",
-          value: "",
-        },
-        ...receipts.map((r, i) => ({
-          key: `r${i}`,
-          label: `${r.merchantCanonicalName}`,
-          value: `${formatCurrency(r.total)}  ·  ${formatDate(r.purchasedAt)}  ·  ${r.merchantCategory || "Purchase"}`,
-        })),
-        {
-          key: "sep1",
-          label: " ",
-          value: "─────────────────────────",
-        },
-        {
-          key: "warrantyTitle",
-          label: "🛡️ WARRANTY & RETURNS",
-          value: "Items with active coverage:",
-        },
-        ...await getWarrantyItems(userId),
-        {
-          key: "sep2",
-          label: " ",
-          value: "─────────────────────────",
-        },
-        {
-          key: "impact",
-          label: "🌱 YOUR ECO IMPACT",
-          value: `${totalReceiptCount} paper receipts eliminated\n🌳 ${eco.treesSaved} trees saved\n♻️ ${eco.paperAvoided} paper avoided\n💨 ${eco.co2Saved} CO₂ prevented`,
-        },
-        {
-          key: "sep3",
-          label: " ",
-          value: "─────────────────────────",
-        },
-        {
-          key: "how",
-          label: "ℹ️ HOW TO USE",
-          value: "Hold your phone near any Receiptiles terminal at checkout. Your receipt appears here instantly.\n\nView all receipts: receiptiles.com/receipts",
-        },
-      ],
+      auxiliaryFields: [],
+      backFields,
     },
     nfc: {
       message: "com.receiptiles.tap", // VAS merchant identifier for auto-present
