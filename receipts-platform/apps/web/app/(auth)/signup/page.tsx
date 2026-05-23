@@ -10,22 +10,33 @@ export default async function SignupPage({
   const { error } = await searchParams;
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[#050507] p-4 overflow-hidden">
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-600/20 blur-3xl" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-green-600/10 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center p-4 overflow-hidden bg-[#242D28]">
+
+      {/* Animated gradient blobs */}
+      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#7BE899]/15 blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] rounded-full bg-[#4A5D4E]/20 blur-[100px]" />
+      <div className="absolute bottom-[30%] left-[20%] w-[300px] h-[300px] rounded-full bg-[#E8C47B]/10 blur-[80px] animate-pulse" style={{ animationDuration: "4s" }} />
+
+      {/* Subtle grid */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundSize: "60px 60px", backgroundImage: "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)" }} />
+
+      {/* Logo */}
+      <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 z-20">
+        <div className="w-8 h-8 rounded-lg bg-[#7BE899] flex items-center justify-center text-[#242D28] text-sm font-bold">R</div>
+        <span className="text-white font-semibold tracking-wide text-sm">Receiptiles</span>
+      </Link>
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] p-8">
+        {/* Glass card */}
+        <div className="rounded-3xl bg-white/[0.04] backdrop-blur-2xl border border-white/[0.08] p-8 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white text-lg font-bold mb-4">
-              R
-            </div>
-            <h1 className="text-2xl font-bold text-white">Create an account</h1>
-            <p className="mt-1 text-sm text-zinc-500">Start organizing your receipts today</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Create an account</h1>
+            <p className="mt-2 text-sm text-[#A0AFAA]">Start organizing your receipts today</p>
           </div>
 
           {error && (
-            <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+            <div className="mb-5 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400 flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               {decodeURIComponent(error)}
             </div>
           )}
@@ -34,16 +45,16 @@ export default async function SignupPage({
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/[0.06]" />
+              <div className="w-full border-t border-white/[0.08]" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-[#050507] px-3 text-zinc-500 uppercase tracking-wider">or</span>
+              <span className="bg-[#242D28] px-3 text-[#82907A] uppercase tracking-wider font-medium">or sign up with email</span>
             </div>
           </div>
 
           <form action={signup} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-zinc-400">
+              <label htmlFor="name" className="block text-xs font-semibold text-[#A0AFAA] uppercase tracking-wider mb-1.5">
                 Name
               </label>
               <input
@@ -52,12 +63,12 @@ export default async function SignupPage({
                 type="text"
                 required
                 placeholder="Your name"
-                className="mt-1 block w-full rounded-lg bg-white/[0.05] border border-white/[0.08] px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-colors"
+                className="block w-full rounded-xl bg-white/[0.05] border border-white/[0.1] px-4 py-3 text-sm text-white placeholder:text-[#82907A] focus:outline-none focus:ring-2 focus:ring-[#7BE899]/30 focus:border-[#7BE899]/40 transition-all"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-400">
+              <label htmlFor="email" className="block text-xs font-semibold text-[#A0AFAA] uppercase tracking-wider mb-1.5">
                 Email
               </label>
               <input
@@ -66,12 +77,12 @@ export default async function SignupPage({
                 type="email"
                 required
                 placeholder="you@example.com"
-                className="mt-1 block w-full rounded-lg bg-white/[0.05] border border-white/[0.08] px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-colors"
+                className="block w-full rounded-xl bg-white/[0.05] border border-white/[0.1] px-4 py-3 text-sm text-white placeholder:text-[#82907A] focus:outline-none focus:ring-2 focus:ring-[#7BE899]/30 focus:border-[#7BE899]/40 transition-all"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-zinc-400">
+              <label htmlFor="password" className="block text-xs font-semibold text-[#A0AFAA] uppercase tracking-wider mb-1.5">
                 Password
               </label>
               <input
@@ -81,22 +92,28 @@ export default async function SignupPage({
                 required
                 minLength={8}
                 placeholder="At least 8 characters"
-                className="mt-1 block w-full rounded-lg bg-white/[0.05] border border-white/[0.08] px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-colors"
+                className="block w-full rounded-xl bg-white/[0.05] border border-white/[0.1] px-4 py-3 text-sm text-white placeholder:text-[#82907A] focus:outline-none focus:ring-2 focus:ring-[#7BE899]/30 focus:border-[#7BE899]/40 transition-all"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 py-2.5 text-sm text-white font-medium hover:from-emerald-500 hover:to-green-500 transition-all"
+              className="w-full rounded-xl bg-[#7BE899] py-3 text-sm text-[#1C1C1A] font-bold hover:bg-white transition-all shadow-lg shadow-[#7BE899]/20 hover:shadow-white/20 active:scale-[0.98]"
             >
               Create Account
             </button>
           </form>
+
+          <p className="mt-4 text-center text-[10px] text-[#82907A] leading-relaxed">
+            By signing up, you agree to our{" "}
+            <Link href="/terms" className="underline hover:text-white transition-colors">Terms</Link>{" "}and{" "}
+            <Link href="/privacy" className="underline hover:text-white transition-colors">Privacy Policy</Link>.
+          </p>
         </div>
 
-        <p className="text-center text-sm text-zinc-500 mt-6">
+        <p className="text-center text-sm text-[#82907A] mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-white hover:text-emerald-400 transition-colors">
+          <Link href="/login" className="font-semibold text-[#7BE899] hover:text-white transition-colors">
             Sign in
           </Link>
         </p>

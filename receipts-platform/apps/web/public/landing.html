@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#242D28">
   <meta name="description" content="Receiptiles eliminates wasteful paper receipts with a smart NFC device. Retailers save money, customers get digital wallets.">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/favicon.png">
   <title>Receiptiles // From Chaos to Clarity</title>
+  <!-- Umami Analytics (self-hosted, cookieless, MIT license) -->
+  <script defer src="https://analytics.receiptiles.com/script.js" data-website-id="receiptiles-landing"></script>
   <!-- Tailwind CSS (inlined for production performance) -->
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <script>
@@ -164,10 +168,10 @@
         <a href="#solutions" class="hover:text-white transition-colors">Solutions</a>
       </div>
       <div class="flex items-center space-x-3">
-        <a href="#founding-beta" id="nav-signin" class="hidden sm:block text-sm font-semibold text-white hover:text-white/80 transition-colors">Claim Spot</a>
-        <button id="nav-signup-btn" class="hidden sm:inline-flex items-center justify-center font-medium transition-all rounded-full h-10 px-6 py-2 text-sm border border-[#7BE899]/40 bg-[#7BE899] text-[#1C1C1A] hover:bg-[#E8C47B] hover:border-[#E8C47B]/40 shadow-lg shadow-[#7BE899]/20">
-          Join Beta
-        </button>
+        <a href="/login" id="nav-signin" class="hidden sm:block text-sm font-semibold text-white hover:text-white/80 transition-colors">Sign In</a>
+        <a href="/signup" id="nav-signup-btn" class="hidden sm:inline-flex items-center justify-center font-medium transition-all rounded-full h-10 px-6 py-2 text-sm border border-[#7BE899]/40 bg-[#7BE899] text-[#1C1C1A] hover:bg-[#E8C47B] hover:border-[#E8C47B]/40 shadow-lg shadow-[#7BE899]/20">
+          Sign Up
+        </a>
         <button id="mobile-menu-btn" class="sm:hidden w-10 h-10 flex items-center justify-center rounded-lg text-white hover:bg-white/10 transition-colors">
           <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
@@ -316,51 +320,155 @@
     </div>
   </section>
 
-  <!-- THE CLOSED LOOP SECTION (SIMPLE CYCLE) -->
+  <!-- HOW IT WORKS SECTION -->
   <section id="how-it-works" class="py-24 bg-white border-y border-[#EBEAE4]">
     <div class="max-w-7xl mx-auto px-6">
       <div class="max-w-3xl mx-auto text-center mb-20">
-        <span class="text-brand-forest font-bold text-xs tracking-widest uppercase block mb-3 text-[#4A5D4E]">The Closed Loop</span>
+        <span class="text-brand-forest font-bold text-xs tracking-widest uppercase block mb-3 text-[#4A5D4E]">How It Works</span>
         <h2 class="text-3xl md:text-5xl font-extrabold text-brand-basalt tracking-tight mb-4 text-[#1C1C1A]">
-          One tap. Done.
+          Setup in minutes.<br>Works forever.
         </h2>
         <p class="text-[#5A635C] text-lg max-w-xl mx-auto">
-          No cashier changes. No complicated accounts. A simple, organic ecosystem loop in three natural steps.
+          No app downloads. No cashier training. No customer sign-ups. Just plug in and go.
         </p>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-12 relative z-10">
+      <!-- No App Required callout -->
+      <div class="max-w-2xl mx-auto mb-16 flex items-center gap-4 bg-[#EAF0E6] border border-[#CFDCC8] rounded-2xl px-6 py-4">
+        <div class="w-10 h-10 rounded-full bg-[#4A5D4E] flex items-center justify-center shrink-0">
+          <i data-lucide="smartphone-nfc" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <div class="text-sm font-bold text-[#1C1C1A]">No app download required</div>
+          <div class="text-xs text-[#5A635C]">Customers use their existing Apple Wallet or Google Wallet — nothing new to install.</div>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-6 relative z-10">
+
+        <!-- Connector line -->
+        <div class="hidden md:block absolute top-[88px] left-[15%] right-[15%] h-px bg-[#EBEAE4]"></div>
 
         <!-- Step 1 -->
         <div class="flex flex-col items-center text-center group">
-          <div class="w-20 h-20 rounded-full bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-8 shadow-sm group-hover:scale-105 transition-transform duration-300">
-            <i data-lucide="cable" class="w-8 h-8 text-[#4A5D4E]"></i>
+          <div class="w-40 h-40 rounded-2xl bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300 relative z-10 overflow-hidden">
+            <svg viewBox="0 0 120 120" fill="none" class="w-28 h-28">
+              <!-- Register/POS terminal -->
+              <rect x="25" y="35" width="70" height="50" rx="6" fill="#E8E7E3" stroke="#4A5D4E" stroke-width="1.5"/>
+              <rect x="32" y="42" width="42" height="24" rx="3" fill="#242D28"/>
+              <text x="53" y="57" text-anchor="middle" fill="#7BE899" font-size="8" font-family="monospace">$12.58</text>
+              <!-- Small adapter plugging in -->
+              <rect x="72" y="60" width="18" height="12" rx="3" fill="#4A5D4E"/>
+              <circle cx="81" cy="66" r="2" fill="#7BE899"/>
+              <!-- Arrow showing plug action -->
+              <path d="M95 66 L100 66" stroke="#4A5D4E" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2"/>
+              <!-- Cable -->
+              <path d="M81 72 L81 82 Q81 85 84 85 L90 85" stroke="#82907A" stroke-width="1" fill="none"/>
+            </svg>
           </div>
-          <h3 class="text-lg font-bold text-brand-basalt mb-2">1. Connect Hardware</h3>
+          <div class="text-[#4A5D4E] text-xs font-bold tracking-widest uppercase mb-2">Step 1</div>
+          <h3 class="text-lg font-bold text-[#1C1C1A] mb-2">Plug In</h3>
           <p class="text-[#5A635C] text-sm leading-relaxed max-w-xs">
-            The Receiptiles dongle plugs directly into your existing register printer slot. It looks and acts like an ordinary printer.
+            Swap your printer cable for the Receiptiles adapter. Takes 2 minutes — no software, no IT department.
           </p>
         </div>
 
         <!-- Step 2 -->
         <div class="flex flex-col items-center text-center group">
-          <div class="w-20 h-20 rounded-full bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-8 shadow-sm group-hover:scale-105 transition-transform duration-300">
-            <i data-lucide="sparkles" class="w-8 h-8 text-[#4A5D4E] animate-pulse"></i>
+          <div class="w-40 h-40 rounded-2xl bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300 relative z-10 overflow-hidden">
+            <svg viewBox="0 0 120 120" fill="none" class="w-28 h-28">
+              <!-- Receipt going in -->
+              <rect x="15" y="30" width="30" height="55" rx="2" fill="white" stroke="#CFDCC8" stroke-width="1"/>
+              <line x1="20" y1="38" x2="40" y2="38" stroke="#E8E7E3" stroke-width="2"/>
+              <line x1="20" y1="44" x2="36" y2="44" stroke="#E8E7E3" stroke-width="2"/>
+              <line x1="20" y1="50" x2="38" y2="50" stroke="#E8E7E3" stroke-width="2"/>
+              <line x1="20" y1="56" x2="34" y2="56" stroke="#E8E7E3" stroke-width="2"/>
+              <line x1="20" y1="68" x2="40" y2="68" stroke="#CFDCC8" stroke-width="1" stroke-dasharray="2 1"/>
+              <text x="30" y="78" text-anchor="middle" fill="#82907A" font-size="6">$12.58</text>
+              <!-- Arrow -->
+              <path d="M50 57 L62 57" stroke="#4A5D4E" stroke-width="1.5" marker-end="url(#arrowhead2)"/>
+              <defs><marker id="arrowhead2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#4A5D4E" stroke-width="1"/></marker></defs>
+              <!-- Structured output card -->
+              <rect x="66" y="34" width="40" height="48" rx="6" fill="white" stroke="#4A5D4E" stroke-width="1.5"/>
+              <circle cx="76" cy="44" r="4" fill="#EAF0E6"/>
+              <rect x="83" y="42" width="16" height="3" rx="1" fill="#4A5D4E"/>
+              <rect x="72" y="52" width="28" height="2" rx="1" fill="#E8E7E3"/>
+              <rect x="72" y="57" width="22" height="2" rx="1" fill="#E8E7E3"/>
+              <rect x="72" y="62" width="25" height="2" rx="1" fill="#E8E7E3"/>
+              <rect x="72" y="70" width="28" height="6" rx="2" fill="#EAF0E6"/>
+              <text x="86" y="75" text-anchor="middle" fill="#4A5D4E" font-size="5" font-weight="bold">$12.58</text>
+              <!-- Sparkle -->
+              <circle cx="100" cy="30" r="1.5" fill="#7BE899"/>
+              <circle cx="104" cy="36" r="1" fill="#7BE899" opacity="0.6"/>
+            </svg>
           </div>
-          <h3 class="text-lg font-bold text-[#1C1C1A] mb-2">2. Local Translation</h3>
+          <div class="text-[#4A5D4E] text-xs font-bold tracking-widest uppercase mb-2">Step 2</div>
+          <h3 class="text-lg font-bold text-[#1C1C1A] mb-2">Instant Digitization</h3>
           <p class="text-[#5A635C] text-sm leading-relaxed max-w-xs">
-            Our onboard microchip extracts raw transaction streams locally, sorting them immediately into digital receipts.
+            The adapter automatically converts every transaction into a clean, organized digital receipt in real time.
           </p>
         </div>
 
         <!-- Step 3 -->
         <div class="flex flex-col items-center text-center group">
-          <div class="w-20 h-20 rounded-full bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-8 shadow-sm group-hover:scale-105 transition-transform duration-300">
-            <i data-lucide="smartphone" class="w-8 h-8 text-[#4A5D4E]"></i>
+          <div class="w-40 h-40 rounded-2xl bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300 relative z-10 overflow-hidden">
+            <svg viewBox="0 0 120 120" fill="none" class="w-28 h-28">
+              <!-- Phone -->
+              <rect x="38" y="20" width="44" height="80" rx="8" fill="#242D28" stroke="#4A5D4E" stroke-width="1.5"/>
+              <rect x="42" y="28" width="36" height="60" rx="4" fill="#1C231F"/>
+              <!-- Wallet pass on screen -->
+              <rect x="46" y="34" width="28" height="36" rx="4" fill="#4A5D4E"/>
+              <rect x="50" y="38" width="12" height="3" rx="1" fill="#7BE899"/>
+              <rect x="50" y="44" width="20" height="2" rx="1" fill="white" opacity="0.4"/>
+              <rect x="50" y="49" width="16" height="2" rx="1" fill="white" opacity="0.3"/>
+              <rect x="50" y="56" width="20" height="5" rx="2" fill="#7BE899" opacity="0.3"/>
+              <text x="60" y="60" text-anchor="middle" fill="white" font-size="4" font-weight="bold">TAP</text>
+              <!-- NFC waves -->
+              <path d="M88 55 Q94 55 94 49" stroke="#7BE899" stroke-width="1.5" fill="none" opacity="0.4"/>
+              <path d="M88 55 Q98 55 98 45" stroke="#7BE899" stroke-width="1.5" fill="none" opacity="0.6"/>
+              <path d="M88 55 Q102 55 102 41" stroke="#7BE899" stroke-width="1.5" fill="none" opacity="0.8"/>
+              <!-- Finger tap indicator -->
+              <ellipse cx="60" cy="95" rx="8" ry="4" fill="#82907A" opacity="0.3"/>
+            </svg>
           </div>
-          <h3 class="text-lg font-bold text-[#1C1C1A] mb-2">3. Immediate Wallet Delivery</h3>
+          <div class="text-[#4A5D4E] text-xs font-bold tracking-widest uppercase mb-2">Step 3</div>
+          <h3 class="text-lg font-bold text-[#1C1C1A] mb-2">Customer Taps</h3>
           <p class="text-[#5A635C] text-sm leading-relaxed max-w-xs">
-            The customer simply taps their phone near the checkout screen. A beautiful system-native wallet receipt appears immediately.
+            The customer holds their phone near the terminal. Their wallet opens automatically — just one tap to confirm.
+          </p>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="flex flex-col items-center text-center group">
+          <div class="w-40 h-40 rounded-2xl bg-[#F7F6F2] border border-black/5 flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300 relative z-10 overflow-hidden">
+            <svg viewBox="0 0 120 120" fill="none" class="w-28 h-28">
+              <!-- Wallet card stack -->
+              <rect x="22" y="42" width="76" height="48" rx="8" fill="#E8E7E3" stroke="#CFDCC8" stroke-width="1"/>
+              <rect x="22" y="38" width="76" height="48" rx="8" fill="#EAF0E6" stroke="#CFDCC8" stroke-width="1"/>
+              <rect x="22" y="34" width="76" height="48" rx="8" fill="white" stroke="#4A5D4E" stroke-width="1.5"/>
+              <!-- Receipt content on card -->
+              <circle cx="36" cy="46" r="5" fill="#4A5D4E"/>
+              <text x="36" y="48" text-anchor="middle" fill="white" font-size="5" font-weight="bold">R</text>
+              <rect x="45" y="43" width="30" height="3" rx="1" fill="#1C1C1A"/>
+              <rect x="45" y="49" width="20" height="2" rx="1" fill="#82907A"/>
+              <rect x="28" y="58" width="64" height="1" fill="#EBEAE4"/>
+              <rect x="28" y="63" width="40" height="2" rx="1" fill="#E8E7E3"/>
+              <rect x="76" y="63" width="16" height="2" rx="1" fill="#E8E7E3"/>
+              <rect x="28" y="69" width="35" height="2" rx="1" fill="#E8E7E3"/>
+              <rect x="76" y="69" width="16" height="2" rx="1" fill="#E8E7E3"/>
+              <!-- Total -->
+              <rect x="28" y="75" width="64" height="1" fill="#EBEAE4"/>
+              <text x="30" y="83" fill="#1C1C1A" font-size="5" font-weight="bold">Total</text>
+              <text x="92" y="83" text-anchor="end" fill="#4A5D4E" font-size="6" font-weight="bold">$12.58</text>
+              <!-- Checkmark -->
+              <circle cx="96" cy="30" r="8" fill="#7BE899"/>
+              <path d="M92 30 L95 33 L101 27" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="text-[#4A5D4E] text-xs font-bold tracking-widest uppercase mb-2">Step 4</div>
+          <h3 class="text-lg font-bold text-[#1C1C1A] mb-2">Saved Forever</h3>
+          <p class="text-[#5A635C] text-sm leading-relaxed max-w-xs">
+            The receipt lives in their Apple Wallet or Google Wallet — organized, searchable, and always available.
           </p>
         </div>
 
@@ -440,104 +548,174 @@
     </div>
   </section>
 
-  <!-- INTERACTIVE DIAGONAL SPLIT SECTION -->
-  <section id="solutions" class="relative w-full h-[80vh] md:h-[90vh] min-h-[550px] md:min-h-[650px] overflow-hidden select-none border-y border-[#EBEAE4] cursor-ew-resize bg-black">
+  <!-- IMAGE COMPARISON SLIDER: CONSUMERS vs RETAILERS -->
+  <section id="solutions" class="py-24 bg-[#F7F6F2] border-y border-[#EBEAE4]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <span class="text-[#4A5D4E] font-bold text-xs tracking-widest uppercase block mb-3">Two Sides, One Solution</span>
+        <h2 class="text-3xl md:text-5xl font-extrabold text-[#1C1C1A] tracking-tight mb-4">
+          Better for everyone.
+        </h2>
+        <p class="text-[#5A635C] text-lg max-w-xl mx-auto">
+          Drag the slider to see how Receiptiles works for consumers and retailers.
+        </p>
+      </div>
 
-    <!-- RIGHT COMPONENT SIDE (Underlay Layer / Retailers) -->
-    <div class="absolute inset-0 h-full w-full bg-[#242D28] text-[#F7F6F2] z-0">
-      <div class="absolute right-0 w-[85vw] md:w-[50vw] h-full flex flex-col justify-center px-6 md:px-16 lg:px-24">
-        <div class="max-w-xl mx-auto space-y-6 w-full">
-          <div class="text-[#82907A] font-semibold tracking-widest uppercase text-xs md:text-sm flex items-center gap-2">
-            <i data-lucide="printer" class="w-4 h-4"></i> For Retailers
+      <!-- Comparison Slider -->
+      <div
+        id="comparison-slider"
+        class="relative w-full max-w-5xl mx-auto select-none rounded-2xl overflow-hidden shadow-2xl cursor-ew-resize"
+        style="aspect-ratio: 16/9;"
+      >
+        <!-- RETAILER SIDE (clipped to right of slider) -->
+        <div
+          id="comparison-after"
+          class="absolute top-0 left-0 h-full w-full"
+          style="clip-path: inset(0 0 0 50%);"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1400&h=788&fit=crop&crop=center"
+            alt="Retailer POS checkout counter with digital display"
+            class="h-full w-full object-cover"
+            draggable="false"
+          />
+          <!-- Dark overlay for readability -->
+          <div class="absolute inset-0 bg-[#242D28]/60"></div>
+          <!-- Retailer label -->
+          <div class="absolute top-6 right-6 z-10 bg-[#242D28]/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs md:text-sm font-bold tracking-wider uppercase flex items-center gap-2">
+            <i data-lucide="store" class="w-4 h-4"></i> For Retailers
           </div>
-          <h2 class="text-3xl md:text-5xl font-bold tracking-tight leading-[1.1] text-white">
-            Grow loyalty.<br>Save paper.
-          </h2>
-          <p class="text-sm md:text-lg text-[#A0AFAA] leading-relaxed">
-            Eliminate operational paper roll expenses completely while establishing direct, secure engagement channels. Offer smart benefits, track repeat visits, and unlock rich automated reports.
-          </p>
-
-          <div class="rounded-2xl bg-[#1C231F] p-6 shadow-2xl ring-1 ring-[#323E36] mt-4 max-w-sm relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-3 opacity-20"><i data-lucide="bar-chart-3" class="w-8 h-8"></i></div>
-            <div class="text-xs md:text-sm text-[#A0AFAA]">AI Insight: Loyalty Sign-ups</div>
-            <div class="mt-2 text-2xl md:text-3xl font-semibold tracking-tight text-[#F7F6F2]">
-              1,204 <span class="text-xs md:text-sm font-medium text-[#82907A] align-middle">New Customers</span>
-            </div>
-            <div class="mt-2 text-xs md:text-sm text-[#7BE899] font-medium flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-[#7BE899] animate-pulse"></span> Targeted marketing campaigns active
-            </div>
-
-            <!-- Dynamic Mini visualizer -->
-            <div class="mt-6 flex h-20 items-end gap-3 rounded-xl bg-gradient-to-b from-[#242D28] to-[#1C231F] p-4 border border-[#323E36]">
-              <div class="w-full rounded-xl bg-gradient-to-t from-[#4A5D4E] to-[#7BE899] opacity-80 animate-grow-bar" style="--target-height: 25%;"></div>
-              <div class="w-full rounded-xl bg-gradient-to-t from-[#4A5D4E] to-[#7BE899] opacity-80 animate-grow-bar" style="--target-height: 55%; animation-delay: 150ms;"></div>
-              <div class="w-full rounded-xl bg-gradient-to-t from-[#4A5D4E] to-[#7BE899] opacity-80 animate-grow-bar" style="--target-height: 78%; animation-delay: 300ms;"></div>
-              <div class="w-full rounded-xl bg-gradient-to-t from-[#4A5D4E] to-[#7BE899] opacity-100 animate-grow-bar" style="--target-height: 95%; animation-delay: 450ms;"></div>
+          <!-- Retailer content -->
+          <div class="absolute inset-0 flex items-center justify-end z-10">
+            <div class="w-[45%] pr-8 md:pr-14">
+              <h3 class="text-white text-xl md:text-3xl font-bold mb-3">Grow loyalty.<br>Save paper.</h3>
+              <ul class="space-y-2.5 mt-4">
+                <li class="flex items-start gap-2.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#7BE899] shrink-0 mt-0.5"></i>
+                  <span class="text-white/90 text-xs md:text-sm">Eliminate thermal paper costs entirely</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#7BE899] shrink-0 mt-0.5"></i>
+                  <span class="text-white/90 text-xs md:text-sm">Build direct customer loyalty programs</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#7BE899] shrink-0 mt-0.5"></i>
+                  <span class="text-white/90 text-xs md:text-sm">Unlock real-time sales analytics</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#7BE899] shrink-0 mt-0.5"></i>
+                  <span class="text-white/90 text-xs md:text-sm">Zero cashier training required</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- LEFT COMPONENT SIDE (Overlay Layer / Consumers) -->
-    <div id="consumer-overlay" class="absolute inset-0 h-full w-full bg-white text-[#1C1C1A] z-10 clip-transition" style="clip-path: polygon(0% 0%, 60% 0%, 35% 100%, 0% 100%);">
-      <div class="absolute left-0 w-[85vw] md:w-[50vw] h-full flex flex-col justify-center px-6 md:px-16 lg:px-24">
-        <div class="max-w-xl mx-auto space-y-6 w-full">
-          <div class="text-[#4A5D4E] font-semibold tracking-widest uppercase text-xs md:text-sm flex items-center gap-2">
-            <i data-lucide="smartphone-nfc" class="w-4 h-4"></i> For Consumers
+        <!-- CONSUMER SIDE (clipped to left of slider) -->
+        <div
+          id="comparison-before"
+          class="absolute top-0 left-0 h-full w-full"
+          style="clip-path: inset(0 50% 0 0);"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1556742111-a301076d9d18?w=1400&h=788&fit=crop&crop=center"
+            alt="Customer using phone with digital wallet at checkout"
+            class="h-full w-full object-cover"
+            draggable="false"
+          />
+          <!-- Light overlay for readability -->
+          <div class="absolute inset-0 bg-white/60"></div>
+          <!-- Consumer label -->
+          <div class="absolute top-6 left-6 z-10 bg-white/90 backdrop-blur-md text-[#1C1C1A] px-4 py-2 rounded-full text-xs md:text-sm font-bold tracking-wider uppercase flex items-center gap-2">
+            <i data-lucide="smartphone-nfc" class="w-4 h-4 text-[#4A5D4E]"></i> For Consumers
           </div>
-          <h2 class="text-3xl md:text-5xl font-bold tracking-tight leading-[1.1]">
-            Perfect clarity.<br>In your pocket.
-          </h2>
-          <p class="text-sm md:text-lg text-[#6B6A65] leading-relaxed">
-            Ditch fragile paper printouts, missing return slips, and faded ink. Every purchase details is securely logged, automatically structured, and backed up inside your native system wallet.
-          </p>
-          <ul class="space-y-4 pt-4 text-sm md:text-base font-medium">
-            <li class="flex items-center space-x-3">
-              <i data-lucide="shield-check" class="text-[#4A5D4E] w-5 h-5 flex-shrink-0"></i>
-              <span>Apple Wallet & Google Wallet Integration</span>
-            </li>
-            <li class="flex items-center space-x-3">
-              <i data-lucide="shield-check" class="text-[#4A5D4E] w-5 h-5 flex-shrink-0"></i>
-              <span>Seamless automated line-item breakdowns</span>
-            </li>
-            <li class="flex items-center space-x-3">
-              <i data-lucide="shield-check" class="text-[#4A5D4E] w-5 h-5 flex-shrink-0"></i>
-              <span>Smart warranty alerts & expense logging</span>
-            </li>
-          </ul>
+          <!-- Consumer content -->
+          <div class="absolute inset-0 flex items-center justify-start z-10">
+            <div class="w-[45%] pl-8 md:pl-14">
+              <h3 class="text-[#1C1C1A] text-xl md:text-3xl font-bold mb-3">Perfect clarity.<br>In your pocket.</h3>
+              <ul class="space-y-2.5 mt-4">
+                <li class="flex items-start gap-2.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#4A5D4E] shrink-0 mt-0.5"></i>
+                  <span class="text-[#1C1C1A] text-xs md:text-sm">Apple Wallet & Google Wallet — no app needed</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#4A5D4E] shrink-0 mt-0.5"></i>
+                  <span class="text-[#1C1C1A] text-xs md:text-sm">Every item, price & tax neatly organized</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#4A5D4E] shrink-0 mt-0.5"></i>
+                  <span class="text-[#1C1C1A] text-xs md:text-sm">Smart warranty & return tracking</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#4A5D4E] shrink-0 mt-0.5"></i>
+                  <span class="text-[#1C1C1A] text-xs md:text-sm">AI spending insights & budget alerts</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slider handle -->
+        <div
+          id="comparison-handle"
+          class="absolute top-0 bottom-0 z-30 flex items-center justify-center"
+          style="left: calc(50% - 1px);"
+        >
+          <div class="w-0.5 h-full bg-white shadow-lg"></div>
+          <div id="comparison-knob" class="absolute bg-white rounded-full h-12 w-12 flex items-center justify-center shadow-xl border-2 border-[#4A5D4E]/20 transition-transform duration-200 hover:scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#4A5D4E]">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#4A5D4E] -ml-2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Hint -->
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#1C1C1A]/70 backdrop-blur-md px-4 py-2 rounded-full text-[10px] md:text-xs text-white/80 pointer-events-none flex items-center gap-2 tracking-wider uppercase font-semibold">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
+          <span>Drag to compare</span>
         </div>
       </div>
     </div>
-
-    <!-- DYNAMIC WEBGL SHADER CONTAINER ON SPLIT LINE -->
-    <div id="webgl-divider-wrapper" class="absolute top-0 bottom-0 w-24 -translate-x-12 z-20 pointer-events-none transition-all duration-500 transform-gpu" style="left: 60%;">
-      <canvas id="shader-canvas" class="w-full h-full opacity-60"></canvas>
-    </div>
-
-    <!-- SPLIT INTERACTIVE LINE OVERLAY SVG -->
-    <svg id="lightning-overlay" class="absolute inset-0 w-full h-full pointer-events-none z-30 select-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <defs>
-        <filter id="electric-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="0.4" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      <!-- Base Glowing lightning trails -->
-      <polyline id="lightning-outer" points="60,0 35,100" fill="none" stroke="rgba(123, 232, 153, 0.4)" stroke-width="0.5" filter="url(#electric-glow)" />
-      <polyline id="lightning-mid" points="60,0 35,100" fill="none" stroke="rgba(74, 93, 78, 0.6)" stroke-width="0.3" />
-      <polyline id="lightning-core" points="60,0 35,100" fill="none" stroke="white" stroke-width="0.15" />
-    </svg>
-
-    <!-- FLOATING INTERACTIVE HINT -->
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 bg-[#1C1C1A]/80 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full text-[10px] md:text-xs text-slate-300 pointer-events-none flex items-center gap-2 tracking-wider uppercase font-semibold">
-      <i data-lucide="sparkles" class="text-brand-mint w-3.5 h-3.5 animate-pulse"></i> <span class="hidden md:inline">Slide left or right to explore</span><span class="md:hidden">Swipe to explore</span>
-    </div>
-
   </section>
+
+  <!-- Comparison Slider Script -->
+  <script>
+  (function() {
+    const container = document.getElementById('comparison-slider');
+    const beforeLayer = document.getElementById('comparison-before');
+    const afterLayer = document.getElementById('comparison-after');
+    const handle = document.getElementById('comparison-handle');
+    const knob = document.getElementById('comparison-knob');
+    if (!container || !beforeLayer || !afterLayer || !handle) return;
+
+    let isDragging = false;
+    let sliderPos = 50;
+
+    function updateSlider(pos) {
+      sliderPos = Math.max(5, Math.min(95, pos));
+      beforeLayer.style.clipPath = `inset(0 ${100 - sliderPos}% 0 0)`;
+      afterLayer.style.clipPath = `inset(0 0 0 ${sliderPos}%)`;
+      handle.style.left = `calc(${sliderPos}% - 1px)`;
+    }
+
+    function getPosition(clientX) {
+      const rect = container.getBoundingClientRect();
+      return ((clientX - rect.left) / rect.width) * 100;
+    }
+
+    container.addEventListener('mousedown', (e) => { isDragging = true; knob.style.transform = 'scale(1.15)'; updateSlider(getPosition(e.clientX)); });
+    window.addEventListener('mouseup', () => { isDragging = false; knob.style.transform = ''; });
+    container.addEventListener('mousemove', (e) => { if (isDragging) updateSlider(getPosition(e.clientX)); });
+    container.addEventListener('mouseleave', () => { isDragging = false; knob.style.transform = ''; });
+
+    container.addEventListener('touchstart', (e) => { isDragging = true; knob.style.transform = 'scale(1.15)'; updateSlider(getPosition(e.touches[0].clientX)); }, { passive: true });
+    container.addEventListener('touchend', () => { isDragging = false; knob.style.transform = ''; });
+    container.addEventListener('touchmove', (e) => { if (isDragging) updateSlider(getPosition(e.touches[0].clientX)); }, { passive: true });
+  })();
+  </script>
 
   <!-- MOCK ESC/POS ANALYZER SECTION -->
   <section class="py-32 bg-[#1C1C1A] overflow-hidden relative">
@@ -914,9 +1092,52 @@ VISA **** 1234</textarea>
         </div>
       </div>
 
+      <!-- Privacy, Data & Compliance -->
+      <div class="relative z-20 w-full px-6 md:px-12 pb-6 pt-8 border-t border-white/5">
+        <div class="max-w-5xl mx-auto">
+          <!-- Compliance badges -->
+          <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] md:text-xs text-[#A0AFAA] font-semibold uppercase tracking-wider">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#7BE899]"></i> SOC 2 Type II
+            </div>
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] md:text-xs text-[#A0AFAA] font-semibold uppercase tracking-wider">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#7BE899]"></i> GDPR Compliant
+            </div>
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] md:text-xs text-[#A0AFAA] font-semibold uppercase tracking-wider">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#7BE899]"></i> CCPA Compliant
+            </div>
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] md:text-xs text-[#A0AFAA] font-semibold uppercase tracking-wider">
+              <i data-lucide="lock" class="w-3.5 h-3.5 text-[#7BE899]"></i> TLS 1.3 Encrypted
+            </div>
+          </div>
+
+          <!-- Links row -->
+          <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-6 text-[11px] md:text-xs text-[#82907A] font-medium">
+            <a href="/privacy" class="hover:text-[#F7F6F2] transition-colors">Privacy Policy</a>
+            <span class="text-white/10">|</span>
+            <a href="/terms" class="hover:text-[#F7F6F2] transition-colors">Terms of Service</a>
+            <span class="text-white/10">|</span>
+            <a href="/data-policy" class="hover:text-[#F7F6F2] transition-colors">Data Protection Policy</a>
+            <span class="text-white/10">|</span>
+            <a href="/cookies" class="hover:text-[#F7F6F2] transition-colors">Cookie Policy</a>
+            <span class="text-white/10">|</span>
+            <a href="/security" class="hover:text-[#F7F6F2] transition-colors">Security</a>
+            <span class="text-white/10">|</span>
+            <a href="/compliance" class="hover:text-[#F7F6F2] transition-colors">Compliance</a>
+            <span class="text-white/10">|</span>
+            <a href="/dpa" class="hover:text-[#F7F6F2] transition-colors">Data Processing Agreement</a>
+          </div>
+
+          <!-- Brief data statement -->
+          <p class="text-center text-[10px] md:text-[11px] text-[#6B6A65] max-w-2xl mx-auto leading-relaxed mb-6">
+            Your data is encrypted at rest and in transit. Receipt data is processed on-device where possible, and stored in SOC 2 certified infrastructure. You can request full data export or deletion at any time.
+          </p>
+        </div>
+      </div>
+
       <!-- Credits row -->
       <div class="relative z-20 w-full pb-8 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="text-[#A0AFAA] text-[10px] md:text-xs font-semibold tracking-widest uppercase order-2 md:order-1">2026 Receiptiles. All rights reserved.</div>
+        <div class="text-[#A0AFAA] text-[10px] md:text-xs font-semibold tracking-widest uppercase order-2 md:order-1">&copy; 2026 Receiptiles. All rights reserved.</div>
 
         <div class="footer-glass-pill px-6 py-3 rounded-full flex items-center gap-2 order-1 md:order-2 border-transparent">
           <span class="text-[#A0AFAA] text-[10px] md:text-xs font-bold uppercase tracking-widest">Engineered with</span>
@@ -934,8 +1155,17 @@ VISA **** 1234</textarea>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+    // Always scroll to top on page load (ignore hash)
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname);
+    }
+    window.scrollTo(0, 0);
+
     if (typeof lucide !== 'undefined') lucide.createIcons();
     else document.querySelector('script[src*="lucide"]').addEventListener('load', () => lucide.createIcons());
+
+    // Track page view
+    fetch('/api/views', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page: 'landing' }) }).catch(() => {});
 
     // 0. TOAST NOTIFICATION SYSTEM
     const toastEl = document.getElementById('toast');
