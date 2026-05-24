@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
+  "installCommand": "npx pnpm@9.15.4 install --no-frozen-lockfile",
   "buildCommand": "pnpm turbo build --filter=@receipts/web",
   "outputDirectory": "apps/web/.next",
   "crons": [
