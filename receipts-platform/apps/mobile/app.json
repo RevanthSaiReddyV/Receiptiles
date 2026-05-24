@@ -23,7 +23,8 @@
         "NSPhotoLibraryUsageDescription": "Select receipt images from your photo library.",
         "NFCReaderUsageDescription": "Read NFC tags at point-of-sale terminals to receive digital receipts.",
         "NSLocationWhenInUseUsageDescription": "Your location helps us recommend the best credit card for nearby merchants.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Background location enables card recommendations when you arrive at a store."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Background location enables card recommendations when you arrive at a store.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -32,11 +33,12 @@
       },
       "package": "com.receiptsplatform.app",
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "NFC",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.NFC",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ],
       "intentFilters": [
         {
@@ -49,7 +51,10 @@
               "pathPrefix": "/claim"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -58,7 +63,6 @@
       "expo-image-picker",
       "expo-secure-store",
       "expo-location",
-      "expo-haptics",
       [
         "expo-notifications",
         {
@@ -69,15 +73,15 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "2fbc2647-2923-452e-b665-89140cbe606b"
       }
     },
-    "owner": "receipts-platform",
+    "owner": "revanthsaireddy",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/YOUR_EAS_PROJECT_ID"
+      "url": "https://u.expo.dev/2fbc2647-2923-452e-b665-89140cbe606b"
     }
   }
 }
