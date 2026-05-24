@@ -104,13 +104,16 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    pkpass.type = "generic";
+    pkpass.type = passJson.passType ?? "storeCard";
 
-    for (const f of passJson.generic.headerFields) pkpass.headerFields.push(f);
-    for (const f of passJson.generic.primaryFields) pkpass.primaryFields.push(f);
-    for (const f of passJson.generic.secondaryFields) pkpass.secondaryFields.push(f);
-    for (const f of passJson.generic.auxiliaryFields) pkpass.auxiliaryFields.push(f);
-    for (const f of passJson.generic.backFields) pkpass.backFields.push(f);
+    const fields = passJson.fields ?? passJson.generic;
+    if (fields) {
+      for (const f of fields.headerFields) pkpass.headerFields.push(f);
+      for (const f of fields.primaryFields) pkpass.primaryFields.push(f);
+      for (const f of fields.secondaryFields) pkpass.secondaryFields.push(f);
+      for (const f of fields.auxiliaryFields) pkpass.auxiliaryFields.push(f);
+      for (const f of fields.backFields) pkpass.backFields.push(f);
+    }
 
     if (passJson.barcodes?.length) {
       pkpass.setBarcodes(...passJson.barcodes.map(b => ({

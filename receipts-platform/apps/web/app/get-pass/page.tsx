@@ -89,11 +89,18 @@ function PassCard() {
 }
 
 function RecentReceipts() {
-  const receipts = [
+  const [showAll, setShowAll] = useState(false);
+
+  const allReceipts = [
     { icon: "☕", color: "bg-orange-100", merchant: "Blue Bottle Coffee", time: "Today, 08:41", amount: "$6.50" },
     { icon: "🛒", color: "bg-green-100", merchant: "Whole Foods Market", time: "Yesterday, 17:22", amount: "$84.30" },
     { icon: "🥐", color: "bg-red-100", merchant: "Tartine Bakery", time: "May 22, 12:05", amount: "$23.00" },
+    { icon: "🍕", color: "bg-yellow-100", merchant: "Pizzeria Delfina", time: "May 21, 19:30", amount: "$42.00" },
+    { icon: "⛽", color: "bg-blue-100", merchant: "Chevron", time: "May 20, 14:15", amount: "$58.72" },
+    { icon: "📦", color: "bg-purple-100", merchant: "Amazon", time: "May 19, 10:00", amount: "$129.99" },
   ];
+
+  const visibleReceipts = showAll ? allReceipts : allReceipts.slice(0, 3);
 
   return (
     <div className="bg-white rounded-2xl border border-zinc-200 p-5 mt-6">
@@ -104,7 +111,7 @@ function RecentReceipts() {
       <p className="text-zinc-400 text-xs mb-4">18 this month · 247 total · all digital</p>
 
       <div className="space-y-3">
-        {receipts.map((r, i) => (
+        {visibleReceipts.map((r, i) => (
           <div key={i} className="flex items-center justify-between py-2">
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-xl ${r.color} flex items-center justify-center text-sm`}>
@@ -126,9 +133,22 @@ function RecentReceipts() {
         ))}
       </div>
 
-      <button className="w-full mt-4 text-center text-[#4A5D4E] text-xs font-medium hover:text-[#1C1C1A] transition-colors">
-        Show all 6 receipts ↓
-      </button>
+      {!showAll && (
+        <button
+          onClick={() => setShowAll(true)}
+          className="w-full mt-4 text-center text-[#4A5D4E] text-xs font-medium hover:text-[#1C1C1A] transition-colors"
+        >
+          Show all {allReceipts.length} receipts ↓
+        </button>
+      )}
+      {showAll && (
+        <button
+          onClick={() => setShowAll(false)}
+          className="w-full mt-4 text-center text-[#4A5D4E] text-xs font-medium hover:text-[#1C1C1A] transition-colors"
+        >
+          Show less ↑
+        </button>
+      )}
     </div>
   );
 }
@@ -273,14 +293,19 @@ function LoginForm() {
   );
 }
 
-function WalletAddFlow() {
+function WalletAddFlow({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [platform, setPlatform] = useState<Platform>("desktop");
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => { setPlatform(detectPlatform()); }, []);
 
   const handleAdd = useCallback(async (targetPlatform: "apple" | "google") => {
+    if (!isLoggedIn) {
+      setShowLogin(true);
+      return;
+    }
     setIsAdding(true);
     try {
       const res = await fetch("/api/wallet/add", {
@@ -301,7 +326,17 @@ function WalletAddFlow() {
     } finally {
       setIsAdding(false);
     }
-  }, []);
+  }, [isLoggedIn]);
+
+  if (showLogin) {
+    return (
+      <div className="w-full max-w-md mx-auto mt-6">
+        <div className="bg-[#242D28] rounded-3xl p-8">
+          <LoginForm />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -342,6 +377,7 @@ function WalletAddFlow() {
 export default function WalletPage() {
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
+  const isLoggedIn = !!session?.user;
 
   return (
     <div className="min-h-screen bg-[#F5F5F0] p-4 md:p-8">
@@ -362,14 +398,8 @@ export default function WalletPage() {
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         </div>
-      ) : session?.user ? (
-        <WalletAddFlow />
       ) : (
-        <div className="min-h-[80vh] flex items-center justify-center">
-          <div className="bg-[#242D28] rounded-3xl p-8 w-full max-w-md">
-            <LoginForm />
-          </div>
-        </div>
+        <WalletAddFlow isLoggedIn={isLoggedIn} />
       )}
     </div>
   );

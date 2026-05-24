@@ -28,6 +28,7 @@ model User {
   customerConnections   CustomerConnection[]
   apiKeys               ApiKey[]
   walletPasses          WalletPass[]
+  customer              Customer?
   subscriptions         Subscription[]
   passwordResetTokens   PasswordResetToken[]
   spendingSnapshots     SpendingSnapshot[]
@@ -832,4 +833,68 @@ model WaitlistEntry {
   email     String   @unique
   source    String   @default("landing")
   createdAt DateTime @default(now())
+}
+
+// ─── Customer Identity (cross-device, cross-app) ────────────────────────────
+
+model Customer {
+  id             String   @id @default(cuid())
+  customerId     String   @unique // Public-facing ID: "cust_<nanoid>" — printed on pass, used at terminals
+  userId         String?  @unique // Linked app user (null if tap-only customer without account)
+  email          String?  // Optional: collected at signup or from merchant
+  name           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  devices        CustomerDevice[]
+  purchases      Purchase[]
+
+  @@index([customerId])
+  @@index([email])
+}
+
+model CustomerDevice {
+  id             String   @id @default(cuid())
+  customerId     String
+  walletPassId   String?  // Links to WalletPass if pass was added
+  platform       String   // "apple", "google", "web"
+  deviceName     String?  // "iPhone 15 Pro", "Pixel 9"
+  pushToken      String?  // For sending pass updates
+  isActive       Boolean  @default(true)
+  lastSeenAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([walletPassId])
+}
+
+model Purchase {
+  id               String   @id @default(cuid())
+  customerId       String
+  receiptId        String?  // Links to Receipt if full receipt data exists
+  merchantName     String
+  merchantId       String?  // Merchant's Receiptiles ID
+  total            Float
+  currency         String   @default("USD")
+  purchasedAt      DateTime
+  source           String   // "nfc_tap", "email", "pos_webhook", "manual", "plaid"
+  deviceId         String?  // Which device was used for this purchase
+  itemCount        Int?
+  category         String?
+  returnWindowDays Int?     // From retailer DB: how many days to return
+  returnExpiresAt  DateTime? // purchasedAt + returnWindowDays
+  warrantyMonths   Int?
+  warrantyExpiresAt DateTime?
+  metadata         Json?    // Flexible: store_number, transaction_id, plaid_id
+  createdAt        DateTime @default(now())
+
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, merchantName, purchasedAt, total]) // Dedup
+  @@index([customerId])
+  @@index([purchasedAt])
+  @@index([merchantName])
 }

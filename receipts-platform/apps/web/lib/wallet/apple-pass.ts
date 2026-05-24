@@ -14,12 +14,20 @@ export interface ApplePassData {
   foregroundColor: string;
   labelColor: string;
   logoText: string;
-  generic: {
-    headerFields: Array<{ key: string; label: string; value: string | number; textAlignment?: "PKTextAlignmentLeft" | "PKTextAlignmentCenter" | "PKTextAlignmentRight" | "PKTextAlignmentNatural" }>;
-    primaryFields: Array<{ key: string; label: string; value: string | number }>;
-    secondaryFields: Array<{ key: string; label: string; value: string | number }>;
-    auxiliaryFields: Array<{ key: string; label: string; value: string | number }>;
-    backFields: Array<{ key: string; label: string; value: string }>;
+  passType?: "storeCard" | "generic";
+  fields?: {
+    headerFields: PassField[];
+    primaryFields: PassField[];
+    secondaryFields: PassField[];
+    auxiliaryFields: PassField[];
+    backFields: PassField[];
+  };
+  generic?: {
+    headerFields: PassField[];
+    primaryFields: PassField[];
+    secondaryFields: PassField[];
+    auxiliaryFields: PassField[];
+    backFields: PassField[];
   };
   nfc?: {
     message: string;
@@ -33,6 +41,13 @@ export interface ApplePassData {
   }>;
 }
 
+interface PassField {
+  key: string;
+  label: string;
+  value: string | number;
+  textAlignment?: "PKTextAlignmentLeft" | "PKTextAlignmentCenter" | "PKTextAlignmentRight" | "PKTextAlignmentNatural";
+}
+
 const PASS_TYPE_ID =
   process.env.APPLE_PASS_TYPE_ID ?? "pass.com.receiptiles.receipts";
 const TEAM_ID = process.env.APPLE_TEAM_ID ?? "";
@@ -43,10 +58,7 @@ function formatCurrency(amount: number): string {
 }
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export function calculateEcoImpact(receiptCount: number) {
@@ -68,11 +80,18 @@ export function calculateEcoImpact(receiptCount: number) {
 }
 
 /**
- * Generate pass.json matching the TapForReceipts design:
- * - Background: dark forest image
- * - Front: brand + "ECO ACTIVE" badge, this month count, total receipts
- * - Bottom: Trees Saved | Paper Avoided | CO₂ Saved + card number + user name
- * - Back: full receipt history with itemized detail + warranty/return info
+ * Apple Wallet Store Card — renders like a loyalty/membership card.
+ *
+ * FRONT (card face):
+ *   Header (top-right):  Receipt count
+ *   Primary (center):    "TapForReceipts" brand
+ *   Secondary (below):   This month count + latest merchant
+ *   Auxiliary (bottom):  Card number + member name
+ *
+ * BACK (tap ⓘ):
+ *   - Eco impact stats (trees, paper, CO₂)
+ *   - Last 10 receipts with items + warranty/return info
+ *   - Eco footer
  */
 export async function generateMasterPassJson(
   userId: string,
@@ -98,11 +117,7 @@ export async function generateMasterPassJson(
       warrantyExpiresAt: true,
       returnExpiresAt: true,
       items: {
-        select: {
-          name: true,
-          quantity: true,
-          totalPrice: true,
-        },
+        select: { name: true, quantity: true, totalPrice: true },
       },
     },
   });
@@ -110,16 +125,27 @@ export async function generateMasterPassJson(
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthReceipts = receipts.filter((r) => r.purchasedAt >= monthStart);
+  const monthTotal = monthReceipts.reduce((sum, r) => sum + r.total, 0);
+  const lastReceipt = receipts[0];
 
   const totalReceiptCount = await db.receipt.count({ where: { userId } });
   const eco = calculateEcoImpact(totalReceiptCount);
 
-  const cardNumber = `TFR •• ${user?.createdAt?.getFullYear() ?? "2026"} •• ${String(totalReceiptCount).padStart(4, "0")}`;
+  const memberYear = user?.createdAt?.getFullYear() ?? 2026;
+  const cardNumber = `TFR •• ${memberYear} •• ${String(totalReceiptCount).padStart(4, "0")}`;
   const memberName = user?.name?.toUpperCase() ?? "MEMBER";
 
-  // Back fields — itemized receipts
-  const backFields: Array<{ key: string; label: string; value: string }> = [];
+  // BACK FIELDS — detailed receipt history
+  const backFields: PassField[] = [];
 
+  // Eco impact section on back
+  backFields.push({
+    key: "ecoTitle",
+    label: "Environmental Impact",
+    value: `🌱 ${eco.treesSaved} trees · 📄 ${eco.paperAvoided} paper · 💨 ${eco.co2Saved} CO₂`,
+  });
+
+  // Receipt list
   for (let i = 0; i < receipts.length; i++) {
     const r = receipts[i];
     const label = `${r.merchantCanonicalName} · ${formatDate(r.purchasedAt)}`;
@@ -140,9 +166,9 @@ export async function generateMasterPassJson(
   }
 
   backFields.push({
-    key: "ecoFooter",
+    key: "footer",
     label: "─────────────",
-    value: `🌱 ${totalReceiptCount} receipts saved · ${eco.co2Saved} CO₂ prevented\nTap at any terminal · receiptiles.com`,
+    value: `${totalReceiptCount} digital receipts · No paper wasted\nTap at any terminal · receiptiles.com`,
   });
 
   return {
@@ -151,16 +177,18 @@ export async function generateMasterPassJson(
     serialNumber,
     teamIdentifier: TEAM_ID,
     organizationName: "Receiptiles",
-    description: "TapForReceipts — Digital Receipt Pass",
+    description: "TapForReceipts — Digital Receipt Card",
     authenticationToken: authToken,
     webServiceURL: WEB_SERVICE_URL,
-    foregroundColor: "#FFFFFF",
-    labelColor: "#A0AFAA",
+    backgroundColor: "#242D28",
+    foregroundColor: "#F7F6F2",
+    labelColor: "#82907A",
     logoText: "",
-    generic: {
+    passType: "storeCard",
+    fields: {
       headerFields: [
         {
-          key: "totalReceipts",
+          key: "receiptCount",
           label: "RECEIPTS",
           value: totalReceiptCount,
           textAlignment: "PKTextAlignmentRight",
@@ -168,38 +196,41 @@ export async function generateMasterPassJson(
       ],
       primaryFields: [
         {
-          key: "monthCount",
-          label: "THIS MONTH",
-          value: `${monthReceipts.length} receipts`,
+          key: "brand",
+          label: "",
+          value: "TapForReceipts",
         },
       ],
       secondaryFields: [
         {
-          key: "treesSaved",
-          label: "TREES SAVED",
-          value: eco.treesSaved,
+          key: "thisMonth",
+          label: "THIS MONTH",
+          value: `${monthReceipts.length} receipts · ${formatCurrency(monthTotal)}`,
         },
         {
-          key: "paperAvoided",
-          label: "PAPER AVOIDED",
-          value: eco.paperAvoided,
-        },
-        {
-          key: "co2Saved",
-          label: "CO₂ SAVED",
-          value: eco.co2Saved,
+          key: "latest",
+          label: "LATEST",
+          value: lastReceipt ? lastReceipt.merchantCanonicalName : "Ready to tap",
+          textAlignment: "PKTextAlignmentRight",
         },
       ],
       auxiliaryFields: [
         {
           key: "cardNumber",
-          label: "",
+          label: "CARD",
           value: cardNumber,
         },
         {
-          key: "memberName",
-          label: "",
+          key: "ecoStatus",
+          label: "ECO STATUS",
+          value: "● Active",
+          textAlignment: "PKTextAlignmentCenter",
+        },
+        {
+          key: "member",
+          label: "MEMBER",
           value: memberName,
+          textAlignment: "PKTextAlignmentRight",
         },
       ],
       backFields,
