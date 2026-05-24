@@ -33,13 +33,13 @@ export default async function CardsPage() {
   );
 
   // Serialize cards as plain objects (no Date instances)
-  const serializedCards = cards.map((card) => ({
+  const serializedCards = cards.map((card: typeof cards[number]) => ({
     id: card.id,
     name: card.name,
     last4: card.last4,
     network: card.network,
     createdAt: card.createdAt.toISOString(),
-    rewardRules: card.rewardRules.map((r) => ({
+    rewardRules: card.rewardRules.map((r: typeof card.rewardRules[number]) => ({
       id: r.id,
       category: r.category,
       merchantName: r.merchantName,
@@ -98,7 +98,7 @@ export default async function CardsPage() {
   // Parse card benefits for the Benefits tab
   const cardBenefits = parseCardBenefits(
     cards
-      .map((card) => {
+      .map((card: typeof cards[number]) => {
         const dbCard = CARD_DATABASE.find(
           (d) => d.name.toLowerCase() === card.name.toLowerCase()
         );
@@ -108,7 +108,7 @@ export default async function CardsPage() {
           dbPerks: dbCard?.perks ?? [],
         };
       })
-      .filter((c) => c.dbPerks.length > 0)
+      .filter((c: { id: string; name: string; dbPerks: string[] }) => c.dbPerks.length > 0)
   );
 
   return (

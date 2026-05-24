@@ -131,7 +131,7 @@ function loadPlaidLink(linkToken: string): Promise<PlaidHandler> {
 
     const existingScript = document.getElementById("plaid-link-script");
     const init = () => {
-      const Plaid = (window as unknown as { Plaid?: { create: (config: Record<string, unknown>) => PlaidHandler } }).Plaid;
+      const Plaid = (window as unknown as { Plaid?: { create: (config: Record<string, unknown>) => { open: () => void; exit: () => void } } }).Plaid;
       if (!Plaid) return reject("Plaid SDK not loaded");
 
       const handler = Plaid.create({

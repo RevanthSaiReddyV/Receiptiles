@@ -8,8 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/lib/auth';
-import { api } from '@/lib/api';
+import { apiGet, apiPost } from '../../lib/api';
 
 interface Subscription {
   id: string;
@@ -45,7 +44,6 @@ interface Summary {
 }
 
 export default function SubscriptionsScreen() {
-  const { token } = useAuth();
   const router = useRouter();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -56,7 +54,7 @@ export default function SubscriptionsScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const data = await api.get('/api/mobile/subscriptions', token);
+      const data = await apiGet<{ subscriptions: Subscription[]; alerts: Alert[]; summary: Summary }>('/api/mobile/subscriptions');
       setSubscriptions(data.subscriptions);
       setAlerts(data.alerts);
       setSummary(data.summary);
@@ -66,7 +64,7 @@ export default function SubscriptionsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -75,7 +73,7 @@ export default function SubscriptionsScreen() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      await api.post('/api/mobile/subscriptions', {}, token);
+      await apiPost('/api/mobile/subscriptions', {});
       await fetchData();
     } finally {
       setSyncing(false);
@@ -83,10 +81,10 @@ export default function SubscriptionsScreen() {
   };
 
   const handleDismissAlert = async (alertId: string) => {
-    await api.patch('/api/mobile/subscriptions', {
+    await apiPost('/api/mobile/subscriptions', {
       alertId,
       action: 'dismiss',
-    }, token);
+    });
     setAlerts(prev => prev.filter(a => a.id !== alertId));
   };
 

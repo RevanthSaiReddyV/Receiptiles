@@ -46,7 +46,7 @@ export default async function AdminJobsPage() {
           </div>
         ) : (
           <div className="divide-y divide-zinc-100">
-            {jobs.map((job) => (
+            {jobs.map((job: typeof jobs[number]) => (
               <div
                 key={job.id}
                 className="flex items-center justify-between px-6 py-4"

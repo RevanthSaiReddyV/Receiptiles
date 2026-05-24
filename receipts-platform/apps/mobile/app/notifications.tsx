@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { apiGet } from "@/lib/api";
+import { apiGet } from "../lib/api";
 
 interface Notification {
   id: string;

@@ -77,9 +77,7 @@
       }
     },
     "owner": "revanthsaireddy",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/2fbc2647-2923-452e-b665-89140cbe606b"
     }

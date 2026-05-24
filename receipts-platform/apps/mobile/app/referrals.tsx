@@ -12,7 +12,7 @@ import {
   Clipboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost } from "../lib/api";
 
 interface ReferralStats {
   totalSent: number;
