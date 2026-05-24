@@ -21,9 +21,8 @@ export async function POST(req: NextRequest) {
     data: {
       userId: session.user.id,
       provider: "plaid",
-      providerAccountId: itemId,
+      accountId: itemId,
       accessToken,
-      status: "active",
       metadata: { institutionName },
     },
   });

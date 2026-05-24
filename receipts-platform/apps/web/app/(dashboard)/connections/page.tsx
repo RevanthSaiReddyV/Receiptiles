@@ -3,6 +3,7 @@ import { db } from "@receipts/db";
 import { redirect } from "next/navigation";
 import { RETAILER_CATALOG } from "@/lib/connectors/retailers";
 import { ConnectionsGrid } from "./connections-grid";
+import { PlaidLinkButton } from "./plaid-link";
 
 export default async function ConnectionsPage() {
   const session = await auth();
@@ -35,10 +36,11 @@ export default async function ConnectionsPage() {
     countMap[retailerId] = rc._count.id;
   }
 
-  // Also get email and POS connections
-  const [emailConns, merchantConns] = await Promise.all([
+  // Also get email, POS, and bank connections
+  const [emailConns, merchantConns, customerConns] = await Promise.all([
     db.emailConnection.findMany({ where: { userId, isActive: true } }),
     db.merchantConnection.findMany({ where: { userId, isActive: true } }),
+    db.customerConnection.findMany({ where: { userId, isActive: true } }),
   ]);
 
   const catalog = RETAILER_CATALOG.map((retailer) => {
@@ -80,6 +82,9 @@ export default async function ConnectionsPage() {
           <div className="text-xs text-neutral-500 mt-1">Retailers Available</div>
         </div>
       </div>
+
+      {/* Bank Connection (Plaid) */}
+      <PlaidLinkButton hasConnection={customerConns.some(c => c.provider === "plaid")} />
 
       {/* Other connections */}
       {(emailConns.length > 0 || merchantConns.length > 0) && (
