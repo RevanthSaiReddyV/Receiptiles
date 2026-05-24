@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://receipts-platform-revanth-sai-reddy-venumbaka-s-projects.vercel.app";
 
 async function getToken() {
   return SecureStore.getItemAsync("auth_token");
