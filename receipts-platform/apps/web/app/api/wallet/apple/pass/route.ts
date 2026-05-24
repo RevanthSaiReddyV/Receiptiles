@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         description: passJson.description,
         authenticationToken: passJson.authenticationToken,
         webServiceURL: passJson.webServiceURL,
-        backgroundColor: passJson.backgroundColor,
+        backgroundColor: "#1a2e1f",
         foregroundColor: passJson.foregroundColor,
         labelColor: passJson.labelColor,
         logoText: passJson.logoText,

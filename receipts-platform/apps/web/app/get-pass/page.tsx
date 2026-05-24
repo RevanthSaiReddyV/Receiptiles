@@ -13,88 +13,196 @@ function detectPlatform(): Platform {
   return "desktop";
 }
 
-function PassPreview() {
+function PassCard() {
   return (
-    <div className="mx-auto w-72 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-      {/* Pass card mockup */}
-      <div className="bg-[#242D28] p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#7BE899] flex items-center justify-center text-[#242D28] font-bold text-sm">
-              R
-            </div>
-            <span className="text-[#F7F6F2] font-semibold text-sm">Receiptiles</span>
-          </div>
-          <div className="text-[#82907A] text-[10px] uppercase tracking-wider">Digital Receipts</div>
-        </div>
-        <div className="border-t border-white/10 pt-4">
-          <div className="text-[#82907A] text-[10px] uppercase tracking-wider mb-1">Last Purchase</div>
-          <div className="text-[#F7F6F2] text-lg font-medium">Ready to tap</div>
-        </div>
-        <div className="flex justify-between mt-4 pt-3 border-t border-white/10">
-          <div>
-            <div className="text-[#82907A] text-[9px] uppercase">This Month</div>
-            <div className="text-[#7BE899] text-sm font-semibold">$0.00</div>
-          </div>
-          <div>
-            <div className="text-[#82907A] text-[9px] uppercase">Receipts</div>
-            <div className="text-[#7BE899] text-sm font-semibold">0</div>
-          </div>
-          <div>
-            <div className="text-[#82907A] text-[9px] uppercase">Trees Saved</div>
-            <div className="text-[#7BE899] text-sm font-semibold">0</div>
-          </div>
-        </div>
+    <div className="relative w-full max-w-md mx-auto rounded-2xl overflow-hidden shadow-2xl" style={{ aspectRatio: "1.6/1" }}>
+      {/* Forest background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#1a2e1f] via-[#1c3322] to-[#0f1f14]">
+        <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=500&fit=crop')", backgroundSize: "cover", backgroundPosition: "center" }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
       </div>
-      {/* QR area */}
-      <div className="bg-[#1a211d] p-4 flex justify-center">
-        <div className="w-16 h-16 bg-white/10 rounded-lg flex items-center justify-center">
-          <svg className="w-8 h-8 text-[#82907A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
-          </svg>
+
+      {/* Pass content */}
+      <div className="relative z-10 h-full p-5 flex flex-col justify-between">
+        {/* Top row */}
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-7 h-7 rounded-lg bg-[#E8C47B]/90 flex items-center justify-center">
+                <svg className="w-4 h-4 text-[#1C1C1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <span className="text-white text-xs font-bold tracking-wider uppercase">TapForReceipts</span>
+            </div>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7BE899]/20 border border-[#7BE899]/30 text-[#7BE899] text-[9px] font-bold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7BE899]"></span> Eco Active
+            </span>
+          </div>
+          <div className="text-right flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
+            </svg>
+            <div>
+              <div className="text-white text-2xl font-black leading-none">247</div>
+              <div className="text-white/50 text-[8px] uppercase tracking-wider">Receipts</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Middle — this month */}
+        <div>
+          <div className="text-white/50 text-[9px] uppercase tracking-widest mb-0.5">This Month</div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-white text-4xl font-black">18</span>
+            <span className="text-white/70 text-sm">receipts</span>
+          </div>
+        </div>
+
+        {/* Bottom row */}
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-white/40 text-[8px] uppercase tracking-wider">Trees Saved</div>
+            <div className="text-white text-lg font-bold">3.2</div>
+            <div className="text-white/50 text-[9px] font-mono mt-0.5">TFR •• 2023 •• 0247</div>
+            <div className="text-white/50 text-[9px] uppercase tracking-wider">Jordan Nakamura</div>
+          </div>
+          <div className="text-center">
+            <div className="text-white/40 text-[8px] uppercase tracking-wider">Paper Avoided</div>
+            <div className="text-white text-lg font-bold">1.4 kg</div>
+          </div>
+          <div className="text-right">
+            <div className="text-white/40 text-[8px] uppercase tracking-wider">CO₂ Saved</div>
+            <div className="text-white text-lg font-bold">0.82 kg</div>
+            <div className="w-6 h-6 rounded-full bg-[#4A5D4E] ml-auto mt-1 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 text-[#7BE899]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 12s1.5 2 4 2 4-2 4-2" />
+                <path d="M12 6v2M8 8l1 1M16 8l-1 1" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function ConfettiAnimation() {
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; delay: number; color: string }>>([]);
-
-  useEffect(() => {
-    const colors = ["#7BE899", "#F7F6F2", "#E8C47B", "#82907A", "#4A5D4E"];
-    const newParticles = Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      delay: Math.random() * 0.5,
-      color: colors[Math.floor(Math.random() * colors.length)],
-    }));
-    setParticles(newParticles);
-  }, []);
+function RecentReceipts() {
+  const receipts = [
+    { icon: "☕", color: "bg-orange-100", merchant: "Blue Bottle Coffee", time: "Today, 08:41", amount: "$6.50" },
+    { icon: "🛒", color: "bg-green-100", merchant: "Whole Foods Market", time: "Yesterday, 17:22", amount: "$84.30" },
+    { icon: "🥐", color: "bg-red-100", merchant: "Tartine Bakery", time: "May 22, 12:05", amount: "$23.00" },
+  ];
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="absolute w-2 h-2 rounded-full animate-confetti-fall"
-          style={{
-            left: `${p.x}%`,
-            backgroundColor: p.color,
-            animationDelay: `${p.delay}s`,
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes confetti-fall {
-          0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-        .animate-confetti-fall {
-          animation: confetti-fall 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-      `}</style>
+    <div className="bg-white rounded-2xl border border-zinc-200 p-5 mt-6">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-[#1C1C1A] font-semibold text-sm">Recent Receipts</h3>
+        <span className="text-[#7BE899] text-xs font-semibold">No paper</span>
+      </div>
+      <p className="text-zinc-400 text-xs mb-4">18 this month · 247 total · all digital</p>
+
+      <div className="space-y-3">
+        {receipts.map((r, i) => (
+          <div key={i} className="flex items-center justify-between py-2">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl ${r.color} flex items-center justify-center text-sm`}>
+                {r.icon}
+              </div>
+              <div>
+                <div className="text-[#1C1C1A] text-sm font-medium">{r.merchant}</div>
+                <div className="text-zinc-400 text-xs">{r.time}</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[#1C1C1A] text-sm font-semibold">{r.amount}</div>
+              <div className="text-[#7BE899] text-[10px] flex items-center gap-0.5 justify-end">
+                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                paper saved
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button className="w-full mt-4 text-center text-[#4A5D4E] text-xs font-medium hover:text-[#1C1C1A] transition-colors">
+        Show all 6 receipts ↓
+      </button>
+    </div>
+  );
+}
+
+function EnvironmentalImpact() {
+  const stats = [
+    { icon: "🌱", value: "3.2", unit: "trees", label: "Trees Saved" },
+    { icon: "📄", value: "1.4", unit: "kg", label: "Paper Avoided" },
+    { icon: "💨", value: "0.82", unit: "kg", label: "CO₂ Saved" },
+    { icon: "📅", value: "Jan", unit: "2023", label: "Member Since" },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-zinc-200 p-5 mt-4">
+      <h3 className="text-[#1C1C1A] font-semibold text-sm mb-1">Your Environmental Impact</h3>
+      <p className="text-zinc-400 text-xs mb-5">Every receipt you skip makes a difference</p>
+
+      <div className="grid grid-cols-4 gap-3">
+        {stats.map((s, i) => (
+          <div key={i} className="text-center">
+            <div className="w-10 h-10 rounded-full bg-[#EAF0E6] flex items-center justify-center mx-auto mb-2 text-sm">
+              {s.icon}
+            </div>
+            <div className="text-[#1C1C1A] text-lg font-bold leading-none">{s.value}</div>
+            <div className="text-zinc-400 text-[10px]">{s.unit}</div>
+            <div className="text-zinc-500 text-[10px] font-medium mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WalletButtons({ onAdd, isAdding, platform }: { onAdd: (p: "apple" | "google") => void; isAdding: boolean; platform: Platform }) {
+  return (
+    <div className="mt-6 space-y-3">
+      {(platform === "ios" || platform === "desktop") && (
+        <button
+          onClick={() => onAdd("apple")}
+          disabled={isAdding}
+          className="w-full flex items-center justify-center gap-3 rounded-2xl bg-[#1C1C1A] py-4 px-6 hover:bg-black transition-colors disabled:opacity-50 shadow-lg"
+        >
+          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19.5 8.5h-3V7a2.5 2.5 0 00-5 0v1.5h-3A1.5 1.5 0 007 10v9a1.5 1.5 0 001.5 1.5h11A1.5 1.5 0 0021 19v-9a1.5 1.5 0 00-1.5-1.5zM13 7a1 1 0 012 0v1.5h-2V7z" />
+          </svg>
+          <span className="text-white font-semibold text-sm">Add to Apple Wallet</span>
+        </button>
+      )}
+
+      {(platform === "android" || platform === "desktop") && (
+        <button
+          onClick={() => onAdd("google")}
+          disabled={isAdding}
+          className="w-full flex items-center justify-center gap-3 rounded-2xl bg-white border-2 border-zinc-200 py-4 px-6 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+          </svg>
+          <span className="text-[#1C1C1A] font-semibold text-sm">Save to Google Wallet</span>
+        </button>
+      )}
+
+      {isAdding && (
+        <div className="flex items-center justify-center gap-2 text-zinc-400 text-sm pt-2">
+          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Creating your pass...
+        </div>
+      )}
     </div>
   );
 }
@@ -109,18 +217,9 @@ function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Invalid email or password.");
-      }
-      // On success, the session will update and the page will re-render
+      const result = await signIn("credentials", { email, password, redirect: false });
+      if (result?.error) setError("Invalid email or password.");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -131,26 +230,22 @@ function LoginForm() {
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#7BE899] text-[#242D28] text-xl font-bold mb-4">
-          R
-        </div>
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#7BE899] text-[#242D28] text-xl font-bold mb-4">R</div>
         <h1 className="text-2xl font-bold text-[#F7F6F2]">Add to Wallet</h1>
-        <p className="mt-2 text-sm text-[#82907A]">Sign in to get your Receiptiles pass</p>
+        <p className="mt-2 text-sm text-[#82907A]">Sign in to get your TapForReceipts pass</p>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
-          {error}
-        </div>
+        <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">{error}</div>
       )}
 
       <button
         type="button"
-        onClick={() => signIn("google", { callbackUrl: "/wallet" })}
-        className="flex w-full items-center justify-center gap-3 rounded-xl bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-sm font-medium text-[#F7F6F2] hover:bg-white/[0.06] transition-colors mb-6"
+        onClick={() => signIn("google", { callbackUrl: "/get-pass" })}
+        className="flex w-full items-center justify-center gap-3 rounded-xl bg-white/[0.05] border border-white/[0.1] px-4 py-3 text-sm font-medium text-white hover:bg-white/[0.08] transition-colors mb-6"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
@@ -159,161 +254,48 @@ function LoginForm() {
       </button>
 
       <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-white/[0.06]" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-[#242D28] px-3 text-[#82907A] uppercase tracking-wider">or</span>
-        </div>
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/[0.08]" /></div>
+        <div className="relative flex justify-center text-xs"><span className="bg-[#242D28] px-3 text-[#82907A] uppercase tracking-wider">or</span></div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email address"
-            required
-            className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] px-4 py-3 text-sm text-[#F7F6F2] placeholder:text-[#82907A] focus:outline-none focus:ring-2 focus:ring-[#7BE899]/30 focus:border-[#7BE899]/50 transition-colors"
-          />
-        </div>
-        <div>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            required
-            minLength={8}
-            className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] px-4 py-3 text-sm text-[#F7F6F2] placeholder:text-[#82907A] focus:outline-none focus:ring-2 focus:ring-[#7BE899]/30 focus:border-[#7BE899]/50 transition-colors"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full rounded-xl bg-[#7BE899] py-3 text-sm text-[#242D28] font-semibold hover:bg-[#6dd884] transition-all disabled:opacity-50"
-        >
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" required className="w-full rounded-xl bg-white/[0.05] border border-white/[0.1] px-4 py-3 text-sm text-white placeholder:text-[#82907A] focus:outline-none focus:ring-2 focus:ring-[#7BE899]/30 transition-colors" />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required minLength={8} className="w-full rounded-xl bg-white/[0.05] border border-white/[0.1] px-4 py-3 text-sm text-white placeholder:text-[#82907A] focus:outline-none focus:ring-2 focus:ring-[#7BE899]/30 transition-colors" />
+        <button type="submit" disabled={isLoading} className="w-full rounded-xl bg-[#7BE899] py-3 text-sm text-[#242D28] font-semibold hover:bg-white transition-all disabled:opacity-50">
           {isLoading ? "Signing in..." : "Sign In"}
         </button>
       </form>
 
       <p className="text-center text-xs text-[#82907A] mt-6">
-        Don&apos;t have an account?{" "}
-        <a href="/signup" className="text-[#7BE899] hover:underline">
-          Sign up
-        </a>
+        Don&apos;t have an account? <a href="/signup" className="text-[#7BE899] hover:underline">Sign up</a>
       </p>
     </div>
   );
-}
-
-function getDeviceName(ua: string): string {
-  if (/iPhone/.test(ua)) return ua.match(/iPhone\s?(\d+)?/)?.[0] || "iPhone";
-  if (/iPad/.test(ua)) return "iPad";
-  if (/Macintosh/.test(ua)) return "Mac";
-  if (/Pixel/.test(ua)) return ua.match(/Pixel\s?\w*/)?.[0] || "Pixel";
-  if (/Samsung/.test(ua)) return ua.match(/SM-\w+/)?.[0] || "Samsung";
-  if (/Windows/.test(ua)) return "Windows PC";
-  if (/Android/.test(ua)) return "Android Device";
-  return "Unknown Device";
-}
-
-function getDeviceType(): string {
-  const w = window.innerWidth;
-  if (/Mobi|Android.*Mobile|iPhone/.test(navigator.userAgent)) return "mobile";
-  if (/iPad|Android(?!.*Mobile)|Tablet/.test(navigator.userAgent) || (w >= 600 && w <= 1024)) return "tablet";
-  if (/Watch/.test(navigator.userAgent)) return "watch";
-  return "desktop";
-}
-
-function getOSName(ua: string): string {
-  if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
-  if (/Mac OS X/.test(ua)) return "macOS";
-  if (/Android/.test(ua)) return "Android";
-  if (/Windows/.test(ua)) return "Windows";
-  if (/Linux/.test(ua)) return "Linux";
-  return "Unknown";
-}
-
-function getOSVersion(ua: string): string {
-  const match = ua.match(/(?:iPhone OS|Mac OS X|Android|Windows NT)\s?([\d_.]+)/);
-  return match ? match[1].replace(/_/g, ".") : "";
-}
-
-function getBrowserName(ua: string): string {
-  if (/CriOS/.test(ua)) return "Chrome (iOS)";
-  if (/FxiOS/.test(ua)) return "Firefox (iOS)";
-  if (/EdgiOS|Edg/.test(ua)) return "Edge";
-  if (/Chrome/.test(ua) && !/Chromium/.test(ua)) return "Chrome";
-  if (/Safari/.test(ua) && !/Chrome/.test(ua)) return "Safari";
-  if (/Firefox/.test(ua)) return "Firefox";
-  return "Unknown";
 }
 
 function WalletAddFlow() {
   const [platform, setPlatform] = useState<Platform>("desktop");
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
-  const [hasExistingPass, setHasExistingPass] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
 
-  useEffect(() => {
-    setPlatform(detectPlatform());
-  }, []);
-
-  // Check if pass was added on THIS device (localStorage)
-  useEffect(() => {
-    const addedOnDevice = localStorage.getItem("receiptiles_wallet_added");
-    if (addedOnDevice) {
-      setHasExistingPass(true);
-    }
-  }, []);
+  useEffect(() => { setPlatform(detectPlatform()); }, []);
 
   const handleAdd = useCallback(async (targetPlatform: "apple" | "google") => {
     setIsAdding(true);
-
     try {
-      // Collect device info
-      const ua = navigator.userAgent;
-      const deviceInfo = {
-        platform: targetPlatform,
-        deviceName: getDeviceName(ua),
-        deviceType: getDeviceType(),
-        osName: getOSName(ua),
-        osVersion: getOSVersion(ua),
-        browserName: getBrowserName(ua),
-        screenWidth: window.screen.width,
-        screenHeight: window.screen.height,
-        userAgent: ua,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        language: navigator.language,
-      };
-
       const res = await fetch("/api/wallet/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(deviceInfo),
+        body: JSON.stringify({ platform: targetPlatform }),
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to create pass");
-      }
-
+      if (!res.ok) throw new Error("Failed");
       const data = await res.json();
-
-      if (targetPlatform === "apple" && data.passUrl) {
-        // Open the .pkpass file or Apple Wallet link
-        window.location.href = data.passUrl;
-      } else if (targetPlatform === "google" && data.passUrl) {
-        // Open Google Save to Wallet
-        window.open(data.passUrl, "_blank");
+      if (data.passUrl) {
+        if (targetPlatform === "apple") window.location.href = data.passUrl;
+        else window.open(data.passUrl, "_blank");
       }
-
       setAdded(true);
-      setShowConfetti(true);
       localStorage.setItem("receiptiles_wallet_added", Date.now().toString());
-      setTimeout(() => setShowConfetti(false), 3000);
     } catch (err) {
       console.error("Wallet add error:", err);
     } finally {
@@ -321,146 +303,38 @@ function WalletAddFlow() {
     }
   }, []);
 
-  if (added || hasExistingPass) {
-    return (
-      <div className="text-center">
-        {showConfetti && <ConfettiAnimation />}
-
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#7BE899]/20 mb-6">
-          <svg className="w-8 h-8 text-[#7BE899]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        </div>
-
-        <h2 className="text-2xl font-bold text-[#F7F6F2] mb-2">
-          {hasExistingPass && !added ? "Pass added on this device" : "You're all set!"}
-        </h2>
-        <p className="text-[#82907A] text-sm mb-4 max-w-xs mx-auto">
-          {hasExistingPass && !added
-            ? "Your Receiptiles pass is active in your wallet. Tap at any terminal to receive receipts."
-            : "Tap at any Receiptiles terminal to receive digital receipts instantly. No manual selection needed."}
-        </p>
-        {hasExistingPass && !added && (
-          <button
-            onClick={() => { localStorage.removeItem("receiptiles_wallet_added"); setHasExistingPass(false); }}
-            className="text-[#7BE899] text-xs font-medium underline underline-offset-2 mb-6 hover:text-white transition-colors"
-          >
-            Add to this device too →
-          </button>
-        )}
-        {!hasExistingPass && !added && null}
-
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 max-w-sm mx-auto">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-[#7BE899]/10 flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#7BE899]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
-              </svg>
-            </div>
-            <div className="text-left">
-              <div className="text-[#F7F6F2] text-sm font-medium">How it works</div>
-              <div className="text-[#82907A] text-xs">Auto-presents on NFC tap</div>
-            </div>
-          </div>
-          <p className="text-[#82907A] text-xs leading-relaxed">
-            When you hold your phone near a Receiptiles terminal, your wallet automatically shows your pass.
-            The receipt is delivered digitally — no paper, no app to open.
-          </p>
-        </div>
-
-        <a
-          href="/dashboard"
-          className="inline-block mt-8 px-6 py-3 rounded-xl bg-white/[0.05] border border-white/[0.08] text-[#F7F6F2] text-sm font-medium hover:bg-white/[0.08] transition-colors"
-        >
-          Go to Dashboard
-        </a>
-      </div>
-    );
-  }
-
   return (
-    <div className="text-center">
-      <div className="mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#7BE899] text-[#242D28] text-xl font-bold mb-4">
-          R
+    <div className="w-full max-w-md mx-auto">
+      {/* Pass status */}
+      <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <span className="w-2 h-2 rounded-full bg-[#7BE899]"></span>
+          Pass active · purchase data written to back
         </div>
-        <h1 className="text-2xl font-bold text-[#F7F6F2] mb-2">Add to Wallet</h1>
-        <p className="text-[#82907A] text-sm max-w-xs mx-auto">
-          Add your Receiptiles pass to automatically receive digital receipts when you tap at checkout.
-        </p>
+        <span className="text-xs text-zinc-400">Updated just now</span>
       </div>
 
-      {/* Pass preview */}
-      <div className="mb-8">
-        <PassPreview />
-      </div>
+      {/* Pass card */}
+      <PassCard />
+
+      {/* Recent receipts */}
+      <RecentReceipts />
+
+      {/* Environmental impact */}
+      <EnvironmentalImpact />
 
       {/* Wallet buttons */}
-      <div className="space-y-3 max-w-xs mx-auto">
-        {(platform === "ios" || platform === "desktop") && (
-          <button
-            onClick={() => handleAdd("apple")}
-            disabled={isAdding}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-black border border-white/20 py-3.5 px-6 hover:bg-zinc-900 transition-colors disabled:opacity-50"
-          >
-            <svg className="h-8 w-auto" viewBox="0 0 120 40" fill="none">
-              <rect width="120" height="40" rx="6" fill="black" />
-              <path d="M25.5 19.8c0-2.4 1.3-4.2 3.4-5.2-.6-.9-1.7-1.5-3.2-1.5-1.4 0-2.9.8-3.4.8-.6 0-1.9-.8-3-.8-2.4 0-4.8 2-4.8 5.7 0 2.3.9 4.7 2 6.3.9 1.3 1.6 2.3 2.8 2.3 1.1 0 1.6-.7 2.9-.7 1.4 0 1.7.7 2.9.7 1.2 0 2-1.1 2.8-2.3.5-.8.9-1.6 1.1-2-.1 0-2.5-1-2.5-3.3z" fill="white" />
-              <path d="M23.5 11.8c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3-1.5z" fill="white" />
-              <text x="38" y="16" fill="white" fontSize="7" fontFamily="system-ui" fontWeight="500">Add to</text>
-              <text x="38" y="28" fill="white" fontSize="12" fontFamily="system-ui" fontWeight="600">Apple Wallet</text>
-            </svg>
-          </button>
-        )}
-
-        {(platform === "android" || platform === "desktop") && (
-          <button
-            onClick={() => handleAdd("google")}
-            disabled={isAdding}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-zinc-200 py-3.5 px-6 hover:bg-zinc-50 transition-colors disabled:opacity-50"
-          >
-            <svg className="h-8 w-auto" viewBox="0 0 154 40" fill="none">
-              <rect width="154" height="40" rx="6" fill="white" />
-              <path d="M21.5 20.5c0 2.5-1.8 4.3-4.1 4.3-2.3 0-4.1-1.8-4.1-4.3s1.8-4.3 4.1-4.3c2.3 0 4.1 1.8 4.1 4.3z" fill="#4285F4" />
-              <path d="M30.5 20.5c0 2.5-1.8 4.3-4.1 4.3-2.3 0-4.1-1.8-4.1-4.3s1.8-4.3 4.1-4.3c2.3 0 4.1 1.8 4.1 4.3z" fill="#EA4335" />
-              <path d="M39.3 16.5v7.2c0 3-1.8 4.2-3.8 4.2-2 0-3.1-1.3-3.1-1.3" stroke="#FBBC04" strokeWidth="1.5" fill="none" />
-              <circle cx="39" cy="20.5" r="3.8" fill="#FBBC04" />
-              <circle cx="47" cy="20.5" r="3.8" fill="#34A853" />
-              <text x="56" y="15" fill="#5f6368" fontSize="7" fontFamily="system-ui" fontWeight="400">Save to</text>
-              <text x="56" y="27" fill="#3c4043" fontSize="11" fontFamily="system-ui" fontWeight="600">Google Wallet</text>
-            </svg>
-          </button>
-        )}
-      </div>
-
-      {isAdding && (
-        <div className="mt-4 flex items-center justify-center gap-2 text-[#82907A] text-sm">
-          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          Creating your pass...
+      {!added ? (
+        <WalletButtons onAdd={handleAdd} isAdding={isAdding} platform={platform} />
+      ) : (
+        <div className="mt-6 text-center p-4 rounded-2xl bg-[#EAF0E6] border border-[#CFDCC8]">
+          <div className="flex items-center justify-center gap-2 text-[#4A5D4E] font-semibold text-sm">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+            Pass added to your wallet!
+          </div>
+          <p className="text-xs text-[#82907A] mt-1">Tap at any terminal to receive receipts instantly.</p>
         </div>
       )}
-
-      {/* Info section */}
-      <div className="mt-10 bg-white/[0.02] border border-white/[0.05] rounded-2xl p-5 max-w-sm mx-auto text-left">
-        <h3 className="text-[#F7F6F2] text-sm font-medium mb-3">How automatic tap works</h3>
-        <ul className="space-y-2.5 text-xs text-[#82907A]">
-          <li className="flex items-start gap-2">
-            <span className="inline-block w-4 h-4 rounded-full bg-[#7BE899]/10 text-[#7BE899] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-            <span>Hold your phone near a Receiptiles terminal at checkout</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="inline-block w-4 h-4 rounded-full bg-[#7BE899]/10 text-[#7BE899] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-            <span>Your wallet automatically presents the Receiptiles pass</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="inline-block w-4 h-4 rounded-full bg-[#7BE899]/10 text-[#7BE899] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            <span>Your receipt appears digitally — no paper, no app needed</span>
-          </li>
-        </ul>
-      </div>
     </div>
   );
 }
@@ -470,27 +344,33 @@ export default function WalletPage() {
   const isLoading = status === "loading";
 
   return (
-    <div className="min-h-screen bg-[#242D28] flex items-center justify-center p-4">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#7BE899]/5 blur-3xl" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-[#7BE899]/3 blur-3xl" />
+    <div className="min-h-screen bg-[#F5F5F0] p-4 md:p-8">
+      {/* Header */}
+      <div className="max-w-md mx-auto mb-6 flex items-center justify-between">
+        <a href="/" className="text-[#4A5D4E] text-sm font-medium flex items-center gap-1">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+          Wallet
+        </a>
+        <span className="text-[#1C1C1A] font-semibold text-sm">TapForReceipts</span>
+        <div className="w-6" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md py-12">
-        {isLoading ? (
-          <div className="flex items-center justify-center">
-            <svg className="animate-spin h-8 w-8 text-[#7BE899]" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <svg className="animate-spin h-8 w-8 text-[#7BE899]" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        </div>
+      ) : session?.user ? (
+        <WalletAddFlow />
+      ) : (
+        <div className="min-h-[80vh] flex items-center justify-center">
+          <div className="bg-[#242D28] rounded-3xl p-8 w-full max-w-md">
+            <LoginForm />
           </div>
-        ) : session?.user ? (
-          <WalletAddFlow />
-        ) : (
-          <LoginForm />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

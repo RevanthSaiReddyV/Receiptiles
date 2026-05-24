@@ -1,22 +1,6 @@
 import crypto from "crypto";
 import { db } from "@receipts/db";
 
-/**
- * Apple Wallet "Master Receipt Pass" — a single generic pass that acts as
- * a living receipt ledger. Updated via APNs push when new receipts arrive.
- *
- * Pass structure: Generic pass with:
- * - headerFields: total spend this month, receipt count
- * - primaryFields: last merchant name
- * - secondaryFields: last amount + date
- * - auxiliaryFields: last 3 receipts summary
- * - backFields: full receipt history (last 10) + eco impact stats
- *
- * For Apple VAS (Value Added Services) at NFC terminals:
- * - The pass includes a VAS protocol handler
- * - When tapped at a compatible terminal, it triggers receipt delivery
- */
-
 export interface ApplePassData {
   formatVersion: number;
   passTypeIdentifier: string;
@@ -26,15 +10,15 @@ export interface ApplePassData {
   description: string;
   authenticationToken: string;
   webServiceURL: string;
-  backgroundColor: string;
+  backgroundColor?: string;
   foregroundColor: string;
   labelColor: string;
   logoText: string;
   generic: {
-    headerFields: Array<{ key: string; label: string; value: string }>;
-    primaryFields: Array<{ key: string; label: string; value: string }>;
-    secondaryFields: Array<{ key: string; label: string; value: string }>;
-    auxiliaryFields: Array<{ key: string; label: string; value: string }>;
+    headerFields: Array<{ key: string; label: string; value: string | number; textAlignment?: "PKTextAlignmentLeft" | "PKTextAlignmentCenter" | "PKTextAlignmentRight" | "PKTextAlignmentNatural" }>;
+    primaryFields: Array<{ key: string; label: string; value: string | number }>;
+    secondaryFields: Array<{ key: string; label: string; value: string | number }>;
+    auxiliaryFields: Array<{ key: string; label: string; value: string | number }>;
     backFields: Array<{ key: string; label: string; value: string }>;
   };
   nfc?: {
@@ -54,16 +38,10 @@ const PASS_TYPE_ID =
 const TEAM_ID = process.env.APPLE_TEAM_ID ?? "";
 const WEB_SERVICE_URL = "https://receiptiles.com/api/wallet/apple";
 
-/**
- * Format a number as USD currency string.
- */
 function formatCurrency(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-/**
- * Format a date as human-readable (e.g., "May 18").
- */
 function formatDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
@@ -71,51 +49,41 @@ function formatDate(date: Date): string {
   });
 }
 
-/**
- * Calculate eco impact stats based on receipt count.
- * Average paper receipt: ~3.15g paper, ~0.0057 kg CO2
- * 1 tree = ~8,333 sheets of paper
- */
-function calculateEcoImpact(receiptCount: number) {
+export function calculateEcoImpact(receiptCount: number) {
   const treesSaved = receiptCount / 8333;
-  const paperAvoided = receiptCount * 3.15; // grams
-  const co2Saved = receiptCount * 0.0057; // kg
+  const paperAvoidedKg = (receiptCount * 3.15) / 1000;
+  const co2SavedKg = receiptCount * 0.0057;
 
   return {
-    treesSaved:
-      treesSaved >= 0.01 ? treesSaved.toFixed(2) : treesSaved.toFixed(4),
-    paperAvoided:
-      paperAvoided >= 1000
-        ? `${(paperAvoided / 1000).toFixed(1)} kg`
-        : `${paperAvoided.toFixed(0)} g`,
-    co2Saved:
-      co2Saved >= 1
-        ? `${co2Saved.toFixed(1)} kg`
-        : `${(co2Saved * 1000).toFixed(0)} g`,
+    treesSaved: treesSaved >= 1 ? treesSaved.toFixed(1) : treesSaved.toFixed(2),
+    paperAvoided: paperAvoidedKg >= 1
+      ? `${paperAvoidedKg.toFixed(1)} kg`
+      : `${(paperAvoidedKg * 1000).toFixed(0)} g`,
+    paperAvoidedKg: paperAvoidedKg.toFixed(1),
+    co2Saved: co2SavedKg >= 1
+      ? `${co2SavedKg.toFixed(2)} kg`
+      : `${(co2SavedKg * 1000).toFixed(0)} g`,
+    co2SavedKg: co2SavedKg.toFixed(2),
   };
 }
 
-
 /**
- * Generate pass.json for the Master Receipt Pass.
- *
- * Design philosophy: MINIMAL front, DETAILED back.
- * - Front: Big receipt count + month spend + latest merchant. That's it.
- * - Back: Each receipt with itemized detail, warranty/return inline, eco footer.
- *
- * NOTE on Express Mode (tap without Face ID):
- * Express Mode cannot be enabled programmatically. It requires:
- * 1. Apple partnership application for "Access" or "Transit" category
- * 2. Apple reviews and approves the application
- * 3. They provide a special entitlement
- * Apply at: developer.apple.com/wallet/access
+ * Generate pass.json matching the TapForReceipts design:
+ * - Background: dark forest image
+ * - Front: brand + "ECO ACTIVE" badge, this month count, total receipts
+ * - Bottom: Trees Saved | Paper Avoided | CO₂ Saved + card number + user name
+ * - Back: full receipt history with itemized detail + warranty/return info
  */
 export async function generateMasterPassJson(
   userId: string,
   serialNumber: string,
   authToken: string
 ): Promise<ApplePassData> {
-  // Fetch latest receipts with items for detailed back fields
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { name: true, createdAt: true },
+  });
+
   const receipts = await db.receipt.findMany({
     where: { userId },
     orderBy: { purchasedAt: "desc" },
@@ -139,38 +107,28 @@ export async function generateMasterPassJson(
     },
   });
 
-  // Calculate monthly stats
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthReceipts = receipts.filter((r) => r.purchasedAt >= monthStart);
-  const monthTotal = monthReceipts.reduce((sum, r) => sum + r.total, 0);
 
-  const lastReceipt = receipts[0];
-
-  // Total receipt count for eco impact
   const totalReceiptCount = await db.receipt.count({ where: { userId } });
   const eco = calculateEcoImpact(totalReceiptCount);
 
-  // Build back fields — each receipt is its own field with itemized detail
+  const cardNumber = `TFR •• ${user?.createdAt?.getFullYear() ?? "2026"} •• ${String(totalReceiptCount).padStart(4, "0")}`;
+  const memberName = user?.name?.toUpperCase() ?? "MEMBER";
+
+  // Back fields — itemized receipts
   const backFields: Array<{ key: string; label: string; value: string }> = [];
 
   for (let i = 0; i < receipts.length; i++) {
     const r = receipts[i];
     const label = `${r.merchantCanonicalName} · ${formatDate(r.purchasedAt)}`;
-
-    // Build value: total + item names
     const itemNames = r.items
-      .map((item) =>
-        item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name
-      )
+      .map((item) => item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name)
       .join(", ");
 
-    let value = `${formatCurrency(r.total)}`;
-    if (itemNames) {
-      value += ` — ${itemNames}`;
-    }
-
-    // Inline warranty/return info
+    let value = formatCurrency(r.total);
+    if (itemNames) value += ` — ${itemNames}`;
     if (r.warrantyExpiresAt && r.warrantyExpiresAt > now) {
       value += `\n🛡️ Warranty until ${formatDate(r.warrantyExpiresAt)}`;
     }
@@ -181,19 +139,10 @@ export async function generateMasterPassJson(
     backFields.push({ key: `r${i}`, label, value });
   }
 
-  // Footer section
   backFields.push({
     key: "ecoFooter",
     label: "─────────────",
     value: `🌱 ${totalReceiptCount} receipts saved · ${eco.co2Saved} CO₂ prevented\nTap at any terminal · receiptiles.com`,
-  });
-
-  // Express Mode informational note
-  backFields.push({
-    key: "expressMode",
-    label: "Express Mode",
-    value:
-      "Apply at developer.apple.com/wallet/access to enable tap without Face ID",
   });
 
   return {
@@ -202,39 +151,61 @@ export async function generateMasterPassJson(
     serialNumber,
     teamIdentifier: TEAM_ID,
     organizationName: "Receiptiles",
-    description: "Receiptiles Digital Receipt Pass",
+    description: "TapForReceipts — Digital Receipt Pass",
     authenticationToken: authToken,
     webServiceURL: WEB_SERVICE_URL,
-    backgroundColor: "#242D28",
-    foregroundColor: "#F7F6F2",
-    labelColor: "#82907A",
+    foregroundColor: "#FFFFFF",
+    labelColor: "#A0AFAA",
     logoText: "",
     generic: {
-      headerFields: [],
+      headerFields: [
+        {
+          key: "totalReceipts",
+          label: "RECEIPTS",
+          value: totalReceiptCount,
+          textAlignment: "PKTextAlignmentRight",
+        },
+      ],
       primaryFields: [
         {
-          key: "count",
-          label: "",
-          value: `${totalReceiptCount} Receipts`,
+          key: "monthCount",
+          label: "THIS MONTH",
+          value: `${monthReceipts.length} receipts`,
         },
       ],
       secondaryFields: [
         {
-          key: "monthSpend",
-          label: "this month",
-          value: formatCurrency(monthTotal),
+          key: "treesSaved",
+          label: "TREES SAVED",
+          value: eco.treesSaved,
         },
         {
-          key: "latest",
-          label: "latest",
-          value: lastReceipt ? lastReceipt.merchantCanonicalName : "—",
+          key: "paperAvoided",
+          label: "PAPER AVOIDED",
+          value: eco.paperAvoided,
+        },
+        {
+          key: "co2Saved",
+          label: "CO₂ SAVED",
+          value: eco.co2Saved,
         },
       ],
-      auxiliaryFields: [],
+      auxiliaryFields: [
+        {
+          key: "cardNumber",
+          label: "",
+          value: cardNumber,
+        },
+        {
+          key: "memberName",
+          label: "",
+          value: memberName,
+        },
+      ],
       backFields,
     },
     nfc: {
-      message: "com.receiptiles.tap", // VAS merchant identifier for auto-present
+      message: "com.receiptiles.tap",
       encryptionPublicKey: process.env.APPLE_NFC_ENCRYPTION_KEY || undefined,
     },
     barcodes: [
@@ -248,9 +219,6 @@ export async function generateMasterPassJson(
   };
 }
 
-/**
- * Create or retrieve the user's wallet pass record.
- */
 export async function getOrCreateWalletPass(userId: string) {
   let pass = await db.walletPass.findFirst({
     where: { userId, platform: "apple", isActive: true },
