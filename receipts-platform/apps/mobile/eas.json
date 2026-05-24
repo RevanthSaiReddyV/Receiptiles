@@ -22,8 +22,7 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://receipts-staging.vercel.app",
-        "EXPO_PUBLIC_PROJECT_ID": "YOUR_EAS_PROJECT_ID"
+        "EXPO_PUBLIC_API_URL": "https://receipts-platform-revanth-sai-reddy-venumbaka-s-projects.vercel.app"
       }
     },
     "production": {
@@ -35,8 +34,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://receipts.app",
-        "EXPO_PUBLIC_PROJECT_ID": "YOUR_EAS_PROJECT_ID"
+        "EXPO_PUBLIC_API_URL": "https://receiptiles.com"
       }
     }
   },
