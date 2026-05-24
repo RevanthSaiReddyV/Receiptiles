@@ -7,10 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "receipts",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "backgroundColor": "#000000"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.receiptsplatform.app",
