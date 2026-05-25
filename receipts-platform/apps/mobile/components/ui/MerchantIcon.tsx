@@ -1,24 +1,30 @@
-import { View, Text } from "react-native";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  Dining: { bg: "#fef3c7", text: "#d97706" },
-  Groceries: { bg: "#d1fae5", text: "#059669" },
-  Gas: { bg: "#e0e7ff", text: "#4f46e5" },
-  Shopping: { bg: "#fce7f3", text: "#db2777" },
-  Travel: { bg: "#dbeafe", text: "#2563eb" },
-  Flights: { bg: "#dbeafe", text: "#2563eb" },
-  Hotels: { bg: "#dbeafe", text: "#2563eb" },
-  Transit: { bg: "#e0e7ff", text: "#4f46e5" },
-  Entertainment: { bg: "#f3e8ff", text: "#9333ea" },
-  Streaming: { bg: "#f3e8ff", text: "#9333ea" },
-  Drugstores: { bg: "#fce7f3", text: "#be185d" },
-  Fitness: { bg: "#ccfbf1", text: "#0d9488" },
-  Utilities: { bg: "#f1f5f9", text: "#475569" },
-  Phone: { bg: "#f1f5f9", text: "#475569" },
-  Internet: { bg: "#f1f5f9", text: "#475569" },
-  Insurance: { bg: "#fef3c7", text: "#b45309" },
-  "EV Charging": { bg: "#d1fae5", text: "#059669" },
+  Dining: { bg: '#FFF5E0', text: '#E8C47B' },
+  Groceries: { bg: '#E8FBF0', text: '#4A5D4E' },
+  Gas: { bg: '#EEF1EE', text: '#4A5D4E' },
+  Shopping: { bg: '#F3E8FF', text: '#7C3AED' },
+  Travel: { bg: '#DBEAFE', text: '#2563EB' },
+  Flights: { bg: '#DBEAFE', text: '#2563EB' },
+  Hotels: { bg: '#FFF5E0', text: '#B8943F' },
+  Transit: { bg: '#E8FBF0', text: '#3AA65B' },
+  Entertainment: { bg: '#F3E8FF', text: '#9333EA' },
+  Streaming: { bg: '#F3E8FF', text: '#9333EA' },
+  Drugstores: { bg: '#FCE7F3', text: '#BE185D' },
+  Fitness: { bg: '#E8FBF0', text: '#059669' },
+  Utilities: { bg: '#EEF1EE', text: '#6B6A65' },
+  Phone: { bg: '#EEF1EE', text: '#6B6A65' },
+  Internet: { bg: '#EEF1EE', text: '#82907A' },
+  Insurance: { bg: '#FFF5E0', text: '#B8943F' },
+  'EV Charging': { bg: '#E8FBF0', text: '#4A5D4E' },
+  Food: { bg: '#FFF5E0', text: '#E8C47B' },
+  Coffee: { bg: '#FFF5E0', text: '#8B6914' },
+  Subscriptions: { bg: '#E8FBF0', text: '#7BE899' },
 };
+
+const DEFAULT_COLORS = { bg: '#EEF1EE', text: '#82907A' };
 
 interface MerchantIconProps {
   name: string;
@@ -26,40 +32,56 @@ interface MerchantIconProps {
   size?: number;
 }
 
-export function MerchantIcon({ name, category, size = 40 }: MerchantIconProps) {
-  const colors = CATEGORY_COLORS[category ?? "Shopping"] ?? {
-    bg: "#f3f4f6",
-    text: "#6b7280",
-  };
+const MerchantIcon = React.memo(function MerchantIcon({
+  name,
+  category,
+  size = 40,
+}: MerchantIconProps) {
+  const colors = CATEGORY_COLORS[category ?? ''] ?? DEFAULT_COLORS;
 
-  // Get initials (first letter of first two words)
   const initials = name
     .split(/[\s\-&]+/)
     .filter((w) => w.length > 0)
     .slice(0, 2)
     .map((w) => w[0].toUpperCase())
-    .join("");
+    .join('');
 
   return (
     <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: colors.bg,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      style={[
+        styles.container,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: colors.bg,
+        },
+      ]}
     >
       <Text
-        style={{
-          fontSize: size * 0.36,
-          fontWeight: "700",
-          color: colors.text,
-        }}
+        style={[
+          styles.initials,
+          {
+            fontSize: size * 0.36,
+            color: colors.text,
+          },
+        ]}
       >
-        {initials || "?"}
+        {initials || '?'}
       </Text>
     </View>
   );
-}
+});
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: {
+    fontWeight: '700',
+  },
+});
+
+export { MerchantIcon };
+export type { MerchantIconProps };

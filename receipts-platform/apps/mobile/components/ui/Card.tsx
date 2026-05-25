@@ -1,44 +1,52 @@
-import { View, ViewProps } from "react-native";
+import React from 'react';
+import { View, ViewProps, StyleSheet } from 'react-native';
 
 interface CardProps extends ViewProps {
-  variant?: "default" | "elevated" | "outlined";
+  variant?: 'elevated' | 'outlined' | 'dark' | 'accent';
   padding?: number;
 }
 
-export function Card({
+const Card = React.memo(function Card({
   children,
-  variant = "default",
+  variant = 'elevated',
   padding = 16,
   style,
   ...props
 }: CardProps) {
-  const variants = {
-    default: {
-      backgroundColor: "#ffffff",
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: "#f3f4f6",
-    },
-    elevated: {
-      backgroundColor: "#ffffff",
-      borderRadius: 16,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      elevation: 3,
-    },
-    outlined: {
-      backgroundColor: "#ffffff",
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: "#e5e7eb",
-    },
-  };
-
   return (
-    <View style={[variants[variant], { padding }, style]} {...props}>
+    <View style={[styles.base, variantStyles[variant], { padding }, style]} {...props}>
       {children}
     </View>
   );
-}
+});
+
+const styles = StyleSheet.create({
+  base: {
+    borderRadius: 16,
+  },
+});
+
+const variantStyles = StyleSheet.create({
+  elevated: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#242D28',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  outlined: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EBEAE4',
+  },
+  dark: {
+    backgroundColor: '#4A5D4E',
+  },
+  accent: {
+    backgroundColor: '#E8FBF0',
+  },
+});
+
+export { Card };
+export type { CardProps };

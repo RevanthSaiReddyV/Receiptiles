@@ -11,7 +11,7 @@ import { api } from "../lib/api";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://receipts-platform-revanth-sai-reddy-venumbaka-s-projects.vercel.app";
 
 interface WalletPassInfo {
   serialNumber: string;

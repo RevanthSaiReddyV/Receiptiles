@@ -1,14 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { apiGet, apiPost } from '../../lib/api';
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColors } from "../../lib/config-provider";
+import { apiGet, apiPost } from "../../lib/api";
 
 interface Subscription {
   id: string;
@@ -18,237 +13,101 @@ interface Subscription {
   status: string;
   confidence: number;
   nextExpectedAt: string | null;
-  lastChargeAt: string | null;
   category: string | null;
-  alertsEnabled: boolean;
 }
 
-interface Alert {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  amount: number | null;
-  subscription: {
-    merchantName: string;
-    amount: number;
-    frequency: string;
-  };
-}
-
-interface Summary {
-  activeCount: number;
-  monthlyTotal: number;
-  annualTotal: number;
-  alertCount: number;
-}
+interface Summary { activeCount: number; monthlyTotal: number; annualTotal: number; }
 
 export default function SubscriptionsScreen() {
-  const router = useRouter();
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const [subs, setSubs] = useState<Subscription[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      const data = await apiGet<{ subscriptions: Subscription[]; alerts: Alert[]; summary: Summary }>('/api/mobile/subscriptions');
-      setSubscriptions(data.subscriptions);
-      setAlerts(data.alerts);
+      const data = await apiGet<{ subscriptions: Subscription[]; summary: Summary }>("/api/mobile/subscriptions");
+      setSubs(data.subscriptions);
       setSummary(data.summary);
-    } catch (error) {
-      console.error('Failed to fetch subscriptions:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    } catch {} finally { setLoading(false); setRefreshing(false); }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { load(); }, []);
 
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      await apiPost('/api/mobile/subscriptions', {});
-      await fetchData();
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleDismissAlert = async (alertId: string) => {
-    await apiPost('/api/mobile/subscriptions', {
-      alertId,
-      action: 'dismiss',
-    });
-    setAlerts(prev => prev.filter(a => a.id !== alertId));
-  };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchData();
-  };
-
-  if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#171717" />
-      </View>
-    );
-  }
+  if (loading) return <View style={[s.center, { backgroundColor: colors.background }]}><ActivityIndicator color={colors.secondary} /></View>;
 
   return (
-    <ScrollView
-      className="flex-1 bg-neutral-50"
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      <View className="p-5">
-        {/* Header */}
-        <View className="flex-row items-center justify-between mb-6">
-          <Text className="text-2xl font-bold text-neutral-900">Subscriptions</Text>
-          <TouchableOpacity
-            onPress={handleSync}
-            disabled={syncing}
-            className="px-3 py-2 bg-neutral-900 rounded-lg"
-          >
-            <Text className="text-white text-sm font-medium">
-              {syncing ? 'Scanning...' : 'Detect'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 12, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.secondary} />}>
+      <View style={s.header}>
+        <Text style={[s.title, { color: colors.onSurface }]}>Subscriptions</Text>
+        <TouchableOpacity onPress={async () => { setSyncing(true); await apiPost("/api/mobile/subscriptions", {}); await load(); setSyncing(false); }} style={[s.detectBtn, { backgroundColor: colors.secondary }]}>
+          <Text style={{ fontSize: 13, fontWeight: "600", color: "#101814" }}>{syncing ? "Scanning..." : "Detect"}</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Summary Cards */}
-        {summary && (
-          <View className="flex-row gap-3 mb-6">
-            <View className="flex-1 bg-white rounded-xl p-4 border border-neutral-200">
-              <Text className="text-neutral-500 text-xs">Monthly</Text>
-              <Text className="text-xl font-bold text-neutral-900">
-                ${summary.monthlyTotal.toFixed(2)}
-              </Text>
-            </View>
-            <View className="flex-1 bg-white rounded-xl p-4 border border-neutral-200">
-              <Text className="text-neutral-500 text-xs">Annual</Text>
-              <Text className="text-xl font-bold text-neutral-900">
-                ${summary.annualTotal.toFixed(0)}
-              </Text>
-            </View>
-            <View className="flex-1 bg-white rounded-xl p-4 border border-neutral-200">
-              <Text className="text-neutral-500 text-xs">Active</Text>
-              <Text className="text-xl font-bold text-neutral-900">
-                {summary.activeCount}
-              </Text>
-            </View>
+      {summary && (
+        <View style={s.statsRow}>
+          <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+            <Text style={[s.statLabel, { color: colors.onSurfaceVariant }]}>Monthly</Text>
+            <Text style={[s.statValue, { color: colors.onSurface }]}>${summary.monthlyTotal.toFixed(2)}</Text>
           </View>
-        )}
+          <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+            <Text style={[s.statLabel, { color: colors.onSurfaceVariant }]}>Annual</Text>
+            <Text style={[s.statValue, { color: colors.onSurface }]}>${summary.annualTotal.toFixed(0)}</Text>
+          </View>
+          <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+            <Text style={[s.statLabel, { color: colors.onSurfaceVariant }]}>Active</Text>
+            <Text style={[s.statValue, { color: colors.onSurface }]}>{summary.activeCount}</Text>
+          </View>
+        </View>
+      )}
 
-        {/* Alerts */}
-        {alerts.length > 0 && (
-          <View className="mb-6">
-            <Text className="text-sm font-semibold text-neutral-700 mb-3">Alerts</Text>
-            {alerts.map(alert => (
-              <View
-                key={alert.id}
-                className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-2"
-              >
-                <View className="flex-row items-start justify-between">
-                  <View className="flex-1">
-                    <Text className="font-medium text-amber-900">{alert.title}</Text>
-                    <Text className="text-sm text-amber-700 mt-1">{alert.message}</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => handleDismissAlert(alert.id)}
-                    className="ml-3 px-2 py-1"
-                  >
-                    <Text className="text-amber-600 text-xs">Dismiss</Text>
-                  </TouchableOpacity>
+      {subs.length === 0 ? (
+        <View style={[s.empty, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+          <Text style={{ fontSize: 36, marginBottom: 12 }}>🔄</Text>
+          <Text style={[s.emptyTitle, { color: colors.onSurface }]}>No subscriptions detected</Text>
+          <Text style={[s.emptySubtitle, { color: colors.onSurfaceVariant }]}>As you add receipts, we'll detect recurring charges automatically.</Text>
+        </View>
+      ) : (
+        <View style={{ gap: 10, marginTop: 16 }}>
+          {subs.map((sub) => {
+            const freq: Record<string, string> = { WEEKLY: "/wk", MONTHLY: "/mo", ANNUAL: "/yr" };
+            return (
+              <View key={sub.id} style={[s.subCard, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.subName, { color: colors.onSurface }]}>{sub.merchantName}</Text>
+                  {sub.category && <Text style={[s.subCategory, { color: colors.onSurfaceVariant, backgroundColor: colors.surfaceContainer }]}>{sub.category}</Text>}
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={[s.subAmount, { color: colors.onSurface }]}>${sub.amount.toFixed(2)}</Text>
+                  <Text style={{ fontSize: 11, color: colors.onSurfaceVariant }}>{freq[sub.frequency] || sub.frequency}</Text>
                 </View>
               </View>
-            ))}
-          </View>
-        )}
-
-        {/* Subscription List */}
-        <Text className="text-sm font-semibold text-neutral-700 mb-3">
-          Active Subscriptions
-        </Text>
-
-        {subscriptions.length === 0 ? (
-          <View className="bg-white rounded-xl border border-neutral-200 p-8 items-center">
-            <Text className="text-3xl mb-3">🔄</Text>
-            <Text className="text-neutral-900 font-medium">No subscriptions detected</Text>
-            <Text className="text-neutral-500 text-sm mt-1 text-center">
-              As you add more receipts, we&apos;ll automatically detect recurring charges.
-            </Text>
-          </View>
-        ) : (
-          <View className="gap-3">
-            {subscriptions.map(sub => (
-              <SubscriptionCard key={sub.id} subscription={sub} />
-            ))}
-          </View>
-        )}
-      </View>
+            );
+          })}
+        </View>
+      )}
     </ScrollView>
   );
 }
 
-function SubscriptionCard({ subscription }: { subscription: Subscription }) {
-  const frequencyLabel: Record<string, string> = {
-    WEEKLY: '/wk',
-    BIWEEKLY: '/2wk',
-    MONTHLY: '/mo',
-    QUARTERLY: '/qtr',
-    ANNUAL: '/yr',
-  };
-
-  const daysUntilRenewal = subscription.nextExpectedAt
-    ? Math.ceil(
-        (new Date(subscription.nextExpectedAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-      )
-    : null;
-
-  return (
-    <View className="bg-white rounded-xl border border-neutral-200 p-4">
-      <View className="flex-row items-center justify-between">
-        <View className="flex-1">
-          <Text className="font-semibold text-neutral-900">{subscription.merchantName}</Text>
-          <View className="flex-row items-center gap-2 mt-1">
-            {subscription.category && (
-              <Text className="text-xs text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">
-                {subscription.category}
-              </Text>
-            )}
-            {subscription.confidence < 0.8 && (
-              <Text className="text-xs text-amber-600">
-                {Math.round(subscription.confidence * 100)}% sure
-              </Text>
-            )}
-          </View>
-        </View>
-        <View className="items-end">
-          <Text className="text-lg font-bold text-neutral-900">
-            ${subscription.amount.toFixed(2)}
-          </Text>
-          <Text className="text-xs text-neutral-500">
-            {frequencyLabel[subscription.frequency] || subscription.frequency}
-          </Text>
-        </View>
-      </View>
-
-      {daysUntilRenewal !== null && daysUntilRenewal > 0 && (
-        <View className="mt-3 pt-3 border-t border-neutral-100">
-          <Text className="text-xs text-neutral-500">
-            Renews in {daysUntilRenewal} day{daysUntilRenewal !== 1 ? 's' : ''} •{' '}
-            {new Date(subscription.nextExpectedAt!).toLocaleDateString()}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-}
+const s = StyleSheet.create({
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  title: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
+  detectBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
+  statsRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
+  statCard: { flex: 1, borderRadius: 14, borderWidth: 1, padding: 14 },
+  statLabel: { fontSize: 12 },
+  statValue: { fontSize: 20, fontWeight: "700", marginTop: 4 },
+  empty: { borderRadius: 16, borderWidth: 1, padding: 32, alignItems: "center", marginTop: 16 },
+  emptyTitle: { fontSize: 16, fontWeight: "600" },
+  emptySubtitle: { fontSize: 13, textAlign: "center", marginTop: 6, maxWidth: 260 },
+  subCard: { flexDirection: "row", alignItems: "center", borderRadius: 14, borderWidth: 1, padding: 16 },
+  subName: { fontSize: 15, fontWeight: "600" },
+  subCategory: { fontSize: 11, marginTop: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, overflow: "hidden" },
+  subAmount: { fontSize: 17, fontWeight: "700" },
+});

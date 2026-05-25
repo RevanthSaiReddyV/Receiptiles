@@ -256,7 +256,141 @@ Match Copilot's UX quality.
    - Alert when same item is cheaper elsewhere
    - Partner with price comparison APIs
 
-### Phase 4: "Platform Moat" (Weeks 10-12)
+### Phase 4: "AI Moat — On-Device & API Monetization" (Weeks 10-14)
+Fine-tuned AI models that parse receipts on-device (zero cloud) and sell as an API.
+
+#### 4A. Fine-Tuned Receipt Parser (Cloud API)
+Revenue: B2B API-as-a-Service
+
+1. **Train Text Parser (Phi-3.5-mini, 3.8B)**
+   - Fine-tune on 5K+ receipt examples using QLoRA
+   - Teacher-student distillation from existing Gemini/GPT-4o parses
+   - Target: 94% accuracy, 400ms latency, $0.001/receipt
+   - Pipeline: `services/receipt-ml/training/finetune.py --mode text`
+
+2. **Train Vision Parser (Qwen2.5-VL-7B)**
+   - Fine-tune on receipt images (beats GPT-4o-mini on OCR: 864 vs 785)
+   - No separate OCR step — image directly to structured JSON
+   - Pipeline: `services/receipt-ml/training/finetune.py --mode vision`
+
+3. **Deploy Receipt Parsing API**
+   - FastAPI + vLLM serving with continuous batching
+   - 3-tier fallback in app: Fine-tuned → Gemini → OpenAI
+   - API key management, usage metering, rate limiting
+   - Pricing: Free (100/mo), Starter $19/mo, Pro $79/mo, Enterprise custom
+   - Target customers: expense management apps, accounting SaaS, fintech startups
+
+4. **Batch API**
+   - Process up to 50 receipts in one call
+   - 5-10x throughput via vLLM continuous batching
+   - No competitor offers this natively
+
+**Competitive Position vs Incumbents:**
+
+| Competitor | Price/Receipt | Our Price | We Win By |
+|-----------|--------------|-----------|-----------|
+| Veryfi | $0.08 | $0.001 | 80x cheaper |
+| Taggun | $0.04-0.08 | $0.001 | 40x cheaper |
+| Mindee | €0.035-0.05 | $0.001 | 35x cheaper |
+| Google Document AI | $0.01 | $0.001 | 10x cheaper |
+| AWS Textract | $0.01 | $0.001 | 10x cheaper |
+
+**Revenue Target:** $6K/mo MRR on $1.1K/mo infra cost (80%+ margin)
+
+---
+
+#### 4B. On-Device Parsing (Zero Cloud — THE Differentiator)
+Revenue: App subscription + SDK licensing
+
+**The killer feature nobody else has: receipts NEVER leave the device.**
+
+5. **On-Device Text Model (SmolLM-1.7B fine-tuned)**
+   - Fine-tune SmolLM-1.7B on receipt text → JSON (same training data)
+   - Export to GGUF format (llama.cpp compatible)
+   - Model size: ~1GB (Q4 quantized)
+   - Runs on: iPhone 12+, any Android 2020+, any laptop
+   - Speed: ~3 seconds per receipt on-device
+
+6. **On-Device Vision Pipeline (Phone)**
+   ```
+   Camera → Apple VisionKit / Google ML Kit (free, on-device OCR)
+         → SmolLM-1.7B GGUF (on-device text → JSON)
+         → Stored locally. Never leaves phone.
+   ```
+   - Zero network required — works on airplane, in subway, anywhere
+   - No API cost — unlimited parsing after model download
+   - No privacy risk — HIPAA/GDPR compliant by architecture
+
+7. **Desktop/Laptop Local Mode**
+   - Bundle Phi-3.5-mini Q4 (GGUF, ~2.2GB one-time download)
+   - Run as local server: `receiptile serve --local`
+   - CLI tool: `receiptile parse receipt.jpg` → JSON output
+   - Also serves as local API for developers (localhost:8000)
+
+8. **Browser Extension (WebGPU)**
+   - SmolLM-360M runs entirely in-browser via WebGPU
+   - Chrome/Firefox extension: right-click any receipt → parse locally
+   - Zero server, zero cost, zero privacy concern
+   - Or: detect order confirmation emails in Gmail → auto-parse in-browser
+
+9. **React Native Integration (Expo)**
+   - `react-native-llama` or ONNX Runtime Mobile
+   - Model downloaded on first launch (~1GB, cached)
+   - Background processing: snap receipt → parse while you pocket phone
+   - Optional cloud sync (encrypted, user-controlled)
+
+**On-Device Monetization:**
+
+| Revenue Stream | Price | Target |
+|---|---|---|
+| Consumer app (subscription) | $4.99/mo or $49/yr | Privacy-conscious users |
+| One-time purchase (lifetime) | $9.99 | Users who hate subscriptions |
+| SDK License (B2B) | $499/mo | Companies embedding in their app |
+| Enterprise SDK + custom model | $2,000-5,000/mo | Fortune 500, healthcare, government |
+| Model weights (developer) | $199 one-time | Developers self-integrating |
+
+**Who pays for privacy:**
+- Healthcare workers (HIPAA — receipts with patient info)
+- Government/military (classified purchase data)
+- European consumers (GDPR — won't send data to US cloud)
+- Corporate security teams (vendor/pricing data is competitive intel)
+- Enterprise on-prem (Fortune 500 won't send expense data to startups)
+- Privacy-conscious consumers (growing market post-AI backlash)
+
+**On-Device vs Every Competitor:**
+
+| Feature | Veryfi | Taggun | Mindee | **Receiptile** |
+|---------|--------|--------|--------|----------------|
+| Data leaves device | Yes | Yes | Yes | **No** |
+| Works offline | No | No | No | **Yes** |
+| HIPAA-ready | Needs BAA | No | No | **Yes (by design)** |
+| Per-receipt cost | $0.04-0.08 | $0.04-0.08 | €0.035 | **$0 after download** |
+| Latency | 2-3s (network) | 2-3s (network) | 2-3s | **1-3s (local)** |
+| Works on airplane | No | No | No | **Yes** |
+
+---
+
+#### 4C. Model Improvement Flywheel
+
+10. **User Corrections → Retraining Loop**
+    - When user corrects a parsed field, store correction as training signal
+    - Monthly retrain with accumulated corrections (active learning)
+    - Each user makes the model better for everyone (with consent)
+
+11. **Multi-Language Expansion**
+    - Start: English only
+    - Phase 2: Spanish, French, German (European market for GDPR positioning)
+    - Phase 3: Japanese, Korean, Chinese (Asian e-commerce receipts)
+    - Train per-language adapters sharing the same base model
+
+12. **Fraud Detection Add-On**
+    - Train a classifier: real vs fake/duplicate receipts
+    - Sell as premium feature to loyalty/rewards platforms
+    - Taggun charges extra for this — match them but cheaper
+
+---
+
+### Phase 5: "Platform Moat" (Weeks 15-18)
 Features that create lock-in and network effects.
 
 1. **Household Sharing**
@@ -274,33 +408,66 @@ Features that create lock-in and network effects.
    - Automated receipt import from loyalty accounts
    - No email access needed for supported retailers
 
-4. **Smart Receipt OCR v2**
-   - On-device ML for instant parsing (no API call)
-   - Support for non-English receipts
-   - Handwritten receipt support
+4. **Multi-Language Receipt Support**
+   - Leverage fine-tuned models with language-specific adapters
+   - Support non-English receipts natively (on-device + cloud)
 
 ---
 
-## Pricing Strategy (Free-first with Data API monetization)
+## Pricing Strategy (Multi-Revenue)
 
-### Consumer App — FREE
-All features free. No premium tier needed because:
-- More users = more data = more Data API revenue
-- Revenue from B2B data partnerships >> consumer subscriptions
-- Network effects: household features drive organic growth
+### Revenue Stream 1: Consumer App — FREEMIUM
+| Tier | Price | What You Get |
+|------|-------|-------------|
+| Free | $0 | Cloud parsing (100/mo), basic analytics, 1 card |
+| Pro | $4.99/mo | **On-device parsing (unlimited, offline)**, all cards, budgets, widgets |
+| Lifetime | $49.99 once | Everything in Pro, forever |
 
-### Data API — B2B Revenue
+### Revenue Stream 2: Receipt Parsing API — B2B SaaS
+| Tier | Price | Requests/mo | Target Customer |
+|------|-------|-------------|----------------|
+| Free | $0 | 100 | Developers trying it |
+| Starter | $19/mo | 5,000 | Side projects, MVPs |
+| Pro | $79/mo | 50,000 | Production apps |
+| Self-Host | $199/mo | Unlimited (their GPU) | Privacy-first companies |
+| Enterprise | Custom | Unlimited | Fortune 500 |
+
+Target: expense management apps, accounting SaaS, fintech, corporate tools, tax prep
+Competitive edge: 30-80x cheaper than Veryfi/Taggun/Mindee
+
+### Revenue Stream 3: Data API — B2B Intelligence
 | Tier | Price | Limits |
 |------|-------|--------|
 | Trial | Free | 1,000 req/mo, 90-day data |
 | Standard | $500/mo | 50K req/mo, 2-year data, merchant-level |
 | Enterprise | Custom | Unlimited, item-level, real-time, custom segments |
 
-Target customers: hedge funds, market research, CPG brands, retailers, ad platforms
+Target: hedge funds, market research, CPG brands, retailers, ad platforms
 
-### Optional Premium (if needed)
-- $2.99/mo for export/CSV, priority support, custom categories
-- Keep it cheap enough that the comparison to $15/mo Monarch is stark
+### Revenue Stream 4: SDK Licensing
+| Tier | Price | What They Get |
+|------|-------|--------------|
+| Developer | $199 one-time | Model weights (GGUF) for self-integration |
+| SDK License | $499/mo | Mobile SDK + model + updates |
+| Enterprise SDK | $2,000-5,000/mo | Custom fine-tuned model + on-prem + support |
+
+Target: companies building expense/receipt features into their own apps
+
+### Revenue Projections (12-month)
+| Stream | Conservative | Optimistic |
+|--------|-------------|-----------|
+| Consumer Pro subscriptions | $3K/mo | $15K/mo |
+| Parsing API (B2B) | $6K/mo | $25K/mo |
+| Data API | $5K/mo | $30K/mo |
+| SDK Licensing | $2K/mo | $10K/mo |
+| **Total MRR** | **$16K/mo** | **$80K/mo** |
+
+### Why This Works
+- **Free app** drives user growth → more data → better models → better API
+- **On-device** is the wedge (nobody else has it) → justifies Pro subscription
+- **API** is the cash cow (recurring, high-margin, scales with zero marginal cost)
+- **Data API** is the long-game (more users = more valuable aggregate data)
+- **SDK** is the enterprise play (companies pay to avoid building ML infra)
 
 ---
 
@@ -328,23 +495,54 @@ Target customers: hedge funds, market research, CPG brands, retailers, ad platfo
 
 ## Success Metrics
 
-| Metric | Target (6 months) |
-|--------|-------------------|
-| Monthly Active Users | 50K |
-| Receipts processed/month | 500K |
-| Retailer parsers (email) | 100+ |
-| Retailer direct connections | 15+ |
-| Cards in database | 75+ |
-| Data API customers | 10+ |
-| Revenue (Data API) | $15K MRR |
+| Metric | 3 Months | 6 Months | 12 Months |
+|--------|----------|----------|-----------|
+| Monthly Active Users | 5K | 50K | 200K |
+| Receipts processed/month | 50K | 500K | 2M |
+| Retailer parsers (email) | 50+ | 100+ | 200+ |
+| Retailer direct connections | 5 | 15+ | 30+ |
+| Cards in database | 50+ | 75+ | 100+ |
+| **Parsing API customers** | 10 | 50 | 200 |
+| **On-device model accuracy** | 90% | 94% | 96% |
+| **Languages supported** | 1 (EN) | 3 | 8 |
+| **Total MRR** | $3K | $16K | $50K+ |
+
+### AI/ML Milestones
+| Milestone | Target Date |
+|-----------|------------|
+| Text parser (Phi-3.5) fine-tuned & deployed | Week 11 |
+| Vision parser (Qwen2.5-VL) fine-tuned & deployed | Week 12 |
+| Parsing API live with paying customers | Week 13 |
+| SmolLM-1.7B on-device model exported (GGUF) | Week 14 |
+| React Native on-device integration working | Week 15 |
+| Browser extension (WebGPU) MVP | Week 16 |
+| Multi-language (ES, FR, DE) adapters | Week 18 |
+| Fraud detection classifier | Week 20 |
 
 ---
 
 ## Competitive Advantage Summary
 
+### vs Consumer Apps
 | vs Monarch | vs MaxRewards | vs Rocket Money | vs YNAB |
 |-----------|---------------|-----------------|---------|
 | Free (they're $15/mo) | Rewards + budgeting combined | Item-level receipt detail | Auto-everything (no manual entry) |
 | Item-level data | Faster, more cards | Free subscription tracking | Receipt-based accuracy |
 | Receipt images | Location-aware recs | Direct retailer connections | Real spending (not bank categories) |
 | Hardware device | Widget at checkout | Price history tracking | Works without bank linking |
+| **On-device AI (privacy)** | **Offline-first** | **No bank login needed** | **AI categorization** |
+
+### vs Receipt Parsing APIs
+| vs Veryfi | vs Taggun | vs Mindee | vs Google/AWS |
+|-----------|-----------|-----------|---------------|
+| 80x cheaper | 40x cheaper | 35x cheaper | 10x cheaper |
+| On-device option | On-device option | On-device option | Self-hostable |
+| Sub-500ms latency | Batch API (50/call) | Open model weights | Higher accuracy (94%) |
+| No $500/mo minimum | Privacy (no cloud) | SDK for mobile | No vendor lock-in |
+
+### The Moat Nobody Can Copy Quickly
+1. **On-device models** — Veryfi/Taggun's entire business model requires cloud. They can't pivot.
+2. **Fine-tuned accuracy** — Trained specifically on receipts, not general documents. Better at the one thing that matters.
+3. **Flywheel** — More users → more corrections → better model → more users. Competitors start from zero.
+4. **Price** — We self-host open models. They use expensive proprietary systems. Our cost floor is 10-100x lower.
+5. **Privacy positioning** — In a post-AI-paranoia world, "your data never leaves your device" is an emotional sell competitors can't match.

@@ -57,7 +57,7 @@ export default function ReferralsScreen() {
       setReferrals(data.recentReferrals);
       setRewards(data.rewards);
     } catch (err) {
-      console.error("Failed to fetch referral data:", err);
+      console.warn("Failed to fetch referral data:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -74,7 +74,7 @@ export default function ReferralsScreen() {
         url: res.deepLink,
       });
     } catch (err) {
-      console.error("Share failed:", err);
+      console.warn("Share failed:", err);
     }
   };
 

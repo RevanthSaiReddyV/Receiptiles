@@ -1,22 +1,23 @@
-import { View, Text } from "react-native";
-import Svg, { Circle } from "react-native-svg";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 
 interface ProgressRingProps {
   progress: number; // 0-1
   size?: number;
   strokeWidth?: number;
   color?: string;
-  bgColor?: string;
+  trackColor?: string;
   label?: string;
   sublabel?: string;
 }
 
-export function ProgressRing({
+const ProgressRing = React.memo(function ProgressRing({
   progress,
   size = 120,
   strokeWidth = 10,
-  color = "#10b981",
-  bgColor = "#e5e7eb",
+  color = '#7BE899',
+  trackColor = '#EBEAE4',
   label,
   sublabel,
 }: ProgressRingProps) {
@@ -25,23 +26,21 @@ export function ProgressRing({
   const clampedProgress = Math.min(Math.max(progress, 0), 1);
   const strokeDashoffset = circumference * (1 - clampedProgress);
 
-  // Color shifts: green → yellow → red as progress goes 0 → 0.8 → 1+
+  // Color shifts: mint → gold → red as progress goes 0 → 0.8 → 1+
   const dynamicColor =
-    progress > 1 ? "#ef4444" : progress > 0.8 ? "#f59e0b" : color;
+    progress > 1 ? '#E05252' : progress > 0.8 ? '#E8C47B' : color;
 
   return (
-    <View style={{ alignItems: "center", justifyContent: "center" }}>
+    <View style={styles.wrapper}>
       <Svg width={size} height={size}>
-        {/* Background circle */}
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={bgColor}
+          stroke={trackColor}
           strokeWidth={strokeWidth}
           fill="none"
         />
-        {/* Progress arc */}
         <Circle
           cx={size / 2}
           cy={size / 2}
@@ -56,37 +55,41 @@ export function ProgressRing({
           origin={`${size / 2}, ${size / 2}`}
         />
       </Svg>
-      {/* Center label */}
-      <View
-        style={{
-          position: "absolute",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <View style={styles.labelContainer}>
         {label && (
-          <Text
-            style={{
-              fontSize: size * 0.18,
-              fontWeight: "700",
-              color: "#171717",
-            }}
-          >
+          <Text style={[styles.label, { fontSize: size * 0.18 }]}>
             {label}
           </Text>
         )}
         {sublabel && (
-          <Text
-            style={{
-              fontSize: size * 0.1,
-              color: "#6b7280",
-              marginTop: 2,
-            }}
-          >
+          <Text style={[styles.sublabel, { fontSize: size * 0.1 }]}>
             {sublabel}
           </Text>
         )}
       </View>
     </View>
   );
-}
+});
+
+const styles = StyleSheet.create({
+  wrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  labelContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    fontWeight: '700',
+    color: '#1C1C1A',
+  },
+  sublabel: {
+    color: '#6B6A65',
+    marginTop: 2,
+  },
+});
+
+export { ProgressRing };
+export type { ProgressRingProps };

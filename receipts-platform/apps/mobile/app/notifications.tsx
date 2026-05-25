@@ -40,7 +40,7 @@ export default function NotificationsScreen() {
       const data = await apiGet("/api/mobile/notifications");
       setNotifications(data.notifications ?? []);
     } catch (err) {
-      console.error("Failed to fetch notifications:", err);
+      console.warn("Failed to fetch notifications:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
