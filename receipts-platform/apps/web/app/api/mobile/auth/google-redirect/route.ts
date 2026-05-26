@@ -7,6 +7,7 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
+const APP_URL = "https://receipts-platform-revanth-sai-reddy-venumbaka-s-projects.vercel.app";
 
 /**
  * GET /api/mobile/auth/google-redirect
@@ -78,19 +79,18 @@ export async function GET(request: NextRequest) {
     const googleUser = await userInfoRes.json();
     const email = googleUser.email;
     const name = googleUser.name || email.split("@")[0];
-    const googleId = googleUser.id;
 
-    // Find or create user
+    // Find or create user by email
     let user = await db.user.findUnique({ where: { email } });
 
     if (!user) {
       user = await db.user.create({
-        data: { email, name, googleId, emailVerified: new Date() },
+        data: { email, name, emailVerified: new Date() },
       });
-    } else if (!user.googleId) {
+    } else if (!user.emailVerified) {
       await db.user.update({
         where: { id: user.id },
-        data: { googleId, emailVerified: user.emailVerified ?? new Date() },
+        data: { emailVerified: new Date() },
       });
     }
 

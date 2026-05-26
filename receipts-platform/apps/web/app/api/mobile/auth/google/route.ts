@@ -44,15 +44,13 @@ export async function POST(request: NextRequest) {
         data: {
           email,
           name,
-          googleId,
           emailVerified: new Date(),
         },
       });
-    } else if (!user.googleId) {
-      // Link Google account to existing user
+    } else if (!user.emailVerified) {
       await db.user.update({
         where: { id: user.id },
-        data: { googleId, emailVerified: user.emailVerified ?? new Date() },
+        data: { emailVerified: new Date() },
       });
     }
 
