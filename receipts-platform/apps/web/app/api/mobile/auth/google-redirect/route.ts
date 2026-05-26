@@ -77,11 +77,15 @@ export async function GET(request: NextRequest) {
     }
 
     const googleUser = await userInfoRes.json();
-    const email = googleUser.email;
+    const email = googleUser.email?.toLowerCase();
     const name = googleUser.name || email.split("@")[0];
 
-    // Find or create user by email
+    // Find or create user by email (case-insensitive)
     let user = await db.user.findUnique({ where: { email } });
+    if (!user) {
+      // Try case-insensitive search
+      user = await db.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
+    }
 
     if (!user) {
       user = await db.user.create({
