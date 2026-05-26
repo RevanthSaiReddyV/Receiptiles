@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signing in...</title>
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #0a0f0d; color: #e8f0ec; }
+    .container { text-align: center; padding: 20px; }
+    .spinner { width: 40px; height: 40px; border: 3px solid #1e2b25; border-top: 3px solid #7BE899; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #g_id_onload { margin: 20px auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <p>Connecting to Google...</p>
+    <div id="g_id_onload"
+      data-client_id="232226751627-0fdqhld70jp6g2ced0iudm533ho7r0n2.apps.googleusercontent.com"
+      data-callback="handleCredentialResponse"
+      data-auto_prompt="true"
+      data-context="signin"
+      data-ux_mode="popup">
+    </div>
+    <div class="g_id_signin"
+      data-type="standard"
+      data-theme="filled_black"
+      data-text="continue_with"
+      data-shape="pill"
+      data-size="large">
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const redirectUrl = params.get('redirect') || 'receipts://auth';
+    const apiBase = window.location.origin;
+
+    function handleCredentialResponse(response) {
+      // Send the ID token to our backend
+      fetch(apiBase + '/api/mobile/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: response.credential })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.token) {
+          window.location.href = redirectUrl + '?token=' + data.token;
+        } else {
+          document.querySelector('p').textContent = 'Sign-in failed. Please try again.';
+        }
+      })
+      .catch(() => {
+        document.querySelector('p').textContent = 'Error. Please close and try again.';
+      });
+    }
+  </script>
+</body>
+</html>
