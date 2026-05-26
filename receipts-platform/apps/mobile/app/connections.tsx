@@ -1,16 +1,21 @@
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useState, useCallback } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
 import { useColors } from "../lib/config-provider";
 import { create, open, LinkSuccess, LinkExit } from "react-native-plaid-link-sdk";
-import { api, apiPost } from "../lib/api";
+import { api, apiGet, apiPost } from "../lib/api";
 
 export default function ConnectionsScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const [isConnecting, setIsConnecting] = useState(false);
   const [bankConnected, setBankConnected] = useState(false);
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailConnecting, setGmailConnecting] = useState(false);
 
   const handleConnectBank = useCallback(async () => {
     setIsConnecting(true);
@@ -30,10 +35,33 @@ export default function ConnectionsScreen() {
     } catch { Alert.alert("Error", "Failed to initialize connection."); setIsConnecting(false); }
   }, []);
 
+  const handleConnectGmail = useCallback(async () => {
+    setGmailConnecting(true);
+    try {
+      const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://receipts-platform-revanth-sai-reddy-venumbaka-s-projects.vercel.app";
+      const callbackScheme = "receipts://gmail-callback";
+      const result = await WebBrowser.openAuthSessionAsync(
+        `${API_URL}/api/mobile/gmail/redirect?state=${encodeURIComponent(callbackScheme)}`,
+        callbackScheme
+      );
+      if (result.type === "success" && result.url) {
+        const params = new URLSearchParams(result.url.split("?")[1] || "");
+        const code = params.get("code");
+        if (code) {
+          await apiPost("/api/mobile/gmail/connect", { code });
+          setGmailConnected(true);
+          Alert.alert("Connected!", "Gmail connected. Your receipts are being imported.");
+        }
+      }
+    } catch {
+      Alert.alert("Error", "Failed to connect Gmail. Please try again.");
+    } finally { setGmailConnecting(false); }
+  }, []);
+
   const connections = [
     { name: "Bank Account", icon: "🏦", desc: bankConnected ? "Connected" : "Match transactions with receipts", connected: bankConnected, action: handleConnectBank },
-    { name: "Gmail", icon: "📧", desc: "Auto-import receipt emails", connected: false },
-    { name: "Wallet Pass", icon: "💳", desc: "Tap to receive receipts", connected: false },
+    { name: "Gmail", icon: "📧", desc: gmailConnected ? "Connected" : "Auto-import receipt emails", connected: gmailConnected, action: handleConnectGmail, connecting: gmailConnecting },
+    { name: "Wallet Pass", icon: "💳", desc: "Tap to receive receipts", connected: false, action: () => router.push("/wallet") },
   ];
 
   const retailers = [
@@ -62,8 +90,8 @@ export default function ConnectionsScreen() {
               <Text style={{ fontSize: 11, fontWeight: "600", color: colors.secondary }}>Connected</Text>
             </View>
           ) : (
-            <TouchableOpacity onPress={c.action} disabled={isConnecting} style={{ backgroundColor: colors.secondary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}>
-              {isConnecting && c.action ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#101814", fontSize: 13, fontWeight: "600" }}>Connect</Text>}
+            <TouchableOpacity onPress={c.action} disabled={isConnecting || (c as any).connecting} style={{ backgroundColor: colors.secondary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}>
+              {(isConnecting || (c as any).connecting) ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#101814", fontSize: 13, fontWeight: "600" }}>Connect</Text>}
             </TouchableOpacity>
           )}
         </View>
