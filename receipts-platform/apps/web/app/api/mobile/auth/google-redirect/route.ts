@@ -59,7 +59,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenRes.ok) {
-      return NextResponse.redirect(`${mobileRedirect}?error=token_exchange_failed`);
+      const errorBody = await tokenRes.text();
+      console.error("Google token exchange failed:", errorBody, "redirect_uri used:", callbackUrl);
+      return NextResponse.redirect(`${mobileRedirect}?error=token_exchange_failed&detail=${encodeURIComponent(errorBody.slice(0, 200))}`);
     }
 
     const tokens = await tokenRes.json();
