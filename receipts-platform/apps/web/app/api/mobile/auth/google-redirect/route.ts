@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
   // Step 1: No code yet — redirect to Google
   if (!code) {
     const thisUrl = new URL(request.url);
-    const callbackUrl = `${thisUrl.origin}/api/mobile/auth/google-redirect`;
+    // Use the canonical domain to ensure redirect_uri matches exactly
+    // Must match EXACTLY what's in Google Console authorized redirect URIs
+    const callbackUrl = "https://receipts-platform-revanth-sai-reddy-venumbaka-s-projects.vercel.app/api/mobile/auth/google-redirect";
 
     const googleUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     googleUrl.searchParams.set("client_id", GOOGLE_CLIENT_ID);
@@ -41,7 +43,8 @@ export async function GET(request: NextRequest) {
   // Step 2: Got code from Google — exchange for tokens
   try {
     const thisUrl = new URL(request.url);
-    const callbackUrl = `${thisUrl.origin}/api/mobile/auth/google-redirect`;
+    // Must match EXACTLY what's in Google Console authorized redirect URIs
+    const callbackUrl = "https://receipts-platform-revanth-sai-reddy-venumbaka-s-projects.vercel.app/api/mobile/auth/google-redirect";
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
